@@ -1,0 +1,802 @@
+---
+title: "Midterm Project"
+author: "Data Dome"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(ezids)
+knitr::opts_chunk$set(echo = TRUE, warning = F, results = "markup", message = F)
+options(scientific=T, digits = 3) 
+```
+
+```{r}
+data <- data.frame(read.csv("googleplaystore.csv"))
+```
+
+```{r}
+str(data)
+```
+
+```{r}
+head(data)
+tail(data)
+```
+
+# Apps
+```{r}
+library(ggplot2)
+
+#Display all the duplicated Apps
+duplicate_apps <- aggregate(App ~ ., data = data, FUN = length)  
+duplicate_apps <- duplicate_apps[duplicate_apps$App > 1, ] 
+duplicate_apps <- duplicate_apps[order(-duplicate_apps$App), ]  
+#View(duplicate_apps)
+print(duplicate_apps)
+print(paste("Number of duplicated Apps:",nrow(duplicate_apps)))
+
+#Removing Na values and duplicates
+data_clean <- data[!is.na(data$App), ] 
+data_clean <- data_clean[!duplicated(data_clean$App), ] 
+
+#(After removing the duplicates)Unique values
+unique_apps <- length(unique(data_clean$App))
+print(paste("Number of unique apps:", unique_apps))
+
+```
+
+Nearly 404 apps have been repeated twice and thrice, after removing all the duplicated app names, there are 9660 unique apps in the data frame. (1181 values removed)
+
+
+```{r}
+#Checking the structure after removal
+str(data_clean)
+```
+
+# Price
+
+
+```{r}
+typeof(data_clean$Price)
+```
+
+Convert Price to numerical is required
+
+```{r}
+#To check if there is dollar symbol present 
+data_clean$Price[]
+```
+
+```{r}
+# Remove dollar symbols and convert to numeric
+data_clean$Price <- as.numeric(gsub("\\$", "", data_clean$Price))
+```
+
+```{r}
+#Recheck for dollar symbol
+data_clean$Price[]
+```
+
+```{r}
+# Summary statistics for price
+summary(data_clean$Price)
+```
+
+There is a missing value present in the Price column. 
+
+```{r}
+#Checking for missing values in Price
+missing_na <- is.na(data_clean$Price)    
+missing_blank <- data_clean$Price == "" 
+
+sum(missing_na)
+sum(missing_blank, na.rm = TRUE)
+```
+
+```{r}
+# Remove row where Price is NA or blank
+data_clean <- data_clean[!is.na(data_clean$Price) & data_clean$Price != "", ]
+```
+
+Have removed one row #10473 which app does not have a category name.(not required)
+
+```{r}
+#Recheck for missing values
+summary(data_clean$Price)
+```
+
+Missing values removed succesfully.(Price)
+
+```{r}
+#Checking the distribution of prices using histogram
+library(ggplot2)
+
+ggplot(data_clean, aes(x=Price)) +
+  geom_histogram(binwidth=2, fill="pink", color="black") +
+   xlim(0, 500) + ylim(0, 500) +
+  labs(title="Price Distribution", x="Price", y="Frequency") +
+  theme_minimal()
+
+```
+
+
+The data is highly skewed as there are many zero price entries.
+
+```{r}
+# Boxplot for the same
+ggplot(data_clean, aes(y=Price)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 1, fill="pink", color="black") +
+  labs(title="Price Boxplot", y="Price") +
+  theme_minimal()
+```
+
+```{r}
+outlierKD2 <- function(df, var, rm = FALSE, boxplt = FALSE, histogram = TRUE, qqplt = FALSE) {
+  dt <- df  # Duplicate the dataframe for potential alteration
+  var_name <- eval(substitute(var), eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = TRUE)
+  colTotal <- boxplt + histogram + qqplt  # Calculate the total number of charts to be displayed
+  par(mfrow = c(2, max(2, colTotal)), oma = c(0, 0, 3, 0))  # Adjust layout for plots
+  
+  # Q-Q plot with custom title
+  if (qqplt) {
+    qqnorm(var_name, main="Q-Q plot without Outliers")
+    qqline(var_name)
+  }
+  
+  # Histogram with custom title
+  if (histogram) { 
+    hist(var_name,main = "Histogram without Outliers", xlab = NA, ylab = NA) 
+  }
+  
+  # Box plot with custom title
+  if (boxplt) { 
+    boxplot(var_name, main= "Box Plot without Outliers")
+  }
+  
+  # Identify outliers
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  
+  # Q-Q plot without outliers
+  if (qqplt) {
+    qqnorm(var_name, main="Q-Q plot with Outliers")
+    qqline(var_name)
+  }
+  
+  # Histogram without outliers
+  if (histogram) { 
+    hist(var_name, main = "Histogram with Outliers", xlab = NA, ylab = NA) 
+  }
+  
+  # Box plot without outliers
+  if (boxplt) { 
+    boxplot(var_name, main = "Boxplot with Outliers") 
+  }
+  
+  # Add the title for the overall plot section if any plots are displayed
+  if (colTotal > 0) {
+    title("Outlier Check", outer = TRUE)
+    na2 <- sum(is.na(var_name))
+    cat("Outliers identified:", na2 - na1, "\n")
+    cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name)) * 100, 1), "\n")
+    cat("Mean of the outliers:", round(mo, 2), "\n")
+    cat("Mean without removing outliers:", round(m1, 2), "\n")
+    cat("Mean if we remove outliers:", round(mean(var_name, na.rm = TRUE), 2), "\n")
+  }
+  
+  # Remove outliers if `rm = TRUE`
+  if (rm) {
+    dt[as.character(substitute(var))] <- invisible(var_name)
+    cat("Outliers successfully removed", "\n")
+    return(invisible(dt))
+  } else {
+    cat("Nothing changed", "\n")
+    return(invisible(df))
+  }
+}
+
+```
+
+```{r}
+outlier_check_price = outlierKD2(data_clean, Price, rm = FALSE, boxplt = TRUE, qqplt = TRUE)
+```
+
+The price values here are valid observations for our analysis(both typical and extreme values), so removing these outliers might not be useful.
+
+```{r}
+#To check the value ranges
+table(data_clean$Price)
+```
+
+
+# Type
+```{r Type}
+table(data_clean$Type)
+```
+
+```{r}
+#Missing values
+print(paste("Missing values:",sum(is.na(data_clean$Type))))
+
+data_clean[is.na(data_clean$Type), ]
+
+```
+There is one row 9150, has a missing value for Type. As the price is 0, replaced it with "Free".
+```{r}
+# Replace NaN or missing values in the Type column with "Free"
+data_clean$Type[is.na(data_clean$Type)] <- "Free"
+```
+
+```{r}
+ggplot(data_clean, aes(x = Type)) +
+  geom_bar(fill = "pink", color = "black") +
+  labs(title = "Distribution of App Types (Free vs Paid)", x = "Type", y = "Count") +
+  theme_minimal()
+```
+
+```{r}
+data_clean$Type <- as.factor(data_clean$Type)
+
+
+summary_by_type <- data.frame(
+  Type = levels(data_clean$Type),
+  Min_Price = tapply(data_clean$Price, data_clean$Type, min, na.rm = TRUE),
+  Max_Price = tapply(data_clean$Price, data_clean$Type, max, na.rm = TRUE),
+  Mean_Price = tapply(data_clean$Price, data_clean$Type, mean, na.rm = TRUE),
+  Median_Price = tapply(data_clean$Price, data_clean$Type, median, na.rm = TRUE)
+)
+
+
+print(summary_by_type)
+```
+
+```{r}
+ggplot(data_clean, aes(x = Type, y = Price, fill = Type)) +
+  geom_boxplot() +
+  labs(title = "Price Distribution by App Type", 
+       x = "App Type", 
+       y = "Price ($)") +
+  theme_minimal()
+```
+
+
+```{r}
+ggplot(data_clean, aes(x = Price, fill = Type)) +
+  geom_histogram(binwidth = 60, alpha = 0.7, position = "identity") +
+  facet_wrap(~ Type) +
+  labs(title = "Price Distribution by App Type", 
+       x = "Price ($)", 
+       y = "Count") +
+  theme_minimal()
+```
+
+Here, by analysing the price distribution by app types, there are some incorrect values in the Type column that are not correctly representing the price of the apps. Hence, as we can completely relu on the prices, the type column is not required for our analysis.
+
+Removing Type column...
+
+```{r}
+#Using subset function
+data_clean <- subset(data_clean, select = -Type)
+print(head(data_clean))
+```
+
+```{r}
+str(data_clean)
+
+head(data_clean)
+```
+The Type column is successfully removed.
+
+*Apps, Type, Price (Data Cleaning) : Snehitha Tadapaneni*
+
+# For ur reference: data is the main data frame, data_clean is the one u can start working with.
+
+```{r}
+# Remove leading and trailing spaces and convert all text to a consistent format (e.g., title case)
+data_clean$Content.Rating <- trimws(tolower(data_clean$Content.Rating))
+data_clean$Genres <- trimws(tolower(data_clean$Genres))
+```
+Removing leading and trailing spaces and ensure format consistency by standardizing Content rating
+
+```{r}
+# Check for missing values in the "Content Rating" column
+cr_missing <- sum(is.na(data_clean$`Content Rating`))
+genr_missing <- sum(is.na(data_clean$`Content Rating`))
+
+# Display the number of missing values in Content rating and genres
+print(paste("Number of missing values in 'Content Rating':", cr_missing))
+print(paste("Number of missing values in 'Genres Rating':", genr_missing))
+
+```
+There are no missing values in the content Rating columns. 
+
+```{r}
+#Handle missing values by replacing them with a placeholder like "Unrated"
+data_clean$Content.Rating[is.na(data_clean$Content.Rating)] <- 'unrated'
+data_clean$Genres[is.na(data_clean$Genres)] <- 'NA'
+```
+There is no point in doing this but I'm dong it anyways :)
+
+```{r}
+# Distinct values in the Content Rating and Genres columns
+unique(data_clean$Content.Rating)
+
+unique(data_clean$Genres)
+```
+```{r}
+# Ensure Genres column is a character vector
+data_clean$Genres <- as.character(data_clean$Genres)
+
+# Split genres, handling any NAs or empty strings
+data_clean$Genres <- lapply(data_clean$Genres, function(g) {
+  if (is.na(g) || g == "") return(NA)
+  else return(strsplit(g, ";")[[1]])
+})
+```
+```{r}
+# # Expand data frame by Genres
+# expanded_data <- do.call(rbind,
+#   lapply(seq_along(data_clean$Genres), function(i) {
+#     data_frame <- data_clean[i, ]
+#     if (is.na(data_clean$Genres[[i]]))
+#       return(data_frame)
+#     else {
+#       data_frame <- data_frame[rep(1, length(data_clean$Genres[[i]])), ]
+#       data_frame$Genres <- data_clean$Genres[[i]]
+#       return(data_frame)
+#     }
+#   })
+# )
+# 
+# # Now, create the table to count each genre per content rating
+# genre_content_rating <- table(expanded_data$Genres, expanded_data$Content.Rating)
+
+```
+```{r}
+# Load the ggplot2 library for visualization
+library(ggplot2)
+
+# Convert the table to a data frame for ggplot
+genre_content_df <- as.data.frame(genre_content_rating)
+names(genre_content_df) <- c("Genres", "Content_Rating", "Count")
+
+# Plot the heatmap
+ggplot(genre_content_df, aes(x = Genres, y = Content_Rating, fill = Count)) +
+  geom_tile() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(x = "Genres", y = "Content Rating", fill = "Count", title = "Distribution of Genres Across Content Ratings")
+
+```
+```{r}
+# Aggregate reviews by genre and content rating
+reviews_summary <- aggregate(Reviews ~ Genres + Content.Rating, data = expanded_data, FUN = mean)
+
+# Review the summary
+print(reviews_summary)
+
+```
+```{r}
+# Aggregate to find top genres by content rating
+library(dplyr)
+top_genres_by_rating <- genre_content_df %>%
+  group_by(Content_Rating) %>%
+  top_n(5, wt = Count) %>%
+  arrange(Content_Rating, desc(Count))
+
+print(top_genres_by_rating)
+```
+```{r}
+# Summary statistics for each content rating
+stats_by_rating <- genre_content_df %>%
+  group_by(Content_Rating) %>%
+  summarise(Mean = mean(Count), Median = median(Count), Total = sum(Count))
+
+print(stats_by_rating)
+```
+```{r}
+# Install plotly if it's not already installed
+if (!require(plotly)) {
+  install.packages("plotly")
+  library(plotly)
+}
+
+library(plotly)
+plot_ly(genre_content_df, x = ~Genres, y = ~Content_Rating, z = ~Count, type = "heatmap") %>%
+  layout(title = "Interactive Heatmap of Genres Across Content Ratings",
+         xaxis = list(title = "Genres", tickangle = -45),
+         yaxis = list(title = "Content Rating"))
+```
+```{r}
+library(dplyr)
+
+# Assuming genre_content_df is already defined
+# Group by Genres and Content_Rating to find total counts
+genre_rating_summary <- genre_content_df %>%
+  group_by(Genres, Content_Rating) %>%
+  summarise(Total_Count = sum(Count)) %>%
+  ungroup() %>%
+  arrange(desc(Total_Count))
+
+# Finding the top genres overall
+top_genres <- genre_rating_summary %>%
+  group_by(Genres) %>%
+  summarise(Sum_Count = sum(Total_Count)) %>%
+  top_n(10, Sum_Count) %>%
+  pull(Genres)
+
+# Filter the summary for these top genres
+top_genre_ratings <- genre_rating_summary %>%
+  filter(Genres %in% top_genres) %>%
+  arrange(Genres, desc(Total_Count))
+
+# Print the top genre and rating combinations
+print(top_genre_ratings)
+```
+```{r}
+# Convert 'Rating' to numeric if not already
+data_clean$Rating <- as.numeric(as.character(data_clean$Rating))
+
+# Check the structure to confirm the change
+str(data_clean$Rating)
+
+```
+```{r}
+# Flatten the Genres list into a plain character vector
+# Assuming data_clean is your dataframe and Genres was previously split into a list
+data_clean <- data_clean %>%
+  mutate(Genres = sapply(Genres, function(x) paste(x, collapse = ", ")))  # Collapses all genres into a single string if list length > 1
+
+# Now, ensure that Ratings are numeric and handle NaNs
+data_clean$Rating <- as.numeric(data_clean$Rating)  # Force conversion again to handle any stragglers
+data_clean <- data_clean %>%
+  mutate(Rating = ifelse(is.nan(Rating), NA, Rating))  # Convert NaN to NA for proper handling
+
+# Check the structure again
+str(data_clean)
+
+```
+```{r}
+# Load necessary libraries
+library(dplyr)
+
+# Flatten the Genres column properly
+data_clean <- data_clean %>%
+  mutate(Genres = sapply(Genres, function(g) {
+    if (is.character(g)) {
+      return(g)
+    } else if (is.list(g)) {
+      # This joins all elements of the list into a single comma-separated string
+      return(paste(unlist(g), collapse = ", "))
+    } else {
+      return(as.character(g))  # Ensure all entries are character
+    }
+  }))
+```
+```{r}
+# Convert Reviews to numeric
+data_clean$Reviews <- as.numeric(data_clean$Reviews)
+
+# Handle NaN values in Ratings
+data_clean$Rating <- ifelse(is.nan(data_clean$Rating), NA, data_clean$Rating)
+
+```
+```{r}
+# Check the structure of the data frame
+str(data_clean)
+
+```
+```{r}
+# Calculate average ratings by genre
+average_ratings <- data_clean %>%
+  group_by(Genres) %>%
+  summarise(Average_Rating = mean(Rating, na.rm = TRUE))
+
+# View the results
+head(average_ratings)
+
+# If you want to visualize:
+library(ggplot2)
+ggplot(average_ratings, aes(x = reorder(Genres, -Average_Rating), y = Average_Rating)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(title = "Average Rating by Genre", x = "Genre", y = "Average Rating")
+
+```
+```{r}
+#Simplify and Focus the Analysis to understand the above cluttered
+# Redefine the simplified genre with a different approach to see if that works
+library(dplyr)
+
+data_clean <- data_clean %>%
+  mutate(Simplified_Genre = case_when(
+    grepl("art", Genres, ignore.case = TRUE) ~ "Art & Design",
+    grepl("action|arcade|adventure", Genres, ignore.case = TRUE) ~ "Action & Adventure",
+    grepl("educational", Genres, ignore.case = TRUE) ~ "Educational",
+    grepl("role playing", Genres, ignore.case = TRUE) ~ "Role Playing",
+    grepl("simulation", Genres, ignore.case = TRUE) ~ "Simulation",
+    TRUE ~ "Other"
+  ))
+
+# Check the count of each simplified genre to ensure data is there
+print(table(data_clean$Simplified_Genre))
+
+# Recalculate average ratings by simplified genre
+simplified_ratings <- data_clean %>%
+  group_by(Simplified_Genre) %>%
+  summarise(Average_Rating = mean(Rating, na.rm = TRUE),
+            Count = n()) %>%
+  filter(Count > 10)  # Ensure there are enough data points per genre
+
+# Check the output
+print(simplified_ratings)
+
+```
+```{r}
+library(ggplot2)
+
+# Plotting the average ratings for simplified genres
+ggplot(simplified_ratings, aes(x = reorder(Simplified_Genre, -Average_Rating), y = Average_Rating, fill = Average_Rating)) +
+  geom_col(show.legend = FALSE) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Average Rating by Simplified Genre", x = "Simplified Genre", y = "Average Rating")
+```
+```{r}
+library(plotly)
+
+# Convert the ggplot2 object to a plotly object
+p <- ggplot(simplified_ratings, aes(x = reorder(Simplified_Genre, -Average_Rating), y = Average_Rating, fill = Average_Rating)) +
+  geom_col(show.legend = FALSE) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  labs(title = "Average Rating by Simplified Genre", x = "Simplified Genre", y = "Average Rating")
+ggplotly(p)
+```
+There are six distinct values in the Content.Rating column and 118 unique values in the Genres column
+```{r}
+# Normalize categories to ensure consistent formatting
+# Create a list to map variations to standard categories
+content_rating_mapping <- c(
+  "everyone" = "Everyone",
+  "everyone 10+" = "Everyone 10+",
+  "teen" = "Teen",
+  "mature 17+" = "Mature 17+",
+  "adults only 18+" = "Adults Only 18+",
+  "unrated" = "Unrated"
+)
+
+```
+
+
+```{r}
+# Apply the mapping to the "Content Rating" column
+data_clean$Content.Rating <- content_rating_mapping[data_clean$Content.Rating]
+```
+
+```{r}
+unique(data_clean$Category)
+```
+
+```{r}
+# Analyze unique combinations of "Content Rating" with "Genres" and "Category" to identify any outliers
+cr_genre_combinations <- unique(data_clean[, c('Content.Rating', 'Genres')])
+cr_category_combinations <- unique(data_clean[, c('Content.Rating', 'Category')])
+```
+
+```{r}
+# Display the unique combinations to see if there are any unexpected matches
+print("Unique combinations of 'Content Rating' and 'Genres':")
+print(cr_genre_combinations)
+
+print("\nUnique combinations of 'Content Rating' and 'Category':")
+print(cr_category_combinations)
+```
+
+```{r}
+# Step 5: Analyze inconsistencies across "Content Rating" and other columns
+# Checking for potential mismatches between "Content Rating" and "Price" (e.g., free apps marked as mature)
+mature_content_mismatch <- subset(data_clean, Content.Rating %in% c('Mature 17+', 'Adults Only 18+') & Price == 0)
+
+print("\nPotential mismatches between mature content and free apps:")
+print(mature_content_mismatch[, c('App', 'Content.Rating', 'Price')])
+```
+
+```{r}
+# Frequency of each genre
+genre_frequency <- table(unlist(data$Genres))
+print(genre_frequency)
+
+```
+
+
+
+
+```{r}
+
+
+# Verify the conversion
+summary(data_clean$Last.Updated)
+# Check the first few entries of the Last Updated column
+head(data_clean)
+# Print the raw data as character strings to inspect the format
+print(as.character(data_clean$Last.Updated)[1:10])
+
+# Ensure the dataset is loaded correctly and inspect the first few rows of the 'Last Updated' column
+# Check the actual raw content in the 'Last Updated' column
+print(head(as.character(data_clean$Last.Updated)))
+
+
+```
+```{r}
+# Convert 'Last Updated' from character to Date using the correct format
+data_clean$Last.Updated <- as.Date(data_clean$Last.Updated, format = "%B %d, %Y")
+
+# Verify the conversion
+summary(data_clean$Last.Updated)
+```
+```{r}
+# Check the first few converted dates to ensure they are now correct
+head(data_clean$Last.Updated)
+```
+
+```{r}
+# Inspect the aggregation results to make sure they contain the expected data
+print(head(updates_by_rating_year))
+```
+```{r}
+# Check the range and distribution of years and counts
+summary(updates_by_rating_year$Year)
+summary(updates_by_rating_year$Count)
+```
+```{r}
+# Confirm the range and distribution of 'Year'
+print(summary(as.numeric(updates_by_rating_year$Year)))
+
+# Confirm the distribution of 'Count'
+print(summary(updates_by_rating_year$Count))
+```
+```{r}
+library(ggplot2)
+
+# Check if 'Year' needs to be coerced to numeric for plotting
+updates_by_rating_year$Year <- as.numeric(as.character(updates_by_rating_year$Year))
+
+# Re-plot ensuring numeric values are used
+ggplot(updates_by_rating_year, aes(x = Year, y = Count, group = Content.Rating, color = Content.Rating)) +
+  geom_line() + 
+  geom_point() +
+  scale_y_continuous(labels = scales::comma) +  # Makes sure Y-axis labels are readable
+  labs(title = "App Updates Over Time by Content Rating",
+       x = "Year",
+       y = "Number of Updates",
+       color = "Content Rating") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle=45, hjust=1))
+```
+```{r}
+# Simple plot to see if any data points are plotted
+ggplot(updates_by_rating_year, aes(x = Year, y = Count)) +
+  geom_point()
+```
+
+
+```{r}
+# Inspect the aggregated data to see if there are entries for each month and content rating
+print(monthly_updates)
+```
+```{r}
+# Check the unique values and counts to ensure all categories are represented
+table(monthly_updates$Month_Year)
+table(monthly_updates$Content.Rating)
+```
+
+
+```{r}
+# Adjusting the plot to improve visibility
+library(ggplot2)
+ggplot(monthly_updates, aes(x = Month_Year, y = Count, color = Content.Rating)) +
+  geom_line() +
+  geom_point() +  # Adding points to help visualize individual data entries
+  scale_x_discrete(breaks = function(x) unique(x)[seq(1, length(unique(x)), by = 2)]) +  # Reducing the number of x-axis labels to prevent overlap
+  labs(title = "Monthly Updates by Content Rating", x = "Month-Year", y = "Number of Updates") +
+  theme(axis.text.x = element_text(angle=90, hjust=1))  # Rotate x-axis labels for better readability
+```
+```{r}
+library(plotly)
+
+# Using plotly for an interactive plot
+plot_ly(monthly_updates, 
+        x = ~Month_Year, 
+        y = ~Count, 
+        color = ~Content.Rating, 
+        type = 'scatter', 
+        mode = 'lines+markers') %>%
+  layout(title = "Monthly Updates by Content Rating",
+         xaxis = list(title = "Month-Year"),
+         yaxis = list(title = "Number of Updates"))
+```
+```{r}
+# Create a Year column for analysis
+monthly_updates$Year <- substr(monthly_updates$Month_Year, 1, 4)
+
+# Group by year and content rating
+yearly_updates <- monthly_updates %>%
+  group_by(Year, Content.Rating) %>%
+  summarise(Count = sum(Count), .groups = 'drop')
+
+# Plotting the yearly trend
+library(ggplot2)
+ggplot(yearly_updates, aes(x = Year, y = Count, fill = Content.Rating)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Yearly Updates by Content Rating", x = "Year", y = "Number of Updates")
+
+```
+```{r}
+# Separate pre-2018 and post-2018 data
+pre_2018 <- yearly_updates %>% filter(as.numeric(Year) < 2018)
+post_2018 <- yearly_updates %>% filter(as.numeric(Year) >= 2018)
+
+# Summarize the total updates for both periods
+pre_2018_summary <- pre_2018 %>% summarise(Total_Updates = sum(Count))
+post_2018_summary <- post_2018 %>% summarise(Total_Updates = sum(Count))
+
+# Display the results
+print(pre_2018_summary)
+print(post_2018_summary)
+
+```
+```{r}
+# Proportion of updates by content rating for each year
+yearly_rating_proportions <- yearly_updates %>%
+  group_by(Year) %>%
+  mutate(Proportion = Count / sum(Count))
+
+# Plotting the proportions
+ggplot(yearly_rating_proportions, aes(x = Year, y = Proportion, fill = Content.Rating)) +
+  geom_bar(stat = "identity", position = "fill") +
+  labs(title = "Proportion of Updates by Content Rating Over Time", x = "Year", y = "Proportion")
+```
+```{r}
+# Focus on specific content ratings for deeper analysis
+popular_ratings <- yearly_updates %>%
+  filter(Content.Rating %in% c("Everyone", "Teen"))
+
+# Plotting the trend for these content ratings
+ggplot(popular_ratings, aes(x = Year, y = Count, color = Content.Rating)) +
+  geom_line(size = 1.5) +
+  geom_point(size = 3) +
+  labs(title = "Updates Over Time for Popular Content Ratings", x = "Year", y = "Number of Updates")
+```
+```{r}
+# Create a quarter column for analysis
+monthly_updates$Quarter <- paste0("Q", ceiling(as.numeric(substr(monthly_updates$Month_Year, 6, 7)) / 3))
+
+# Group by quarter and content rating
+quarterly_trends <- monthly_updates %>%
+  group_by(Year, Quarter, Content.Rating) %>%
+  summarise(Count = sum(Count), .groups = 'drop')
+
+# Plot the seasonal trends
+ggplot(quarterly_trends, aes(x = Quarter, y = Count, fill = Content.Rating)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Year) +
+  labs(title = "Seasonal Trends in App Updates by Content Rating", x = "Quarter", y = "Number of Updates")
+
+```
+```{r}
+# Calculate average updates per app by content rating and year
+average_updates_per_app <- data_clean %>%
+  group_by(Content.Rating, Year = format(Last.Updated, "%Y")) %>%
+  summarise(Total_Updates = n(), .groups = 'drop')
+
+# Plotting average updates per app
+ggplot(average_updates_per_app, aes(x = Year, y = Total_Updates, fill = Content.Rating)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Average Number of Updates Per App by Content Rating and Year", 
+       x = "Year", 
+       y = "Average Updates per App")
+```
