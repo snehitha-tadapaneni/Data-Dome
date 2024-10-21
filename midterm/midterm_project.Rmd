@@ -1,0 +1,508 @@
+---
+title: "midterm"
+output: html_document
+date: "2024-10-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = F, results = "markdown", message = F)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+```{r init, include=F}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+library(ezids)
+```
+
+```{r}
+data <- data.frame(read.csv("googleplaystore.csv"))
+```
+
+```{r}
+str(data)
+```
+
+```{r}
+head(data)
+tail(data)
+xkablesummary(data)
+```
+
+# Apps
+```{r}
+library(ggplot2)
+
+#Display all the duplicated Apps
+duplicate_apps <- aggregate(App ~ ., data = data, FUN = length)  
+duplicate_apps <- duplicate_apps[duplicate_apps$App > 1, ] 
+duplicate_apps <- duplicate_apps[order(-duplicate_apps$App), ]  
+#View(duplicate_apps)
+#print(duplicate_apps)
+print(paste("Number of duplicated Apps:",nrow(duplicate_apps)))
+
+#Removing Na values and duplicates
+data_clean <- data[!is.na(data$App), ] 
+data_clean <- data_clean[!duplicated(data_clean$App), ] 
+
+#(After removing the duplicates)Unique values
+unique_apps <- length(unique(data_clean$App))
+print(paste("Number of unique apps:", unique_apps))
+
+```
+
+Nearly 404 apps have been repeated twice and thrice, after removing all the duplicated app names, there are 9660 unique apps in the data frame. (1181 values removed)
+
+
+```{r}
+#Checking the structure after removal
+str(data_clean)
+```
+
+# Price
+
+
+```{r}
+typeof(data_clean$Price)
+```
+
+Convert Price to numerical is required
+
+```{r}
+#To check if there is dollar symbol present 
+#data_clean$Price[]
+```
+
+```{r}
+# Remove dollar symbols and convert to numeric
+data_clean$Price <- as.numeric(gsub("\\$", "", data_clean$Price))
+```
+
+```{r}
+#Recheck for dollar symbol
+#data_clean$Price[]
+```
+
+```{r}
+# Summary statistics for price
+summary(data_clean$Price)
+```
+
+There is a missing value present in the Price column. 
+
+```{r}
+#Checking for missing values in Price
+missing_na <- is.na(data_clean$Price)    
+missing_blank <- data_clean$Price == "" 
+
+sum(missing_na)
+sum(missing_blank, na.rm = TRUE)
+```
+
+```{r}
+# Remove row where Price is NA or blank
+data_clean <- data_clean[!is.na(data_clean$Price) & data_clean$Price != "", ]
+```
+
+Have removed one row #10473 which app does not have a category name.(not required)
+
+```{r}
+#Recheck for missing values
+summary(data_clean$Price)
+```
+
+Missing values removed succesfully.(Price)
+
+```{r}
+#Checking the distribution of prices using histogram
+library(ggplot2)
+
+ggplot(data_clean, aes(x=Price)) +
+  geom_histogram(binwidth=2, fill="pink", color="black") +
+   xlim(0, 500) + ylim(0, 500) +
+  labs(title="Price Distribution", x="Price", y="Frequency") +
+  theme_minimal()
+
+```
+
+
+The data is highly skewed as there are many zero price entries.
+
+```{r}
+# Boxplot for the same
+ggplot(data_clean, aes(y=Price)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 1, fill="pink", color="black") +
+  labs(title="Price Boxplot", y="Price") +
+  theme_minimal()
+```
+
+```{r}
+outlierKD2 <- function(df, var, rm = FALSE, boxplt = FALSE, histogram = TRUE, qqplt = FALSE) {
+  dt <- df  # Duplicate the dataframe for potential alteration
+  var_name <- eval(substitute(var), eval(dt))
+  na1 <- sum(is.na(var_name))
+  m1 <- mean(var_name, na.rm = TRUE)
+  colTotal <- boxplt + histogram + qqplt  # Calculate the total number of charts to be displayed
+  par(mfrow = c(2, max(2, colTotal)), oma = c(0, 0, 3, 0))  # Adjust layout for plots
+  
+  # Q-Q plot with custom title
+  if (qqplt) {
+    qqnorm(var_name, main="Q-Q plot without Outliers")
+    qqline(var_name)
+  }
+  
+  # Histogram with custom title
+  if (histogram) { 
+    hist(var_name,main = "Histogram without Outliers", xlab = NA, ylab = NA) 
+  }
+  
+  # Box plot with custom title
+  if (boxplt) { 
+    boxplot(var_name, main= "Box Plot without Outliers")
+  }
+  
+  # Identify outliers
+  outlier <- boxplot.stats(var_name)$out
+  mo <- mean(outlier)
+  var_name <- ifelse(var_name %in% outlier, NA, var_name)
+  
+  # Q-Q plot without outliers
+  if (qqplt) {
+    qqnorm(var_name, main="Q-Q plot with Outliers")
+    qqline(var_name)
+  }
+  
+  # Histogram without outliers
+  if (histogram) { 
+    hist(var_name, main = "Histogram with Outliers", xlab = NA, ylab = NA) 
+  }
+  
+  # Box plot without outliers
+  if (boxplt) { 
+    boxplot(var_name, main = "Boxplot with Outliers") 
+  }
+  
+  # Add the title for the overall plot section if any plots are displayed
+  if (colTotal > 0) {
+    title("Outlier Check", outer = TRUE)
+    na2 <- sum(is.na(var_name))
+    cat("Outliers identified:", na2 - na1, "\n")
+    cat("Proportion (%) of outliers:", round((na2 - na1) / sum(!is.na(var_name)) * 100, 1), "\n")
+    cat("Mean of the outliers:", round(mo, 2), "\n")
+    cat("Mean without removing outliers:", round(m1, 2), "\n")
+    cat("Mean if we remove outliers:", round(mean(var_name, na.rm = TRUE), 2), "\n")
+  }
+  
+  # Remove outliers if `rm = TRUE`
+  if (rm) {
+    dt[as.character(substitute(var))] <- invisible(var_name)
+    cat("Outliers successfully removed", "\n")
+    return(invisible(dt))
+  } else {
+    cat("Nothing changed", "\n")
+    return(invisible(df))
+  }
+}
+
+```
+
+```{r}
+outlier_check_price = outlierKD2(data_clean, Price, rm = FALSE, boxplt = TRUE, qqplt = TRUE)
+```
+
+The price values here are valid observations for our analysis(both typical and extreme values), so removing these outliers might not be useful.
+
+```{r}
+#To check the value ranges
+table(data_clean$Price)
+```
+
+
+# Type
+```{r Type}
+table(data_clean$Type)
+```
+
+```{r}
+#Missing values
+print(paste("Missing values:",sum(is.na(data_clean$Type))))
+
+data_clean[is.na(data_clean$Type), ]
+
+```
+There is one row 9150, has a missing value for Type. As the price is 0, replaced it with "Free".
+```{r}
+# Replace NaN or missing values in the Type column with "Free"
+data_clean$Type[is.na(data_clean$Type)] <- "Free"
+```
+
+```{r}
+ggplot(data_clean, aes(x = Type)) +
+  geom_bar(fill = "pink", color = "black") +
+  labs(title = "Distribution of App Types (Free vs Paid)", x = "Type", y = "Count") +
+  theme_minimal()
+```
+
+```{r}
+data_clean$Type <- as.factor(data_clean$Type)
+
+
+summary_by_type <- data.frame(
+  Type = levels(data_clean$Type),
+  Min_Price = tapply(data_clean$Price, data_clean$Type, min, na.rm = TRUE),
+  Max_Price = tapply(data_clean$Price, data_clean$Type, max, na.rm = TRUE),
+  Mean_Price = tapply(data_clean$Price, data_clean$Type, mean, na.rm = TRUE),
+  Median_Price = tapply(data_clean$Price, data_clean$Type, median, na.rm = TRUE)
+)
+
+
+print(summary_by_type)
+```
+
+```{r}
+ggplot(data_clean, aes(x = Type, y = Price, fill = Type)) +
+  geom_boxplot() +
+  labs(title = "Price Distribution by App Type", 
+       x = "App Type", 
+       y = "Price ($)") +
+  theme_minimal()
+```
+
+
+```{r}
+ggplot(data_clean, aes(x = Price, fill = Type)) +
+  geom_histogram(binwidth = 60, alpha = 0.7, position = "identity") +
+  facet_wrap(~ Type) +
+  labs(title = "Price Distribution by App Type", 
+       x = "Price ($)", 
+       y = "Count") +
+  theme_minimal()
+```
+
+Here, by analysing the price distribution by app types, there are some incorrect values in the Type column that are not correctly representing the price of the apps. Hence, as we can completely relu on the prices, the type column is not required for our analysis.
+
+Removing Type column...
+
+```{r}
+#Using subset function
+data_clean <- subset(data_clean, select = -Type)
+```
+
+```{r}
+str(data_clean)
+head(data_clean)
+```
+The Type column is successfully removed.
+```{r read data set}
+head(data_clean)
+tail(data_clean)
+str(data_clean)
+```
+
+## Summary statistics
+
+
+```{r summary statistics, echo=FALSE}
+xkablesummary(data_clean)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+##Change the columns of reviews from Str to int for more knowledge on number of reviews
+```{r , echo=FALSE}
+data_clean$Reviews <- as.numeric(data_clean$Reviews)
+str(data_clean)
+xkablesummary(data_clean)
+```
+
+There are 1474 missing values in rating and 1 missing value in Reviews
+
+
+
+##Checking for Outliers For rating
+
+```{r}
+ breaks = seq(15,20,by = 1)
+frequency_table = table(data_clean$Rating)
+frequency_table
+```
+From above it can be seen all the rating are between 1 nd 5 
+
+
+##Plotting for Rating
+
+```{r}
+boxplot(data_clean$Rating,ylab = "Rating", xlab = "Count",col = "Blue")
+hist(data_clean$Rating, main="Histogram of Apps Rating after cleaning", xlab="Rating (count)", col = 'blue', breaks = 100 )
+qqnorm(data_clean$Rating)
+qqline(data_clean$Rating, col = "red")
+```
+Here, it could be seen the plots are much clearer but still skewed due to other outliers from 1-3 rating but as these may be the reason from which the low rating could be found these cannot be removed from our dataset
+
+
+##Plotting for Reviews 
+
+```{r}
+boxplot(data_clean$Reviews,ylab = "Reviews", xlab = "Count",col = 'Blue')
+hist(data_clean$Reviews, main="Histogram of Apps Reviews", xlab="Reviews (count)", col = 'blue', breaks = 100 )
+ggplot(data_clean, aes(x = log(Reviews))) +
+  geom_histogram(binwidth = 0.1, fill = "blue", color = "black") +
+  labs(title = "Log-Transformed Histogram of Ratings", x = "Log(Rating)", y = "Count")
+
+qqnorm(data_clean$Reviews)
+qqline(data_clean$Reviews, col = "red")
+
+```
+Similar to the case of ratings the plots are skewed due to the outliers lets check the frequency of the reviews 
+
+##Review frequency table
+
+```{r}
+frequency_table = table(data_clean$Reviews)
+summary(data_clean$Reviews)
+outlierKD2(data_clean,Reviews)
+```
+To check which are outliers lets make sections of data that is create bins to check which bins have maximum data, this would help us see how reviews are distributed
+
+
+
+##Binned reviews 
+
+Binning into equal count in each bin to check averge rating for each bin
+
+```{r}
+# Define the new custom breaks for bins
+# Ensure there are no NA values
+data_clean1 <- na.omit(data_clean)
+
+# Define new breaks for more even intervals
+breaks <- c(0, 500, 1000, 2500, 5000, 10000, 25000,50000,100000, 300000,1000000,Inf)
+
+# Create a categorical variable based on the new breaks
+data_clean1$Review_Category <- cut(data_clean1$Reviews, breaks = breaks, right = FALSE, 
+                   labels = c("Around 500", "Around 1k", " Around 2.5K",
+                              "Around 5K", "Around 10K", "Around 25k","Around 50K",
+                              "Around 100K", "Around 300K","Around 1M","1M and above"))
+
+# Count the number of values in each bin
+bin_counts <- table(data_clean1$Review_Category)
+
+# Print the counts
+print(bin_counts)
+
+
+```
+
+
+
+##Histogram of Review Category with reviews bins
+
+```{r}
+
+
+# Assuming 'df' is your dataframe containing the review counts
+# Define the custom breaks for bins
+
+
+# View the dataframe with the new 'review_category' column
+head(data_clean1)
+
+summary(data_clean1$Review_Category)
+barplot(bin_counts, 
+        main = "Histogram of Reviews by Bin", 
+        xlab = "Review Count Bins", 
+        ylab = "Frequency", 
+        col = "lightblue", 
+        border = "black",
+        las = 2,  # Make the axis labels perpendicular to the axis
+        na.rm = TRUE,
+        cex.names = 0.8) #
+
+
+
+```
+
+
+## Rating vs Reviews boxplots
+
+```{r}
+
+boxplot( data_clean1$Rating~ data_clean1$Review_Category, data = data_clean1, 
+        main = "Boxplot of Review Counts by Review Category", 
+        xlab = "Review Category", 
+        ylab = "Review Rating",
+        las = 2,        # Rotate the x-axis labels for readability
+        col = "lightblue")  # Optional: Set color for the boxplots
+
+```
+
+
+
+## Mean value of Ratings for each Review bins
+```{r}
+# Load dplyr package
+library(dplyr)
+
+# Group by ReviewCategory and calculate mean Rating
+mean_ratings <- data_clean1 %>%
+  group_by(Review_Category) %>%
+  summarise(mean_rating = mean(Rating, na.rm = TRUE))
+
+# View the result
+print(mean_ratings)
+
+```
+
+## Plotting of Rating averages in Review Bins
+```{r}
+
+ggplot(mean_ratings, aes(x = Review_Category, y = mean_rating)) +
+  geom_bar(stat = "identity", fill = "blue") +
+  labs(title = "Mean Rating by Review Category", x = "Review Category", y = "Mean Rating") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels if needed
+
+```
+
+
+##Histogram of Reviews and Rating
+
+```{r}
+ggplot(data_clean1, aes(x = Rating)) +
+    geom_histogram(bins = 30, fill = "blue", alpha = 0.7) +
+    facet_wrap(~ Review_Category) +
+    theme_minimal() +
+    labs(title = "Histograms of Ratings by Review Category", x = "Rating", y = "Frequency")
+```
+
+## ANOVA test
+```{r}
+anova_result <- aov(Rating ~ as.factor(Review_Category), data = data_clean1)
+summary(anova_result)
+
+
+
+```
+
+## Post Hoc Test
+```{r}
+# Perform Tukey's HSD
+tukey_result <- TukeyHSD(anova_result)
+tukey_result
+# Convert the result to a data frame
+tukey_df <- as.data.frame(tukey_result$`as.factor(Review_Category)`)
+
+# Filter for significant p-values
+significant_tukey <- tukey_df[tukey_df[4] < 0.05, ]
+
+# Display the significant results
+print(significant_tukey)
+
+
+```
+
