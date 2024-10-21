@@ -19,21 +19,14 @@ When you click the **Knit** button a document will be generated that includes bo
 # The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
 # Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
 library(ezids)
+library(dplyr)
 ```
 
 ```{r}
 data <- data.frame(read.csv("googleplaystore.csv"))
 ```
 
-```{r}
-str(data)
-```
 
-```{r}
-head(data)
-tail(data)
-xkablesummary(data)
-```
 
 # Apps
 ```{r}
@@ -53,20 +46,30 @@ data_clean <- data_clean[!duplicated(data_clean$App), ]
 
 #(After removing the duplicates)Unique values
 unique_apps <- length(unique(data_clean$App))
-print(paste("Number of unique apps:", unique_apps))
+print(paste("Number of unique apps after removing the duplicates:", unique_apps))
 
 ```
 
-Nearly 404 apps have been repeated twice and thrice, after removing all the duplicated app names, there are 9660 unique apps in the data frame. (1181 values removed)
+Nearly 404 apps have been repeated twice and thrice. After removing all the duplicated app names, there are 9660 unique apps in the data frame. (1181 values removed)
 
+Below is the dataframe with number of unique values and NA value for each variables in the dataset after removing the duplicates.
 
 ```{r}
-#Checking the structure after removal
-str(data_clean)
+#DataFrame includes unique values and Na for all variables in data after removing duplicates
+unique_values_list <- lapply(data_clean, unique)  
+unique_counts_list <- lapply(data_clean, function(col) length(unique(col)))
+null_counts_list <- lapply(data_clean, function(col) sum(is.na(col)))  
+
+unique_df <- data.frame(
+  Unique_Values = sapply(unique_values_list, function(x) paste(x, collapse = ", ")),  
+  Unique_Counts = unlist(unique_counts_list),
+  Null_Counts = unlist(null_counts_list)
+)
 ```
 
-# Price
 
+
+# Price
 
 ```{r}
 typeof(data_clean$Price)
@@ -94,7 +97,7 @@ data_clean$Price <- as.numeric(gsub("\\$", "", data_clean$Price))
 summary(data_clean$Price)
 ```
 
-There is a missing value present in the Price column. 
+From the unique_df, there is a missing value present in the Price column. 
 
 ```{r}
 #Checking for missing values in Price
@@ -346,6 +349,32 @@ qqline(data_clean$Rating, col = "red")
 Here, it could be seen the plots are much clearer but still skewed due to other outliers from 1-3 rating but as these may be the reason from which the low rating could be found these cannot be removed from our dataset
 
 
+The figure below shows the distribution of NA Ratings by Category.
+```{r}
+df_na_rating <- data_clean %>% filter(is.na(Rating))
+
+# Group by Category and count the number of NA ratings for each category
+na_rating_distribution <- df_na_rating %>%
+  group_by(Category) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+
+
+ggplot(na_rating_distribution, aes(x = reorder(Category, -count), y = count)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  geom_text(aes(label = count), 
+            position = position_stack(vjust = 0.5),  # Center the text within the bars
+            color = "white", size = 3) +  # Adjust text color and size
+  coord_flip() +  
+  theme_minimal() +
+  labs(title = "Distribution of NA Ratings by Category",
+       x = "Category",
+       y = "Count of NA Ratings") +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+
+
 ##Plotting for Reviews 
 
 ```{r}
@@ -481,6 +510,8 @@ ggplot(data_clean1, aes(x = Rating)) +
 ```
 
 ## ANOVA test
+
+The tests below are to test whether or not different categories have different average ratings. 
 ```{r}
 anova_result <- aov(Rating ~ as.factor(Review_Category), data = data_clean1)
 summary(anova_result)
@@ -503,6 +534,77 @@ significant_tukey <- tukey_df[tukey_df[4] < 0.05, ]
 # Display the significant results
 print(significant_tukey)
 
+
+```
+
+
+## Category
+
+```{r}
+length(unique(data_clean$Category))
+length(unique(data_clean$Genres))
+```
+
+There are 34 categories in the the dataframe with 119 genres. This means that in each category, there are multiple genres. Given that, the later analyses in this project can be proceeded with Category variable. 
+
+Below is the graph for the distribution of Categories for the dataset after removing duplicates. 
+
+```{r}
+#Distribution for Category
+category_counts <- table(data_clean$Category)
+
+# Convert to data frame for plotting
+category_counts_df <- as.data.frame(category_counts)
+colnames(category_counts_df) <- c("Category", "Frequency") 
+
+ggplot(category_counts_df, aes(x = reorder(Category, Frequency), y = Frequency)) + 
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = Frequency), vjust = 0.5, hjust=1, size=2.5) +
+  coord_flip() +  
+  labs(title = "Distribution of Categories", x = "Category", y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 5.5)) 
+```
+## Current Version
+
+Due to the inconsistent formatting of values in the `Current.Ver` column, it is recommended that this column be excluded from the analysis.
+
+## Android Version
+
+Below is the figure showing the distribution of Android versions. 
+
+```{r}
+df_clean <- data_clean %>%
+  mutate(Android_Ver = sapply(Android.Ver, extract_version)) %>%
+  filter(!is.na(Android_Ver))  # Remove rows with NA
+
+
+ggplot(df_clean, aes(x = Android_Ver)) +
+  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
+  scale_x_continuous(breaks = seq(1, 8, by = 1.0)) +  # Set x-axis ticks from 1.0 to 8.0
+  theme_minimal() +
+  labs(title = "Distribution of Android Versions",
+       x = "Android Version",
+       y = "Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+The following code contains additional functions, which will be placed in a separate R file to improve the readability and organization of the main R script.
+
+```{r}
+# extract_version <- function(version) {
+#   version <- tolower(version)  # Make lowercase for consistency
+#   
+#   # Handle "Varies with device" and "NaN"
+#   if (version == "varies with device" || version == "nan") return(NA)
+#   
+#   # Extract the first version in case of ranges (e.g., "4.1 - 7.1.1" -> "4.1")
+#   first_version <- strsplit(version, "[- ]")[[1]][1]
+#   
+#   # Remove "and up" if present (e.g., "4.0 and up" -> "4.0")
+#   first_version <- gsub("and up", "", first_version)
+#   
+#   return(as.numeric(first_version))  # Convert to numeric
+# }
 
 ```
 
