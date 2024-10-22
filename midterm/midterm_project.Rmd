@@ -565,6 +565,112 @@ ggplot(category_counts_df, aes(x = reorder(Category, Frequency), y = Frequency))
   theme_minimal() +
   theme(axis.text.y = element_text(size = 5.5)) 
 ```
+## Category vs. Installs
+
+```{r}
+df_clean <- df %>%
+  mutate(Installs = as.numeric(gsub("[+,]", "", Installs))) %>%
+  filter(!is.na(Installs))
+
+# Boxplot: Category vs Installs
+ggplot(df_clean, aes(x = reorder(Category, Installs, FUN = median), y = Installs)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 1) +  # Red outliers for emphasis
+  coord_flip() +  # Flip for better readability
+  scale_y_log10() +  # Log scale for clearer comparison
+  theme_minimal() +
+  labs(title = "Distribution of Installs by Category",
+       x = "Category",
+       y = "Number of Installs (Log Scale)") +
+  theme(axis.text.y = element_text(size = 8))
+```
+## Category vs App Size
+
+```{r}
+# convert_size <- function(size) {
+#   size <- gsub(",", "", size)  # Remove commas
+#   size <- tolower(size)  # Make lowercase for consistency
+#   
+#   # Handle "varies with device" by assigning NA
+#   if (size == "varies with device") return(NA)
+#   
+#   # Convert "k" to MB (1 MB = 1024 KB)
+#   if (grepl("k", size)) return(as.numeric(gsub("k", "", size)) / 1024)
+#   
+#   # Convert "M" to numeric MB
+#   if (grepl("m", size)) return(as.numeric(gsub("m", "", size)))
+#   
+#   # Handle numeric values directly (e.g., "1000+")
+#   if (grepl("\\d+\\+", size)) return(as.numeric(gsub("\\+", "", size)) / 1024)
+#   
+#   # Default case: return as numeric if possible
+#   return(as.numeric(size))
+# }
+```
+
+
+```{r}
+df_clean <- df %>% 
+  mutate(Size = sapply(Size, convert_size)) %>% 
+  filter(!is.na(Size))  
+
+# Plot the histogram with faceting by category
+ggplot(df_clean, aes(x = Size)) +
+  geom_histogram(binwidth = 5, fill = "steelblue", color = "black") +
+  facet_wrap(~ Category, scales = "free_y") +
+  theme_minimal() +
+  labs(title = "Distribution of App Sizes by Category",
+       x = "Size (MB)",
+       y = "Count") +
+  theme(strip.text = element_text(size = 8),
+        axis.text.x = element_text(size = 7, angle = 45, hjust = 1))
+```
+
+```{r}
+ggplot(df_clean, aes(x = reorder(Category, Size, FUN = median), y = Size)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 1) +  
+  coord_flip() +  
+  theme_minimal() +
+  labs(title = "Boxplot of App Sizes by Category (Ordered by Median)",
+       x = "Category",
+       y = "Size (MB)") +
+  theme(strip.text = element_text(size = 8),
+        axis.text.x = element_text(size = 7, angle = 45, hjust = 1))
+```
+
+## Category vs. reviews
+```{r}
+df_aggregated <- df %>%
+  group_by(Category) %>%
+  summarise(Total_Reviews = sum(Reviews, na.rm = TRUE))
+
+# Plot the total reviews by category using a bar chart
+ggplot(df_aggregated, aes(x = reorder(Category, -Total_Reviews), y = log10(Total_Reviews))) + 
+  geom_bar(stat = "identity", fill = "skyblue", color = "black") +
+  labs(title = "Log-Scaled Total Reviews by Category", 
+       x = "Category", y = "Log10(Total Number of Reviews)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+## Category vs. Rating
+
+```{r}
+ggplot(df_clean, aes(x = Rating)) +
+  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
+  facet_wrap(~ Category, scales = "free_y") +  # Facet by Category with independent y-axis
+  scale_x_continuous(limits = c(1, 5), breaks = seq(1, 5, by = 0.5)) +  # Restrict x-axis to 1-5
+  theme_minimal() +
+  labs(title = "Distribution of Ratings by Category",
+       x = "Rating",
+       y = "Count") +
+  theme(strip.text = element_text(size = 5),  # Adjust facet label size
+        axis.text.x = element_text(size = 5, angle = 45, hjust = 1),  # Rotate x-axis labels
+        plot.title = element_text(hjust = 0.5)) 
+```
+
+
 ## Current Version
 
 Due to the inconsistent formatting of values in the `Current.Ver` column, it is recommended that this column be excluded from the analysis.
@@ -574,9 +680,13 @@ Due to the inconsistent formatting of values in the `Current.Ver` column, it is 
 Below is the figure showing the distribution of Android versions. 
 
 ```{r}
-#df_clean <- data_clean %>%
-# mutate(Android_Ver = sapply(Android.Ver, extract_version)) %>%
-# filter(!is.na(Android_Ver))  # Remove rows with NA
+df_clean <- data_clean %>%
+mutate(Android_Ver = sapply(Android.Ver, extract_version)) %>%
+filter(!is.na(Android_Ver))  # Remove rows with NA
+
+android_installs <- df_clean %>%
+  group_by(Android.Ver) %>%
+  summarize(Total_Installs = sum(Installs, na.rm = TRUE))
 
 
 #ggplot(df_clean, aes(x = Android_Ver)) +
@@ -588,25 +698,92 @@ Below is the figure showing the distribution of Android versions.
  #      y = "Count") +
  # theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+
+
+
+
+
+
+
+
+
 The following code contains additional functions, which will be placed in a separate R file to improve the readability and organization of the main R script.
 
 ```{r}
 # extract_version <- function(version) {
 #   version <- tolower(version)  # Make lowercase for consistency
-#   
+# 
 #   # Handle "Varies with device" and "NaN"
 #   if (version == "varies with device" || version == "nan") return(NA)
-#   
+# 
 #   # Extract the first version in case of ranges (e.g., "4.1 - 7.1.1" -> "4.1")
 #   first_version <- strsplit(version, "[- ]")[[1]][1]
-#   
+# 
 #   # Remove "and up" if present (e.g., "4.0 and up" -> "4.0")
 #   first_version <- gsub("and up", "", first_version)
-#   
+# 
 #   return(as.numeric(first_version))  # Convert to numeric
 # }
 
 ```
+
+
+## Android Version vs. Installs
+
+
+```{r}
+ggplot(df_clean, aes(x = reorder(Android.Ver, -Installs), y = Installs)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +  # Flip coordinates for better readability
+  scale_y_continuous(labels = scales::comma) +  # Format y-axis with commas
+  theme_minimal() +
+  labs(title = "Total Installs by Android Version",
+       x = "Android Version",
+       y = "Total Installs") +
+  theme(axis.text.y = element_text(size = 8),  # Adjust y-axis text size
+        plot.title = element_text(hjust = 0.5)) 
+```
+
+
+## Android Version vs. Reviews
+
+```{r}
+df_clean <- df %>%
+  filter(!is.na(Android.Ver) & !is.na(Reviews)) %>%
+  mutate(Scaled_Reviews = log10(Reviews + 1))
+
+
+ggplot(df_clean, aes(x = reorder(Android.Ver, Scaled_Reviews, FUN = median), y =Scaled_Reviews)) +
+  geom_boxplot(outlier.color = "red", outlier.shape = 1) +  # Boxplot with red outliers
+  coord_flip() +  # Flip coordinates for better readability
+  theme_minimal() +
+  labs(title = "Distribution of Scaled Reviews by Android Version",
+       x = "Android Version",
+       y = "Scaled Reviews (Log10)") +
+  theme(axis.text.y = element_text(size = 8),  # Adjust y-axis text size
+        plot.title = element_text(hjust = 0.5)) 
+```
+
+
+
+## Android Version vs. Rating
+
+```{r}
+ggplot(df_clean, aes(x = Rating, fill = Android.Ver)) +
+  geom_histogram(binwidth = 0.5, position = "stack", color = "black", alpha = 0.7) +
+  scale_x_continuous(breaks = seq(1, 5, by = 0.5)) +  # Set x-axis breaks
+  theme_minimal() +
+  labs(title = "Histogram of Ratings by Android Version",
+       x = "Rating",
+       y = "Count") +
+  theme(axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        plot.title = element_text(hjust = 0.5))
+```
+
+
+
+
 
 
 ```{r}
@@ -695,3 +872,10 @@ boxplot(Size ~ Install_Category, data = data_clean1,
         col = "Yellow",
         las = 2)
 ```
+
+## Final DataFrame
+```{r}
+data_final <- data_clean %>% select(-c('Genres', 'Current.Ver'))
+```
+
+
