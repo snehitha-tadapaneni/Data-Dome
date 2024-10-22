@@ -292,6 +292,7 @@ Here, by analysing the price distribution by app types, there are some incorrect
 
 Removing Type column...
 
+
 ```{r}
 #Using subset function
 data_clean <- subset(data_clean, select = -Type)
@@ -307,49 +308,27 @@ head(data_clean)
 tail(data_clean)
 str(data_clean)
 ```
+Now that the price and Apps cleaning and Analysis is done.Now lets proceed with Ratings and Reviews.
 
-## Summary statistics
-
+## Checking the format of Rating and Reviews
 
 ```{r summary statistics, echo=FALSE}
-xkablesummary(data_clean)
+str(data_clean$Reviews)
+str(data_clean$Rating)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+As we can see the Review column is in string format which could be converted into int for more insights
 
-##Change the columns of reviews from Str to int for more knowledge on number of reviews
+##Change the column reviews from Str to int
 ```{r , echo=FALSE}
 data_clean$Reviews <- as.numeric(data_clean$Reviews)
 str(data_clean)
 xkablesummary(data_clean)
 ```
 
-There are 1474 missing values in rating and 1 missing value in Reviews
+There are 1463 missing values in rating.
 
-
-
-##Checking for Outliers For rating
-
-```{r}
- breaks = seq(15,20,by = 1)
-frequency_table = table(data_clean$Rating)
-frequency_table
-```
-From above it can be seen all the rating are between 1 nd 5 
-
-
-##Plotting for Rating
-
-```{r}
-boxplot(data_clean$Rating,ylab = "Rating", xlab = "Count",col = "Blue")
-hist(data_clean$Rating, main="Histogram of Apps Rating after cleaning", xlab="Rating (count)", col = 'blue', breaks = 100 )
-qqnorm(data_clean$Rating)
-qqline(data_clean$Rating, col = "red")
-```
-Here, it could be seen the plots are much clearer but still skewed due to other outliers from 1-3 rating but as these may be the reason from which the low rating could be found these cannot be removed from our dataset
-
-
-The figure below shows the distribution of NA Ratings by Category.
+#Distribution of NA Ratings by Category.
 ```{r}
 df_na_rating <- data_clean %>% filter(is.na(Rating))
 
@@ -372,30 +351,72 @@ ggplot(na_rating_distribution, aes(x = reorder(Category, -count), y = count)) +
        y = "Count of NA Ratings") +
   theme(axis.text.y = element_text(size = 8))
 ```
+As it could observed the Family category apps have the highest NA values.
+
+```{r}
+#We can replace the NA values with the average instead of removing them to extract more information
+library(dplyr)
+
+# Method 1: Replace NA in Ratings with Overall Mean
+data_clean1 <- data_clean %>%
+  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
+
+xkablesummary(data_clean1)
+
+```
+
+Now there are no missing values
+
+
+##Checking for Outliers For rating by seeing frequency for each rating
+
+```{r}
+ breaks = seq(15,20,by = 1)
+frequency_table = table(data_clean1$Rating)
+frequency_table
+```
+From above it can be seen all the rating are between 1 and 5 
+
+
+##Visualising the Rating Distribution
+
+```{r}
+boxplot(data_clean1$Rating,ylab = "Rating", xlab = "Count",col = "Blue")
+hist(data_clean1$Rating, main="Histogram of Apps Rating after cleaning", xlab="Rating (count)", col = 'blue', breaks = 100 )
+qqnorm(data_clean1$Rating)
+qqline(data_clean$Rating, col = "red")
+```
+Here, it could be seen the plots are much clearer but still skewed due to other outliers from 1-3 rating but as these may be the reason from which we could find why the apps are low rated hencecannot be removed from our dataset.
+
+
+
 
 
 
 ##Plotting for Reviews 
 
 ```{r}
-boxplot(data_clean$Reviews,ylab = "Reviews", xlab = "Count",col = 'Blue')
-hist(data_clean$Reviews, main="Histogram of Apps Reviews", xlab="Reviews (count)", col = 'blue', breaks = 100 )
-ggplot(data_clean, aes(x = log(Reviews))) +
+boxplot(data_clean1$Reviews,ylab = "Reviews", xlab = "Count",col = 'Blue')
+hist(data_clean1$Reviews, main="Histogram of Apps Reviews", xlab="Reviews (count)", col = 'blue', breaks = 100 )
+ggplot(data_clean1, aes(x = log(Reviews))) +
   geom_histogram(binwidth = 0.1, fill = "blue", color = "black") +
   labs(title = "Log-Transformed Histogram of Ratings", x = "Log(Rating)", y = "Count")
 
-qqnorm(data_clean$Reviews)
-qqline(data_clean$Reviews, col = "red")
+qqnorm(data_clean1$Reviews)
+qqline(data_clean1$Reviews, col = "red")
 
 ```
-Similar to the case of ratings the plots are skewed due to the outliers lets check the frequency of the reviews 
+
+
+Similar to the case of ratings the plots are skewed due to the outliers. Hence, we can use the log plot of reviews for the visualisation which is normalised version of Reviews. 
+As they are skewed, they donot follow normal distribution
+
 
 ##Review frequency table
 
 ```{r}
-frequency_table = table(data_clean$Reviews)
-summary(data_clean$Reviews)
-outlierKD2(data_clean,Reviews)
+xkablesummary(data_clean1)
+outlierKD2(data_clean1,Reviews)
 ```
 To check which are outliers lets make sections of data that is create bins to check which bins have maximum data, this would help us see how reviews are distributed
 
@@ -408,61 +429,45 @@ Binning into equal count in each bin to check averge rating for each bin
 ```{r}
 # Define the new custom breaks for bins
 # Ensure there are no NA values
-data_clean1 <- na.omit(data_clean)
+
 
 # Define new breaks for more even intervals
-breaks <- c(0, 500, 1000, 2500, 5000, 10000, 25000,50000,100000, 300000,1000000,Inf)
+breaks <- c(0, 100, 500, 1000, 2500, 5000, 10000, 25000,50000,100000, 300000,1000000,Inf)
 
 # Create a categorical variable based on the new breaks
-data_clean1$Review_Category <- cut(data_clean1$Reviews, breaks = breaks, right = FALSE, 
-                   labels = c("Around 500", "Around 1k", " Around 2.5K",
-                              "Around 5K", "Around 10K", "Around 25k","Around 50K",
-                              "Around 100K", "Around 300K","Around 1M","1M and above"))
+Review_Category <- cut(data_clean1$Reviews, breaks = breaks, right = FALSE, 
+                   labels = c("0+","100+", "500+", "1K+",
+                              "2.5K+", "5K+", "10K+","25K+",
+                              "50K+", "100K+","300K+","1M+"))
 
 # Count the number of values in each bin
-bin_counts <- table(data_clean1$Review_Category)
+bin_counts <- as.data.frame(table(Review_Category))
+
+# Rename the columns for clarity
+colnames(bin_counts) <- c("Review_Category", "Count")
 
 # Print the counts
 print(bin_counts)
 
-
+# Create a line plot of the binned counts
+ggplot(bin_counts, aes(x = Review_Category, y = Count, group = 1)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "blue", size = 3) +
+  labs(title = "Count of Reviews by Review Category", 
+       x = "Review Category", 
+       y = "Count of Reviews") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
 ```
+Hence, high reviews can be observed in less apps and less reviews can be observed in more apps which is expected 
 
-
-
-##Histogram of Review Category with reviews bins
-
-```{r}
-
-
-# Assuming 'df' is your dataframe containing the review counts
-# Define the custom breaks for bins
-
-
-# View the dataframe with the new 'review_category' column
-head(data_clean1)
-
-summary(data_clean1$Review_Category)
-barplot(bin_counts, 
-        main = "Histogram of Reviews by Bin", 
-        xlab = "Review Count Bins", 
-        ylab = "Frequency", 
-        col = "lightblue", 
-        border = "black",
-        las = 2,  # Make the axis labels perpendicular to the axis
-        na.rm = TRUE,
-        cex.names = 0.8) #
-
-
-
-```
 
 
 ## Rating vs Reviews boxplots
 
 ```{r}
 
-boxplot( data_clean1$Rating~ data_clean1$Review_Category, data = data_clean1, 
+boxplot( data_clean1$Rating~ Review_Category, data = data_clean1, 
         main = "Boxplot of Review Counts by Review Category", 
         xlab = "Review Category", 
         ylab = "Review Rating",
@@ -470,44 +475,62 @@ boxplot( data_clean1$Rating~ data_clean1$Review_Category, data = data_clean1,
         col = "lightblue")  # Optional: Set color for the boxplots
 
 ```
-
+In this we could observe that, as reviews increase the median of rating increased and the values clustered around higher ratings which could show that high reviews, could mean a better rated app.
 
 
 ## Mean value of Ratings for each Review bins
 ```{r}
-# Load dplyr package
 library(dplyr)
 
-# Group by ReviewCategory and calculate mean Rating
-mean_ratings <- data_clean1 %>%
-  group_by(Review_Category) %>%
-  summarise(mean_rating = mean(Rating, na.rm = TRUE))
+                                    
 
-# View the result
-print(mean_ratings)
+# Calculate the mean Rating for each Review_Category
+mean_ratings <- tapply(data_clean1$Rating, Review_Category, mean, na.rm = TRUE)
+
+# Convert the result to a data frame for better readability
+mean_ratings_df <- data.frame(Review_Category = names(mean_ratings), Mean_Rating = as.numeric(mean_ratings))
+
+# Print the mean ratings for each review bin
+print(mean_ratings_df)
+
+# Define correct order of Review_Category as a factor
+mean_ratings_df$Review_Category <- factor(mean_ratings_df$Review_Category, 
+                                          levels = c("0+","100+", "500+", "1K+",
+                                                     "2.5K+", "5K+", "10K+","25K+",
+                                                     "50K+", "100K+", "300K+", "1M+"))
+
+# Plot the mean ratings for each review bin in the correct order
+ggplot(mean_ratings_df, aes(x = Review_Category, y = Mean_Rating)) +
+  geom_bar(stat = "identity", fill = "steelblue") +  # Use bar plot
+  labs(title = "Mean Rating by Review Category",
+       x = "Review Category",
+       y = "Mean Rating") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+
 
 ```
 
-## Plotting of Rating averages in Review Bins
-```{r}
+As we can see, the mean rating increases as the reviews increase.
 
-ggplot(mean_ratings, aes(x = Review_Category, y = mean_rating)) +
-  geom_bar(stat = "identity", fill = "blue") +
-  labs(title = "Mean Rating by Review Category", x = "Review Category", y = "Mean Rating") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels if needed
-
-```
 
 
 ##Histogram of Reviews and Rating
 
 ```{r}
-ggplot(data_clean1, aes(x = Rating)) +
-    geom_histogram(bins = 30, fill = "blue", alpha = 0.7) +
-    facet_wrap(~ Review_Category) +
-    theme_minimal() +
-    labs(title = "Histograms of Ratings by Review Category", x = "Rating", y = "Frequency")
+# Create a new data frame for plotting
+plot_data <- data.frame(Rating = data_clean1$Rating, Review_Category = Review_Category)
+
+# Create a histogram of Ratings, faceted by Review_Category
+ggplot(plot_data, aes(x = Rating)) +
+  geom_histogram(bins = 30, fill = "blue", alpha = 0.7) +
+  facet_wrap(~ Review_Category, labeller = label_wrap_gen()) +  # Facet by Review_Category
+  theme_minimal() +
+  labs(title = "Histograms of Ratings by Review Category", x = "Rating", y = "Frequency")
 ```
+This is another representation of ratings vs reviews
+
 
 ## ANOVA test
 
@@ -515,10 +538,10 @@ The tests below are to test whether or not different categories have different a
 ```{r}
 anova_result <- aov(Rating ~ as.factor(Review_Category), data = data_clean1)
 summary(anova_result)
-
-
-
 ```
+
+According to p-value, it is significant hence we can say that the average rating for all review categories is not same
+
 
 ## Post Hoc Test
 ```{r}
@@ -536,6 +559,79 @@ print(significant_tukey)
 
 
 ```
+
+As we can see, the significant difference for average rating for different review categories is between 0+ and 1M+ as expected.
+
+##For easier Ratings and Reviews vs Installs we can group Installs into categories given
+
+```{r}
+
+# Load necessary libraries
+library(ggplot2)
+
+# Step 1: Identify the unique values in the 'Installs' column
+unique_values <- unique(data_clean1$Installs)
+
+# Function to convert installs to numeric
+convert_to_numeric <- function(x) {
+  # Remove non-numeric characters and convert to numeric
+  as.numeric(gsub("[^0-9]", "", x)) * 10^(length(gregexpr(",", x)[[1]]) - 1)
+}
+
+# Sort unique values based on the custom numeric conversion
+sorted_values <- unique_values[order(sapply(unique_values, convert_to_numeric))]
+
+# Create a bar plot with the ordered factor without adding a new column
+ggplot(data = data_clean1, aes(x = factor(Installs, levels = sorted_values))) +
+  geom_bar(fill = "blue", alpha = 0.7) +
+  xlab("Installs") +
+  ylab("Count") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for readability
+  ggtitle("Distribution of App Installs")
+
+
+
+```
+
+##Ratings vs Installs
+
+Now we can check what is the average rating for each Install category and what is the relationship between them
+```{r}
+
+# Load necessary libraries
+library(ggplot2)
+library(dplyr)
+
+# Function to convert installs to numeric
+convert_to_numeric <- function(x) {
+  as.numeric(gsub("[^0-9]", "", x)) * 10^(length(gregexpr(",", x)[[1]]) - 1)
+}
+
+# Step 1: Calculate mean ratings and counts for each install category using dplyr
+data_mean <- data_clean1 %>%
+  group_by(Installs) %>%
+  summarise(Mean_Rating = mean(Rating, na.rm = TRUE), Count = n()) %>%
+  ungroup()
+
+# Sort install categories
+sorted_installs <- data_mean$Installs[order(sapply(data_mean$Installs, convert_to_numeric))]
+
+# Create dot plot with size based on the count of ratings
+ggplot(data_mean, aes(x = factor(Installs, levels = sorted_installs), y = Mean_Rating)) +
+  geom_point(aes(size = Count), color = "blue", alpha = 0.7) +  # Size based on count of ratings
+  geom_segment(aes(x = factor(Installs, levels = sorted_installs), 
+                   xend = factor(Installs, levels = sorted_installs), 
+                   y = 0, yend = Mean_Rating), color = "grey", linetype = "dashed") +
+  labs(title = "Mean Ratings by Install Category", x = "Install Categories", y = "Mean Ratings") +
+  scale_size_continuous(name = "Number of Ratings") +  # Add legend for size
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+
+
+```
+
+The analysis reveals that both low and high install counts correspond to high ratings. However, apps with a greater number of installs and high ratings are generally regarded as superior, as indicated by the density of the dots in the plot, which reflects the volume of ratings they have received
 
 
 ## Category
@@ -873,9 +969,12 @@ boxplot(Size ~ Install_Category, data = data_clean1,
         las = 2)
 ```
 
+<<<<<<< Updated upstream
 ## Final DataFrame
 ```{r}
 data_final <- data_clean %>% select(-c('Genres', 'Current.Ver'))
 ```
 
 
+=======
+>>>>>>> Stashed changes
