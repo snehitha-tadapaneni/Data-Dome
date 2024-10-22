@@ -574,19 +574,19 @@ Due to the inconsistent formatting of values in the `Current.Ver` column, it is 
 Below is the figure showing the distribution of Android versions. 
 
 ```{r}
-df_clean <- data_clean %>%
-  mutate(Android_Ver = sapply(Android.Ver, extract_version)) %>%
-  filter(!is.na(Android_Ver))  # Remove rows with NA
+#df_clean <- data_clean %>%
+# mutate(Android_Ver = sapply(Android.Ver, extract_version)) %>%
+# filter(!is.na(Android_Ver))  # Remove rows with NA
 
 
-ggplot(df_clean, aes(x = Android_Ver)) +
-  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
-  scale_x_continuous(breaks = seq(1, 8, by = 1.0)) +  # Set x-axis ticks from 1.0 to 8.0
-  theme_minimal() +
-  labs(title = "Distribution of Android Versions",
-       x = "Android Version",
-       y = "Count") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+#ggplot(df_clean, aes(x = Android_Ver)) +
+#  geom_histogram(binwidth = 0.5, fill = "steelblue", color = "black") +
+#  scale_x_continuous(breaks = seq(1, 8, by = 1.0)) +  # Set x-axis ticks from 1.0 to 8.0
+#  theme_minimal() +
+ # labs(title = "Distribution of Android Versions",
+ #      x = "Android Version",
+ #      y = "Count") +
+ # theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 The following code contains additional functions, which will be placed in a separate R file to improve the readability and organization of the main R script.
 
@@ -608,3 +608,90 @@ The following code contains additional functions, which will be placed in a sepa
 
 ```
 
+
+```{r}
+# Replace "Varies with Device" in the Size column with NA
+library(DT)
+data_clean$Size[data_clean$Size == "Varies with device"] <- NA
+data_clean <- data_clean[!grepl("\\+", data_clean$Size), ]
+data_clean$Size <- ifelse(grepl("k", data_clean$Size), 
+                          as.numeric(gsub("k", "", data_clean$Size)) * 0.001,  # Convert "K" to MB
+                          as.numeric(gsub("M", "", data_clean$Size)))  # Remove "M" for megabytes
+# Step 3: Calculate and display the mean size for each category in the 'Type' column
+mean_size_by_type <- tapply(data_clean$Size, data_clean$Category, mean, na.rm = TRUE)
+print(mean_size_by_type)
+
+
+# Loop through each row and replace NA values in the Size column with the mean size of the corresponding category
+data_clean$Size <- ifelse(
+  is.na(data_clean$Size),  # Check if Size is NA
+  round(mean_size_by_type[data_clean$Category], 1),  # Replace with the mean size based on the Category
+  data_clean$Size  # Keep the original size if it's not NA
+)
+
+
+
+```
+
+```{r}
+#clean installations
+clean_installs <- function(Installs) {
+  Installs <- gsub("\\+", "", Installs)  # Remove the '+' sign
+  Installs <- gsub(",", "", Installs)    # Remove the commas
+  return(as.numeric(Installs))           # Convert to numeric
+}
+
+data_clean$Installs <- sapply(data_clean$Installs, clean_installs)
+
+nan_rows <- sapply(data_clean[, c("Size", "Installs")], function(x) any(is.nan(x)))
+
+# Display only rows that contain NaN in either Size or Installs
+data_clean[,nan_rows]
+
+
+datatable((data_clean), options = list(scrollX = TRUE ))
+```
+
+```{r}
+# Define the new custom breaks for bins
+# Ensure there are no NA values
+data_clean1 <- na.omit(data_clean)
+
+# Define new breaks for more even intervals
+breaks <- c(0,10, 500, 1000, 2500, 5000, 10000, 25000,50000,100000, 300000,1000000,Inf)
+
+# Create a categorical variable based on the new breaks
+data_clean1$Install_Category <- cut(data_clean1$Installs, breaks = breaks, right = FALSE, 
+                   labels = c("Around 10","Around 500", "Around 1k", " Around 2.5K",
+                              "Around 5K", "Around 10K", "Around 25k","Around 50K",
+                              "Around 100K", "Around 300K","Around 1M","1M and above"))
+
+# Count the number of values in each bin
+bin_counts_Installs <- table(data_clean1$Install_Category )
+
+# Print the counts
+print(bin_counts_Installs)
+```
+```{r}
+barplot(bin_counts_Installs, 
+        main = "Histogram of Installs by Bin", 
+        xlab = "Review Count Bins", 
+        ylab = "Frequency", 
+        col = "lightblue", 
+        border = "black",
+        las = 2,  # Make the axis labels perpendicular to the axis
+        na.rm = TRUE,
+        cex.names = 0.8) #
+```
+
+
+
+
+```{r}
+boxplot(Size ~ Install_Category, data = data_clean1, 
+        main = "Boxplot of Size by Install Category",
+        xlab = "Install Category",
+        ylab = "Size",
+        col = "Yellow",
+        las = 2)
+```
