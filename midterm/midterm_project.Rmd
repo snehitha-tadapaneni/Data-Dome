@@ -1272,3 +1272,509 @@ ratings. Similarly, for reviews.
 #Use 'data_final' as the dataframe which is cleaned. And continue ur code from here
 ################################################################################
 ```
+
+
+
+```{r}
+###########################################
+# Replacing 'data_clean' with 'data_final'
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(scales)
+library(cluster)
+```
+```{r}
+# Remove leading and trailing spaces and convert all text to a consistent format (e.g., title case)
+data_clean$Content.Rating <- trimws(tolower(data_clean$Content.Rating))
+
+cr_missing <- sum(is.na(data_clean$`Content Rating`))
+
+print(paste("Number of missing values in 'Content Rating':", cr_missing))
+```
+
+```{r}
+# Check for null/missing values
+# Convert Last Updated to Date format
+data_clean$Last.Updated <- as.Date(data_clean$Last.Updated, format = "%B %d, %Y")
+
+# Verify the cleaning
+print("\nSummary of Last.Updated after cleaning:")
+print(summary(data_clean$Last.Updated))
+```
+
+```{r}
+# 1. Content Rating Distribution
+content_rating_dist <- table(data_clean$Content.Rating)
+print("Content Rating Distribution:")
+print(content_rating_dist)
+```
+```{r}
+# Bar plot for Content Rating
+ggplot(data_clean, aes(x = Content.Rating)) +
+  geom_bar(fill = "skyblue") +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +
+  labs(title = "Distribution of App Content Ratings",
+       x = "Content Rating",
+       y = "Number of Apps") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+Frequency of different content ratings assigned to a set of apps, each bar represents the count of apps for a specific content rating category
+
+```{r}
+# Last Updated Analysis
+
+# Create summary of updates by month and year
+updates_by_month <- data_clean %>%
+  mutate(
+    update_month = format(Last.Updated, "%Y-%m"),
+    update_year = year(Last.Updated)
+  ) %>%
+  group_by(update_month) %>%
+  summarize(count = n()) %>%
+  arrange(update_month)
+```
+
+```{r}
+# Plot updates over time
+ggplot(updates_by_month, aes(x = as.Date(paste0(update_month, "-01")), y = count)) +
+  geom_line(color = "blue") +
+  geom_point(color = "red") +
+  labs(title = "Number of App Updates Over Time",
+       x = "Date",
+       y = "Number of Updates") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+The number of updates have drastically increased from the end of 2017
+
+```{r}
+# Content Rating and Update Frequency Relationship
+update_frequency_by_rating <- data_clean %>%
+  group_by(Content.Rating) %>%
+  summarize(
+    avg_last_update = mean(Last.Updated),
+    median_last_update = median(Last.Updated),
+    n_apps = n()
+  )
+print("\nUpdate Frequency by Content Rating:")
+print(update_frequency_by_rating)
+```
+```{r}
+# Chi-square test for independence
+# Creating contingency table of Content Rating vs Update Year
+content_update_table <- table(
+  data_clean$Content.Rating,
+  year(data_clean$Last.Updated)
+)
+chi_test <- chisq.test(content_update_table)
+print("\nChi-square test results:")
+print(chi_test)
+```
+The P value is small signifying that there is statistically significant relationship between Content Rating and Last Updated Columns
+```{r}
+# Content Rating Basic Analysis
+print("Basic Content Rating Analysis:")
+content_rating_counts <- table(data_clean$Content.Rating)
+print(content_rating_counts)
+
+# Basic bar plot for Content Rating
+ggplot(data_clean, aes(x = Content.Rating)) +
+  geom_bar(fill = "skyblue") +
+  geom_text(stat = "count", aes(label = ..count..), vjust = -0.5) +
+  labs(title = "Distribution of App Content Ratings",
+       x = "Content Rating",
+       y = "Number of Apps") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+# Calculate percentages
+content_rating_percentages <- prop.table(content_rating_counts) * 100
+print("\nContent Rating Percentages:")
+print(round(content_rating_percentages, 2))
+
+# 1.2 Last Updated Basic Analysis
+data_clean$Last.Updated <- as.Date(data_clean$Last.Updated, format = "%B %d, %Y")
+
+print("\nLast Updated Summary Statistics:")
+summary(data_clean$Last.Updated)
+```
+Last Updated is the most dominant Category with 81.82% of all apps and Adults 18+ being most least significant category with about 0.03% of overall app population
+```{r}
+
+# Time-based Analysis
+data_clean <- data_clean %>%
+  mutate(
+    update_year = year(Last.Updated),
+    update_month = month(Last.Updated),
+    update_quarter = quarter(Last.Updated),
+    days_since_update = as.numeric(difftime(max(Last.Updated), Last.Updated, units = "days"))
+  )
+
+# Monthly update pattern
+monthly_updates <- data_clean %>%
+  group_by(update_year, update_month) %>%
+  summarize(count = n()) %>%
+  mutate(date = as.Date(paste(update_year, update_month, "01", sep = "-")))
+
+ggplot(monthly_updates, aes(x = date, y = count)) +
+  geom_line(color = "blue") +
+  geom_point() +
+  labs(title = "App Updates Over Time",
+       x = "Date",
+       y = "Number of Updates") +
+  theme_minimal()
+
+# 2.2 Content Rating Distribution by Update Quarter
+ggplot(data_clean, aes(x = factor(update_quarter), fill = Content.Rating)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Content Rating Distribution by Quarter",
+       x = "Quarter",
+       y = "Count") +
+  theme_minimal()
+```
+```{r}
+# 3.1 Update Frequency Analysis by Content Rating
+update_patterns <- data_clean %>%
+  group_by(Content.Rating) %>%
+  summarize(
+    avg_days_since_update = mean(days_since_update),
+    median_days_since_update = median(days_since_update),
+    sd_days_since_update = sd(days_since_update),
+    n_apps = n()
+  ) %>%
+  arrange(avg_days_since_update)
+
+print("\nUpdate Patterns by Content Rating:")
+print(update_patterns)
+
+# 3.2 Statistical Tests
+
+# Chi-square test for independence
+contingency_table <- table(data_clean$Content.Rating, data_clean$update_quarter)
+chi_test <- chisq.test(contingency_table)
+print("\nChi-square test for independence between Content Rating and Update Quarter:")
+print(chi_test)
+
+# 3.3 Advanced Visualization - Heatmap of Updates
+update_heatmap_data <- data_clean %>%
+  group_by(update_month, Content.Rating) %>%
+  summarize(count = n()) %>%
+  spread(Content.Rating, count)
+
+# Convert to matrix for heatmap
+update_matrix <- as.matrix(update_heatmap_data[,-1])
+rownames(update_matrix) <- month.abb[update_heatmap_data$update_month]
+
+# Create heatmap
+heatmap(update_matrix, 
+        Colv = NA, 
+        Rowv = NA,
+        scale = "column",
+        col = colorRampPalette(c("white", "steelblue"))(50),
+        main = "Update Pattern Heatmap by Content Rating",
+        xlab = "Content Rating",
+        ylab = "Month")
+
+# 3.4 Time Series Decomposition
+# Focus on Everyone category as an example
+everyone_ts <- monthly_updates %>%
+  filter(count > 0) %>%
+  select(count) %>%
+  ts(frequency = 12)
+
+decomposed <- decompose(everyone_ts)
+plot(decomposed)
+
+# 3.5 Update Velocity Analysis
+update_velocity <- data_clean %>%
+  group_by(Content.Rating) %>%
+  summarize(
+    update_velocity = n() / n_distinct(update_month),
+    total_apps = n()
+  ) %>%
+  arrange(desc(update_velocity))
+
+print("\nUpdate Velocity by Content Rating:")
+print(update_velocity)
+```
+###Observation for Update Frequency Velocity Analysis:
+This column represents the average number of updates per app for each content rating category. It reflects how frequently apps in each category receive updates.
+
+```{r}
+# 1. Update Cycle Analysis
+data_clean <- data_clean %>%
+  mutate(
+    Last.Updated = as.Date(Last.Updated, format = "%B %d, %Y"),
+    day_of_week = wday(Last.Updated, label = TRUE),
+    week_of_year = week(Last.Updated),
+    month_of_year = month(Last.Updated, label = TRUE),
+    season = case_when(
+      month_of_year %in% c("Dec", "Jan", "Feb") ~ "Winter",
+      month_of_year %in% c("Mar", "Apr", "May") ~ "Spring",
+      month_of_year %in% c("Jun", "Jul", "Aug") ~ "Summer",
+      TRUE ~ "Fall"
+    )
+  )
+
+# Day of Week Update Pattern by Content Rating
+dow_pattern <- data_clean %>%
+  group_by(Content.Rating, day_of_week) %>%
+  summarise(count = n()) %>%
+  group_by(Content.Rating) %>%
+  mutate(percentage = count/sum(count) * 100)
+
+ggplot(dow_pattern, aes(x = day_of_week, y = percentage, fill = Content.Rating)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  facet_wrap(~Content.Rating) +
+  labs(title = "Update Day Preferences by Content Rating",
+       x = "Day of Week",
+       y = "Percentage of Updates") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r}
+# 2. Update Interval Analysis
+update_intervals <- data_clean %>%
+  group_by(Content.Rating) %>%
+  arrange(Last.Updated) %>%
+  mutate(days_between_updates = as.numeric(Last.Updated - lag(Last.Updated))) %>%
+  summarise(
+    mean_interval = mean(days_between_updates, na.rm = TRUE),
+    median_interval = median(days_between_updates, na.rm = TRUE),
+    std_dev = sd(days_between_updates, na.rm = TRUE),
+    cv = std_dev / mean_interval * 100  # Coefficient of Variation
+  )
+
+print("Update Interval Analysis:")
+print(update_intervals)
+```
+```{r}
+# 3. Seasonal Update Intensity
+seasonal_intensity <- data_clean %>%
+  group_by(Content.Rating, season) %>%
+  summarise(
+    update_count = n(),
+    update_intensity = n() / n_distinct(Last.Updated)
+  ) %>%
+  arrange(Content.Rating, desc(update_intensity))
+
+# Visualization of seasonal patterns
+ggplot(seasonal_intensity, aes(x = season, y = update_intensity, fill = Content.Rating)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Seasonal Update Intensity by Content Rating",
+       x = "Season",
+       y = "Update Intensity") +
+  theme_minimal()
+```
+```{r}
+# 4. Update Clustering Analysis
+update_features <- data_clean %>%
+  group_by(Content.Rating) %>%
+  summarise(
+    mean_week = mean(week_of_year),
+    std_week = sd(week_of_year),
+    update_frequency = n(),
+    weekend_ratio = sum(day_of_week %in% c("Sat", "Sun")) / n()
+  )
+
+# Normalize the features
+update_features_norm <- scale(update_features[,-1])
+rownames(update_features_norm) <- update_features$Content.Rating
+
+# Perform hierarchical clustering
+update_clusters <- hclust(dist(update_features_norm))
+plot(update_clusters, main = "Hierarchical Clustering of Content Ratings by Update Patterns")
+```
+```{r}
+
+# 6. Update Consistency Score
+consistency_score <- data_clean %>%
+  group_by(Content.Rating) %>%
+  summarise(
+    total_updates = n(),
+    unique_days = n_distinct(Last.Updated),
+    consistency_score = (total_updates / unique_days) * 
+      (1 - sd(as.numeric(day_of_week)) / 7)  # Normalized consistency metric
+  ) %>%
+  arrange(desc(consistency_score))
+
+print("\nUpdate Consistency Scores:")
+print(consistency_score)
+```
+```{r}
+
+# Convert Last.Updated to numeric (days since reference date) if not already done
+reference_date <- min(data_clean$Last.Updated, na.rm = TRUE)  # Reference date
+data_clean$Days.Since.Update <- as.numeric(data_clean$Last.Updated - reference_date)
+
+# Perform the Kolmogorov-Smirnov test on the numeric 'Days.Since.Update' values
+content_ratings <- unique(data_clean$Content.Rating)
+ks_results <- data.frame(
+  rating1 = character(),
+  rating2 = character(),
+  p_value = numeric()
+)
+
+for (i in 1:(length(content_ratings)-1)) {
+  for (j in (i+1):length(content_ratings)) {
+    # Extract groups, removing NA values
+    group1 <- na.omit(data_clean$Days.Since.Update[data_clean$Content.Rating == content_ratings[i]])
+    group2 <- na.omit(data_clean$Days.Since.Update[data_clean$Content.Rating == content_ratings[j]])
+    
+    # Check if both groups have enough data for comparison
+    if(length(group1) > 1 && length(group2) > 1) {
+      ks_test <- ks.test(group1, group2)
+      ks_results <- rbind(ks_results, 
+                          data.frame(rating1 = content_ratings[i],
+                                     rating2 = content_ratings[j],
+                                     p_value = ks_test$p.value))
+    }
+  }
+}
+
+print("\nKolmogorov-Smirnov Test Results:")
+print(ks_results[ks_results$p_value < 0.05,])
+
+```
+```{r}
+# Clean and prepare the Installs column
+data_clean <- data_clean %>%
+  mutate(
+    # Remove '+' and ',' from Installs and convert to numeric
+    Installs = as.numeric(gsub("[+,]", "", Installs)),
+    # Convert Last.Updated to Date format if not already
+    Last.Updated = as.Date(Last.Updated, format = "%B %d, %Y"),
+    # Convert Content.Rating to factor
+    Content.Rating = as.factor(Content.Rating)
+  )
+```
+```{r}
+# 1. Basic statistics for Installs by Content Rating
+installs_by_rating <- data_clean %>%
+  group_by(Content.Rating) %>%
+  summarise(
+    mean_installs = mean(Installs, na.rm = TRUE),
+    median_installs = median(Installs, na.rm = TRUE),
+    total_installs = sum(Installs, na.rm = TRUE),
+    n_apps = n()
+  ) %>%
+  arrange(desc(mean_installs))
+
+print("Summary of Installs by Content Rating:")
+print(installs_by_rating)
+```
+```{r}
+# 2. Visualize distribution of installs by content rating
+ggplot(data_clean, aes(x = Content.Rating, y = log10(Installs))) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Distribution of App Installs by Content Rating",
+       x = "Content Rating",
+       y = "Log10(Number of Installs)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r}
+# 3. Timeline analysis: Average installs over time by content rating
+installs_timeline <- data_clean %>%
+  group_by(Content.Rating, Last.Updated) %>%
+  summarise(avg_installs = mean(Installs, na.rm = TRUE)) %>%
+  ungroup()
+
+ggplot(installs_timeline, aes(x = Last.Updated, y = log10(avg_installs), color = Content.Rating)) +
+  geom_smooth(method = "loess", se = FALSE) +
+  labs(title = "Average App Installs Over Time by Content Rating",
+       x = "Last Updated Date",
+       y = "Log10(Average Installs)") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+```{r}
+# Remove rows where Installs has NA, NaN, or non-positive values (because log10 of 0 or negative is undefined)
+data_clean <- data_clean %>%
+  filter(!is.na(Installs) & Installs > 0)
+
+# ANOVA test for difference in installs between content ratings
+install_anova <- aov(log10(Installs) ~ Content.Rating, data = data_clean)
+
+print("\nANOVA test results for Installs by Content Rating:")
+print(summary(install_anova))
+
+# 5. Create time-based features for correlation analysis
+data_analysis <- data_clean %>%
+  mutate(
+    days_since_update = as.numeric(difftime(max(Last.Updated), Last.Updated, units = "days")),
+    update_year = year(Last.Updated),
+    update_month = month(Last.Updated)
+  )
+
+# Calculate correlation between days since update and installs
+correlation_result <- cor.test(data_analysis$days_since_update, 
+                             log10(data_analysis$Installs), 
+                             method = "spearman")
+
+print("\nCorrelation between days since update and installs:")
+print(correlation_result)
+```
+```{r}
+# 6. Recent vs Old updates comparison
+data_analysis <- data_analysis %>%
+  mutate(update_recency = ifelse(days_since_update <= median(days_since_update),
+                                "Recent Update", "Old Update"))
+
+recent_vs_old <- data_analysis %>%
+  group_by(Content.Rating, update_recency) %>%
+  summarise(
+    mean_installs = mean(Installs, na.rm = TRUE),
+    median_installs = median(Installs, na.rm = TRUE),
+    n_apps = n()
+  )
+
+print("\nComparison of Installs by Update Recency and Content Rating:")
+print(recent_vs_old)
+```
+```{r}
+# 7. Visualization of update recency effect
+ggplot(data_analysis, aes(x = Content.Rating, y = log10(Installs), fill = update_recency)) +
+  geom_boxplot() +
+  labs(title = "Install Distribution by Content Rating and Update Recency",
+       x = "Content Rating",
+       y = "Log10(Number of Installs)",
+       fill = "Update Recency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r}
+# 1. Encode content rating (e.g., as factor levels or one-hot encoding)
+data_clean$Content.Rating <- as.factor(data_clean$Content.Rating)
+
+# 2. Create days since last update
+data_clean$days_since_update <- as.numeric(difftime(Sys.Date(), data_clean$Last.Updated, units = "days"))
+
+# 3. Calculate correlations
+# Log-transform installs for better normalization
+data_clean$log_installs <- log10(data_clean$Installs)
+
+# Correlation between days since update and installs
+correlation_update_installs <- cor.test(data_clean$days_since_update, data_clean$log_installs, method = "spearman")
+
+# ANOVA for installs based on content rating
+anova_content_rating <- aov(log_installs ~ Content.Rating, data = data_clean)
+
+# Print results
+print(correlation_update_installs)
+print(summary(anova_content_rating))
+```
+### Correlation Analysis:
+A moderate negative correlation :(ρ=−0.3317) was found between the number of days since the last update and the log-transformed installs. This indicates that as the time since the last update increases, the number of installs tends to decrease. The relationship is statistically significant (p < 2.2e-16), suggesting that timely updates may be crucial for maintaining user engagement.
+
+### ANOVA analysis : 
+Revealed significant differences in install counts based on content rating (F(5, 9638) = 41.95, p < 2e-16). This indicates that various content ratings have a substantial impact on the number of installs, highlighting the importance of content quality and type in attracting users.
+
+### Implications
+These findings suggest that regular updates are important for sustaining app installs, and that different content ratings can influence user engagement. Strategies aimed at timely updates and optimizing content ratings could enhance app performance and user acquisition.
