@@ -396,6 +396,7 @@ Here, it could be seen the plots are much clearer but still skewed due to other 
 ##Plotting for Reviews 
 
 ```{r}
+
 boxplot(data_clean1$Reviews,ylab = "Reviews", xlab = "Count",col = 'Blue')
 hist(data_clean1$Reviews, main="Histogram of Apps Reviews", xlab="Reviews (count)", col = 'blue', breaks = 100 )
 ggplot(data_clean1, aes(x = log(Reviews))) +
@@ -999,3 +1000,169 @@ ggplot(data_clean, aes(x = log_Installs, y = Rating)) +
   guides(shape = guide_legend(title = "Category"))  # Add legend title for Category
 
 ```
+```{r}
+data_final <- data_clean %>% select(-c('Genres', 'Current.Ver'))
+```
+
+### Price vs Installs
+
+```{r}
+library(ggplot2)
+
+ggplot(data_final, aes(x=Price, y=log_Installs)) +
+  geom_point(color = 'red', size = 1, alpha = 0.5) + 
+  geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
+  labs(title = "Price vs Installs", x = "Price (USD)", y = "Number of Installs") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+
+```
+
+
+```{r}
+# Categorize the apps as "Free" or "Paid" based on Price
+Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
+str(data_final$Price)
+str(Price_Category)
+str(data_final$log_Installs)
+
+```
+
+```{r}
+# Box plot of Price Category vs. log-transformed Installs
+ggplot(data_final, aes(x = Price_Category, y = log_Installs)) +
+  geom_boxplot(fill = "lightblue", color = "darkblue", alpha = 0.6) +
+  labs(title = "Price Categories vs. Log-Transformed Installs", 
+       x = "Price Category", 
+       y = "Log(Installs)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+```
+"Free" apps tend to have more installs than "Paid" apps. The difference between the means on the log scale is estimated to be between 3.47 and 3.97.
+
+```{r}
+# Check for missing values and ensure no negative/zero values in log_Installs
+data_final <- data_final %>%
+  filter(!is.na(Installs), Installs > 0)  # Remove missing values and zeros in Installs
+
+# Apply log transformation, adding 1 to avoid log(0)
+data_final$log_Installs <- log(data_final$Installs + 1)
+
+# Ensure Price_Category has no missing values
+#data_final <- data_final %>%
+ # filter(!is.na(Price_Category))
+
+# Perform t-test on log-transformed Installs by Price Category
+#t_test_result <- t.test(log_Installs ~ Price_Category, data = data_final, var.equal = FALSE)
+
+# Print t-test results
+#print(t_test_result)
+
+```
+There is a statistically significant difference between the number of installs for "Free" and "Paid" apps, with the p-value being extremely small.
+
+From the above analysis, we can practically state that free apps are more popular than paid apps, which can be considered true in the app market.
+
+```{r}
+# Plot Price vs. Reviews
+ggplot(data_final, aes(x=Price, y=Reviews)) +
+  geom_point(color = 'blue') +
+  geom_smooth(method = 'lm', color = 'red', se = FALSE) +
+  labs(title = "Price vs Reviews", x = "Price (USD)", y = "Number of Reviews") +
+  theme_minimal() + 
+  theme(
+    panel.background = element_rect(fill = "white"),  # Set panel background to white
+    plot.background = element_rect(fill = "white"),   # Set plot background to white
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+# Plot Price vs. Rating
+ggplot(data_final, aes(x=Price, y=Rating)) +
+  geom_point(color = 'green') +
+  geom_smooth(method = 'lm', color = 'red', se = FALSE) +
+  labs(title = "Price vs Rating", x = "Price (USD)", y = "Rating") +
+  theme_minimal() + 
+  theme(
+    panel.background = element_rect(fill = "white"),  # Set panel background to white
+    plot.background = element_rect(fill = "white"),   # Set plot background to white
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+```
+Price vs Reviews with installation: Cheaper products tend to have more reviews, indicating higher popularity or more frequent purchases. In contrast, expensive products tend to have fewer reviews, possibly because fewer people buy higher-priced items.
+
+Price vs Ratings with installation: Price does not strongly affect the average rating, but there is a slight trend where lower-priced products have more variation in ratings, while higher-priced products tend to receive more consistent ratings around 4. May be higher price apps are meeting the customer expectations.
+
+```{r}
+library(corrplot)
+
+# Check correlation between numeric variables
+correlation_matrix <- data_final %>%
+  select(Price, Reviews, Rating, log_Installs) %>%
+  cor(use = "complete.obs")
+
+correlation_matrix
+
+# Create a colorful correlation matrix
+corrplot(correlation_matrix, method = "color", 
+         col = colorRampPalette(c("red", "white", "blue"))(200),
+         type = "upper", 
+         tl.col = "black", tl.srt = 45, 
+         addCoef.col = "black", # Add correlation coefficients
+         number.cex = 0.7,      # Adjust size of numbers
+         title = "Correlation Matrix", # Title
+         mar = c(0, 0, 1, 0))   # Margins
+
+```
+Price vs. Log_Installs: -0.06, suggesting a very weak negative relationship between price and the number of installs.
+
+<!--```{r} -->
+<!-- # Box plot of Reviews vs. Price Category -->
+<!--ggplot(data_final, aes(x = Price_Category, y = Reviews, fill = Price_Category)) +-->
+<!--  geom_boxplot() +-->
+ <!-- labs(title = "Box Plot of Reviews by Price Category", x = "Price Category", y = "Number of Reviews") +-->
+ <!-- scale_y_continuous(trans = 'log10') +  -->
+ <!-- theme_minimal()-->
+
+
+<!--# Box plot of Rating vs. Price Category-->
+<!--ggplot(data_final, aes(x = Price_Category, y = Rating, fill = Price_Category)) +-->
+ <!-- geom_boxplot() +-->
+<!--  labs(title = "Box Plot of Reviews by Price Category", x = "Price Category", y = "Number of Rating") +-->
+ <!-- scale_y_continuous(trans = 'log10') +  -->
+ <!-- theme_minimal()-->
+
+
+
+
+```{r}
+# Scatter plot of Price vs. Ratings with log_Installs as  color
+ggplot(data_final, aes(x = Price, y = Rating,color = log_Installs)) +
+  geom_point(alpha = 0.6) +
+  scale_color_gradient(low = "blue", high = "red") +  
+  labs(title = "Price vs. Ratings with Installs as Color by Price", 
+       x = "Price", 
+       y = "Rating", 
+       color = "log(Installs)") +
+  theme_minimal()
+
+# Scatter plot of Price vs. Reviews with log_Installs as color
+ggplot(data_final, aes(x = Price, y = Reviews,color = log_Installs)) +
+  geom_point(alpha = 0.6) +
+  scale_color_gradient(low = "darkgreen", high = "yellow") +  
+  labs(title = "Price vs. reviewss with Installs as Color by Price", 
+       x = "Price", 
+       y = "Reviews", 
+       color = "log(Installs)") +
+  theme_minimal()
+```
+Conluding: Apps with lower prices, have more ratings and installs while apps priced higher tend to have fewer installs and more scattered ratings.
+Similarly, for reviews.
+
+```{r}
+#Use 'data_final' as the dataframe which is cleaned. And continue ur code from here
+################################################################################
+```
+
+
+
