@@ -1,7 +1,7 @@
 ---
 title: "DATS 6101 - Midterm"
 output: html_document
-date: Sys.Date()
+date: "`r Sys.Date()`"
 author: "Name: Snehitha Tadapaneni, Sai Rachana Kandikattu, Amrutha Jayachandradhara, Wilona Nguyen, Pramod Krishnachari
 "
 editor_options: 
@@ -56,17 +56,24 @@ library(lubridate)
 library(tidyr)
 library(scales)
 library(cluster)
+library(knitr)
+library(kableExtra)
 ```
 
 ```{r}
-data <- data.frame(read.csv("googleplaystore.csv"))
+data_apps <- data.frame(read.csv("googleplaystore.csv"))
+```
+
+```{r}
+#Checking the structure of the data
+str(data_apps)
 ```
 
 ## Apps
 
 ```{r ST0}
 #Display all the duplicated Apps
-duplicate_apps <- aggregate(App ~ ., data = data, FUN = length)  
+duplicate_apps <- aggregate(App ~ ., data = data_apps, FUN = length)  
 duplicate_apps <- duplicate_apps[duplicate_apps$App > 1, ] 
 duplicate_apps <- duplicate_apps[order(-duplicate_apps$App), ] 
 
@@ -76,7 +83,7 @@ duplicate_apps <- duplicate_apps[order(-duplicate_apps$App), ]
 print(paste("Number of duplicated Apps:",nrow(duplicate_apps)))
 
 #Removing Na values and duplicates
-data_clean <- data[!is.na(data$App), ] 
+data_clean <- data_apps[!is.na(data_apps$App), ] 
 data_clean <- data_clean[!duplicated(data_clean$App), ] 
 
 #(After removing the duplicates) Unique values
@@ -111,7 +118,7 @@ unique_df <- data.frame(
 ## Price
 
 ```{r ST1}
-typeof(data$Price)
+typeof(data_apps$Price)
 ```
 
 Convertion of Price to numerical is required.
@@ -131,7 +138,7 @@ data_clean$Price <- as.numeric(gsub("\\$", "", data_clean$Price))
 #Recheck for dollar symbol
 #data_clean$Price[]
 ```
-
+All the dollar symbols are removed succesfully.
 ```{r}
 # Summary statistics for price
 summary(data_clean$Price)
@@ -410,6 +417,8 @@ ggplot(data_clean1_factor, aes(x = Installs)) +
 
 
 ```
+
+---- Should add cleaning of Ratings and Reviews here -----
 
 ```{r A.J3}
 
@@ -787,6 +796,7 @@ received.
 
 Now, we are done with ratings and reviews as well. 
 
+
 ## Category
 
 ```{r W}
@@ -1103,7 +1113,7 @@ ggplot(data_final, aes(x=Price, y=log_Installs)) +
   geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
   labs(title = "Price vs Installs", x = "Price (USD)", y = "Number of Installs") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 From the scatter plot, we can see that there are more number of installations with price value 0. 
@@ -1132,21 +1142,33 @@ ggplot(data_final, aes(x = Price_Category, y = log_Installs)) +
 3.97.
 
 ```{r}
+# Categorize the apps as "Free" or "Paid" based on Price
+Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
+str(data_final$Price)
+str(Price_Category)
+str(data_final$log_Installs)
+
+table(Price_Category)
+
+```
+
+
+```{r}
 # Check for missing values and ensure no negative/zero values in log_Installs
-data_final <- data_final %>%
-  filter(!is.na(Installs), Installs > 0)  # Remove missing values and zeros in Installs
+#data_final <- data_final %>%
+  #filter(!is.na(Installs), Installs > 0)  # Remove missing values and zeros in Installs
 
 # Apply log transformation, adding 1 to avoid log(0)
-data_final$log_Installs <- log(data_final$Installs + 1)
+#data_final$log_Installs <- log(data_final$Installs + 1)
 
 # Ensure Price_Category has no missing values
 #data_final <- data_final %>%
- # filter(!is.na(Price_Category))
+ #filter(!is.na(Price_Category))
 
-# Perform t-test on log-transformed Installs by Price Category
+#Perform t-test on log-transformed Installs by Price Category
 #t_test_result <- t.test(log_Installs ~ Price_Category, data = data_final, var.equal = FALSE)
 
-# Print t-test results
+#Print t-test results
 #print(t_test_result)
 
 ```
@@ -1158,6 +1180,24 @@ small.
 From the above analysis, we can practically state that free apps are
 more popular than paid apps, which can be considered true in the app
 market.
+
+```{r}
+# Add Price_Category to data_final
+data_duplicate <- data_final
+data_duplicate$Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
+
+# Create a summarized table for Price_Category and log_Installs
+summary_table <- data_duplicate %>%
+  group_by(Price_Category) %>%
+  summarise(Average_Log_Installs = mean(log_Installs, na.rm = TRUE),
+            Count = n())
+
+# View the summarized table
+kable(summary_table, format = "html", col.names = c("Price Category", "Mean Log(Installs)", "App Count")) %>%
+  kable_styling(full_width = FALSE, position = "center") 
+
+```
+
 
 ```{r}
 # Plot Price vs. Reviews
@@ -1198,7 +1238,26 @@ receive more consistent ratings around 4. May be higher price apps are
 meeting the customer expectations.
 
 ```{r}
-# Check correlation between numeric variables
+#Confirming with a t-test
+# Perform t-test for Reviews between Free and Paid
+t_test_reviews <- t.test(Reviews ~ Price_Category, data = data_final)
+
+# Perform t-test for Rating between Free and Paid
+t_test_rating <- t.test(Rating ~ Price_Category, data = data_final)
+
+# Print the results
+print(t_test_reviews)
+print(t_test_rating)
+
+
+```
+* There is a statistically significant difference between the mean number of reviews for Free and Paid apps. Free apps have significantly more reviews on average.
+
+* There is a statistically significant difference between the mean ratings for Free and Paid apps. Paid apps have slightly higher ratings on average, though the difference is small.
+
+
+```{r}
+# Check correlation between variables
 correlation_matrix <- data_final %>%
   select(Price, Reviews, Rating, log_Installs) %>%
   cor(use = "complete.obs")
@@ -1246,6 +1305,15 @@ ggplot(data_final, aes(x = Price, y = Reviews,color = log_Installs)) +
 Concluding: Apps with lower prices, have more ratings and installs while
 apps priced higher tend to have fewer installs and more scattered
 ratings. Similarly, for reviews.
+
+```{r}
+# Plot Price vs Size
+ggplot(data_final, aes(x=Price, y=Size)) +
+  geom_point(color = 'red') + 
+  geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
+  labs(title = "Price vs Size", x = "Price (USD)", y = "App Size (MB)") +
+  theme_minimal() 
+```
 
 ### Content Rating, Last Updated
 ```{r}
