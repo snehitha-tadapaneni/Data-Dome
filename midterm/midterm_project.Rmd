@@ -58,6 +58,7 @@ library(scales)
 library(cluster)
 library(knitr)
 library(kableExtra)
+library(hexbin)
 ```
 
 # Data Preparation and Cleaning
@@ -752,11 +753,16 @@ ggplot(data_final, aes(x=Price, y=Size)) +
 #### Visulization for Distribution of Installs
 
 ```{r A.J2}
-# Bar plot for distribution of Installs
-# Create a new data frame to store the factor levels
+# Create a copy of data_final for factor-level modifications
 data_clean1_factor <- data_final  
 
-data_clean1_factor$Installs <- factor(data_final$Installs, levels = c(0,1,5,10,50,100,500,1000,5000,10000,50000,100000,500000,1000000,5000000,10000000,50000000,100000000,500000000,1000000000))
+# Define breakpoints and labels for the Installs factor
+breaks <- c(0, 500, 1000, 2500, 5000, 10000, 25000, 50000, 100000, 300000, 1000000, 5000000,10000000,Inf)
+labels <- c("0+","500+", "1K+", "2.5K+", "5K+", "10K+", 
+            "25K+", "50K+", "100K+", "300K+", "1M+", "5M+","Above 10M+" )
+
+# Convert Installs into a factor with the defined levels
+data_clean1_factor$Installs <- cut(data_final$Installs, breaks = breaks, right = FALSE, labels = labels)
 
 # Create a bar plot with the ordered factor
 ggplot(data_clean1_factor, aes(x = Installs)) +
@@ -767,6 +773,7 @@ ggplot(data_clean1_factor, aes(x = Installs)) +
   ggtitle("Distribution of App Installs")
 ```
 
+This plot shows a common trend where many apps have limited user engagement, while a few high-performing apps achieve very high install counts, indicating a polarized distribution of app popularity.
 
 ### Visualization for Rating Distribution
 
@@ -920,6 +927,21 @@ ggplot(plot_data, aes(x = Rating)) +
 
 This is another representation of ratings vs reviews.
 
+#### Visualization for Installs vs Size
+
+```{r}
+ggplot(data_clean, aes(x = Size, y = log(Installs))) +
+  geom_hex(bins = 30) +
+  scale_fill_viridis_c() + # Adds color gradient
+  labs(title = "Plot of App Size vs. Installs (Log Scale)",
+       x = "Size (MB)",
+       y = "Installs (Log Scale)") +
+  theme_minimal()
+
+```
+
+This analysis shows that apps with medium file sizes (around 20-50 MB) tend to be more popular and get downloaded more often. On the other hand, larger apps (over 75 MB) don’t get downloaded as much, possibly because they take up more space on devices or are slower to download.
+
 #### Visualization for Reviews vs Installs
 
 ```{r A.J3}
@@ -935,7 +957,9 @@ ggplot(data_clean1_factor, aes(x = Review_Category, y = Installs)) +
 
 ```
 
-It could be observed that more the number of installs, more the number of reviews.
+
+This scatter plot shows that as apps get more downloads, they tend to get more reviews from users. Most apps fall in the lower range of downloads (like 0 to 50K installs), meaning they get a moderate number of reviews. Popular apps with over a million downloads often have thousands of reviews, showing strong user engagement. However, very few apps reach extremely high review counts (like 100K+ reviews), indicating that only a few apps become extremely popular. In short, the more installs an app has, the more likely it is to gather user feedback in the form of reviews.
+
 
 #### Visualisation of Mean for different Install Categories
 ```{r}
@@ -975,6 +999,8 @@ ggplot(data_final, aes(x = log(Installs) , y = Rating)) +
 
 ```
 
+The scatter plot shows a weak positive correlation between app installs and ratings, as indicated by the nearly flat red trend line. Data points are clustered at specific rating levels, suggesting many apps share similar ratings but vary significantly in install counts. The x-axis range, extending to 20, is unusual for typical rating scales (e.g., 1-5), possibly indicating data irregularities or transformations. The y-axis, log-transformed, reveals a wide distribution in install counts. Overall, ratings seem to have minimal impact on installs, and the data’s clustering suggests further examination of the rating scale may be necessary.
+
 #### Visualization for Rating vs Installs by Category
 
 ```{r A.J5, echo=FALSE, fig.width=12, fig.height=8, out.width='100%', fig.align='center'}
@@ -991,6 +1017,7 @@ ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
 
 ```
 
+This scatter plot illustrates the relationship between log-transformed installs and ratings across app categories. Each category has distinct symbols and colors, showing varying distributions in ratings and installs. Higher-rated apps (around 4-5) are more densely populated across several categories, while lower-rated apps are sparse. Some categories, such as "LIFESTYLE" and "FINANCE," have a broad range of installs and ratings, while others are tightly clustered. The spread of installs varies widely, especially among apps with similar ratings, suggesting that category influences install counts significantly. Overall, higher ratings correlate with greater install variability across categories.
 
 #### Visualization for Category Distribution
 
@@ -2007,4 +2034,27 @@ The P value is small signifying that there is statistically significant relation
 
 Implications
 These findings suggest that regular updates are important for sustaining app installs, and that different content ratings can influence user engagement. Strategies aimed at timely updates and optimizing content ratings could enhance app performance and user acquisition.
+
+
+##correlation between Installs Vs Size
+```{r}
+# Calculate Pearson correlation and perform the test
+cor_test <- cor.test(data_clean$Size, data_clean$Installs, method = "pearson")
+
+# Output the correlation coefficient and p-value
+cor_test
+```
+
+According to the relational hypothesis testing:
+1. Correlation Coefficient (cor):Pearson correlation coefficient is 0.0407. This indicates a very weak positive relationship between Size and Installs—meaning that as app size increases, installs slightly tend to increase as well, but the effect is minimal.
+
+P-values: The p-value is 6.198e-05 (or 0.00006198), which is much smaller than the conventional significance level (e.g., 0.05). This low p-value means that we can reject the null hypothesis (that there is no correlation) and conclude that x and y are not independent.
+
+Confidence Interval: The 95% confidence interval for the correlation coefficient is between 0.0208 and 0.0606. This range is quite narrow and close to zero, further confirming that while the relationship is significant, the strength of the correlation is very low.
+
+
+
+
+
+
 
