@@ -63,7 +63,7 @@ library(hexbin)
 
 # Data Preparation and Cleaning
 
-Here, we have loaded the dataset 'Google Play Store Apps' stored in csv file using ()
+Here, we have loaded the dataset ‘Google Play Store Apps’ stored in a CSV file using the read.csv function, which reads the CSV file into a data frame, and then we assigned it to the variable data_apps.
 
 ```{r}
 #Loading the Dataset
@@ -256,7 +256,7 @@ data_clean$Size <- ifelse(
 
 ## Installs
 
-####Remove the '+' sign, Remove the commas, Convert to numeric
+#### Remove the '+' sign, Remove the commas, Convert to numeric
 
 ```{r A.J}
 #clean installations
@@ -300,6 +300,7 @@ sorted_values <- unique_values[order(sapply(unique_values, convert_to_numeric))]
 
 
 ```
+
 
 ## Rating and Reviews
 
@@ -748,7 +749,23 @@ ggplot(data_final, aes(x=Price, y=Size)) +
   labs(title = "Price vs Size", x = "Price (USD)", y = "App Size (MB)") +
   theme_minimal() 
 ```
+#### Visualization for paid apps vs category
 
+```{r}
+# Filter only paid apps
+paid_apps <- data_duplicate %>% filter(Price_Category == "Paid")
+
+ggplot(paid_apps, aes(x = Category)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Distribution of Categories for Paid Apps",
+       x = "App Category",
+       y = "Count of Paid Apps") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+Few Categories have a high count of paid apps, such as "Family," "Health and Fitness," and "Personalization" which tells us that users may be more willing to pay for apps in these categories, possibly due to the quality or utility they offer.
+
+Categories like "Dating," "Weather," and "Education" have very few paid apps, indicating lower availability or demand for paid versions in these areas. 
 
 #### Visulization for Distribution of Installs
 
@@ -775,7 +792,7 @@ ggplot(data_clean1_factor, aes(x = Installs)) +
 
 This plot shows a common trend where many apps have limited user engagement, while a few high-performing apps achieve very high install counts, indicating a polarized distribution of app popularity.
 
-### Visualization for Rating Distribution
+#### Visualization for Rating Distribution
 
 ```{r}
 boxplot(data_final$Rating,ylab = "Rating", xlab = "Count",col = "Blue")
@@ -789,7 +806,7 @@ to other outliers from 1-3 rating but as these may be the reason from
 which we could find why the apps are low rated hencecannot be removed
 from our dataset.
 
-### Visualization for Reviews
+#### Visualization for Reviews
 
 ```{r}
 
@@ -962,6 +979,7 @@ This scatter plot shows that as apps get more downloads, they tend to get more r
 
 
 #### Visualisation of Mean for different Install Categories
+
 ```{r}
 # Calculate the mean Rating for each Review_Category
 mean_ratings <- tapply(data_final$Rating, data_clean1_factor$Installs, mean, na.rm = TRUE)
@@ -987,6 +1005,7 @@ ggplot(mean_ratings_df, aes(x = Installs, y = Mean_Rating)) +
 Observing the flucuation of Rating for different Installs it could be seen that there is no constant increase or deacrease trend seen for Installs and rating, which could be expected as more Rating doesnot necessarily mean more Installs. But high Installs and high Rating could be seen as good app.
 
 #### Visualization for Rating vs Installs
+
 ```{r A.J4}
 # Scatter plot of log-transformed Installs vs. Rating
 ggplot(data_final, aes(x = log(Installs) , y = Rating)) +
@@ -1018,6 +1037,7 @@ ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
 ```
 
 This scatter plot illustrates the relationship between log-transformed installs and ratings across app categories. Each category has distinct symbols and colors, showing varying distributions in ratings and installs. Higher-rated apps (around 4-5) are more densely populated across several categories, while lower-rated apps are sparse. Some categories, such as "LIFESTYLE" and "FINANCE," have a broad range of installs and ratings, while others are tightly clustered. The spread of installs varies widely, especially among apps with similar ratings, suggesting that category influences install counts significantly. Overall, higher ratings correlate with greater install variability across categories.
+
 
 #### Visualization for Category Distribution
 
@@ -1112,8 +1132,6 @@ ggplot(data_clean, aes(x = Size)) +
     strip.text = element_text(size = 5),
     axis.text.x = element_text(size = 7, angle = 45, hjust = 1)
   )
-
-str(data_clean)
 
 ```
 
@@ -1215,9 +1233,6 @@ extract_version <- function(version) {
   
   return(as.numeric(first_version))  # Convert to numeric
 }
-
-
-
 ```
 
 ```{r}
@@ -1231,6 +1246,7 @@ android_installs <- data_final %>%
 
 
 ```
+
 
 ```{r}
 ggplot(df_clean, aes(x = Android_Ver)) + 
@@ -1246,6 +1262,7 @@ ggplot(df_clean, aes(x = Android_Ver)) +
 
 ```
 As it can be seen that, the minimum required Android Version for most apps is 4.0 and up. 
+
 
 ```{r}
 extract_version <- function(version) {
@@ -1299,6 +1316,7 @@ df_clean <- data_final %>%
   mutate(Scaled_Reviews = log10(Reviews + 1))
 ```
 
+
 ```{r}
 ggplot(df_clean, aes(x = reorder(Android.Ver, Scaled_Reviews, FUN = median), y = Scaled_Reviews)) + 
   geom_boxplot(outlier.color = "#f05555", outlier.shape = 1) +  # Boxplot with red outliers
@@ -1342,7 +1360,6 @@ ggplot(df_clean, aes(x = Rating, fill = Android.Ver)) +
 ```
 It can be seen that most Android Version have ratings range between 4.0 and 5.0.
 
-
 #### Distribution for Content.Rating
 
 ```{r}
@@ -1352,7 +1369,7 @@ data_final <- data_final %>%
     Content.Rating = as.factor(Content.Rating)
   )
 
-# 1. Content Rating Distribution
+#Content Rating Distribution
 content_rating_dist <- table(data_final$Content.Rating)
 print("Content Rating Distribution:")
 print(content_rating_dist)
@@ -1442,22 +1459,29 @@ print(update_frequency_by_rating)
 ```
 
 ```{r}
+# Create a duplicate dataframe for time-based analysis, use data_time_analysis
+data_time_analysis <- data_final %>%
+  mutate(Last.Updated = as.Date(Last.Updated, format = "%B %d, %Y"))
 
-# Time-based Analysis
-data_final <- data_final %>%
+# Calculate max(Last.Updated)
+max_last_updated <- max(data_time_analysis$Last.Updated, na.rm = TRUE)
+
+#  Add columns for update year, month, quarter, and days since last update
+data_time_analysis <- data_time_analysis %>%
   mutate(
     update_year = year(Last.Updated),
     update_month = month(Last.Updated),
     update_quarter = quarter(Last.Updated),
-    days_since_update = as.numeric(difftime(max(Last.Updated), Last.Updated, units = "days"))
+    days_since_update = as.numeric(difftime(max_last_updated, Last.Updated, units = "days"))
   )
 
 # Monthly update pattern
-monthly_updates <- data_final %>%
+monthly_updates <- data_time_analysis %>%
   group_by(update_year, update_month) %>%
   summarize(count = n()) %>%
   mutate(date = as.Date(paste(update_year, update_month, "01", sep = "-")))
 
+# Plotting monthly update pattern
 ggplot(monthly_updates, aes(x = date, y = count)) +
   geom_line(color = "blue") +
   geom_point() +
@@ -1466,17 +1490,19 @@ ggplot(monthly_updates, aes(x = date, y = count)) +
        y = "Number of Updates") +
   theme_minimal()
 
-# 2.2 Content Rating Distribution by Update Quarter
-ggplot(data_final, aes(x = factor(update_quarter), fill = Content.Rating)) +
+# Content Rating Distribution by Update Quarter
+ggplot(data_time_analysis, aes(x = factor(update_quarter), fill = Content.Rating)) +
   geom_bar(position = "dodge") +
   labs(title = "Content Rating Distribution by Quarter",
        x = "Quarter",
        y = "Count") +
   theme_minimal()
+
 ```
+
 ```{r}
-# 3.1 Update Frequency Analysis by Content Rating
-update_patterns <- data_final %>%
+# Update Frequency Analysis by Content Rating
+update_patterns <- data_time_analysis %>%
   group_by(Content.Rating) %>%
   summarize(
     avg_days_since_update = mean(days_since_update),
@@ -1491,8 +1517,8 @@ print("\nUpdate Patterns by Content Rating:")
 print(update_patterns)
 
 
-# 3.3 Advanced Visualization - Heatmap of Updates
-update_heatmap_data <- data_final %>%
+# Advanced Visualization - Heatmap of Updates
+update_heatmap_data <- data_time_analysis %>%
   group_by(update_month, Content.Rating) %>%
   summarize(count = n()) %>%
   spread(Content.Rating, count)
@@ -1521,8 +1547,8 @@ heatmap(update_matrix,
 #decomposed <- decompose(everyone_ts)
 #plot(decomposed)
 
-# 3.4 Update Velocity Analysis
-update_velocity <- data_final %>%
+# Update Velocity Analysis
+update_velocity <- data_time_analysis %>%
   group_by(Content.Rating) %>%
   summarize(
     update_velocity = n() / n_distinct(update_month),
@@ -1533,12 +1559,14 @@ update_velocity <- data_final %>%
 print("\nUpdate Velocity by Content Rating:")
 print(update_velocity)
 ```
-###Observation for Update Frequency Velocity Analysis:
+
+
+#### Observation for Update Frequency Velocity Analysis:
 This column represents the average number of updates per app for each content rating category. It reflects how frequently apps in each category receive updates.
 
 ```{r}
-# 1. Update Cycle Analysis
-data_final <- data_final %>%
+# 1. Update Cycle Analysis - use data_update_time_analysis
+data_update_time_analysis <- data_time_analysis %>%
   mutate(
     Last.Updated = as.Date(Last.Updated, format = "%B %d, %Y"),
     day_of_week = wday(Last.Updated, label = TRUE),
@@ -1553,7 +1581,7 @@ data_final <- data_final %>%
   )
 
 # Day of Week Update Pattern by Content Rating
-dow_pattern <- data_final %>%
+dow_pattern <- data_update_time_analysis %>%
   group_by(Content.Rating, day_of_week) %>%
   summarise(count = n()) %>%
   group_by(Content.Rating) %>%
@@ -1571,7 +1599,7 @@ ggplot(dow_pattern, aes(x = day_of_week, y = percentage, fill = Content.Rating))
 
 ```{r}
 # 2. Update Interval Analysis
-update_intervals <- data_final %>%
+update_intervals <- data_update_time_analysis %>%
   group_by(Content.Rating) %>%
   arrange(Last.Updated) %>%
   mutate(days_between_updates = as.numeric(Last.Updated - lag(Last.Updated))) %>%
@@ -1589,7 +1617,7 @@ print(update_intervals)
 
 ```{r}
 # 3. Seasonal Update Intensity
-seasonal_intensity <- data_final %>%
+seasonal_intensity <- data_update_time_analysis %>%
   group_by(Content.Rating, season) %>%
   summarise(
     update_count = n(),
@@ -1679,7 +1707,6 @@ ggplot(seasonal_intensity, aes(x = season, y = update_intensity, fill = Content.
 ```
 
 
-
 #### Visualization for Content Rating vs Installs
 
 ```{r}
@@ -1745,7 +1772,6 @@ ggplot(data_analysis, aes(x = Content.Rating, y = log10(Installs), fill = update
 
 ```
 
-
 #### Visualization for Last Updated vs Content Rating vs Installs 
 ```{r}
 # 3. Timeline analysis: Average installs over time by content rating
@@ -1763,10 +1789,10 @@ ggplot(installs_timeline, aes(x = Last.Updated, y = log10(avg_installs), color =
   theme(legend.position = "bottom")
 ```
 
-
 # Statistical Tests
 
 #### Statistical test for Installs and Price 
+
 
 ```{r}
 # Check for missing values and ensure no negative/zero values in log_Installs
@@ -1774,17 +1800,17 @@ ggplot(installs_timeline, aes(x = Last.Updated, y = log10(avg_installs), color =
   #filter(!is.na(Installs), Installs > 0)  # Remove missing values and zeros in Installs
 
 # Apply log transformation, adding 1 to avoid log(0)
-#data_final$log_Installs <- log(data_final$Installs + 1)
+data_final$log_Installs <- log(data_final$Installs + 1)
 
 # Ensure Price_Category has no missing values
-#data_final <- data_final %>%
- #filter(!is.na(Price_Category))
+data_final <- data_final %>%
+ filter(!is.na(Price_Category))
 
 #Perform t-test on log-transformed Installs by Price Category
-#t_test_result <- t.test(log_Installs ~ Price_Category, data = data_final, var.equal = FALSE)
+t_test_result <- t.test(log_Installs ~ Price_Category, data = data_final, var.equal = FALSE)
 
 #Print t-test results
-#print(t_test_result)
+print(t_test_result)
 
 ```
 
@@ -1829,7 +1855,7 @@ summary(anova_result)
 
 According to p-value, it is significant hence we can say that the average rating for all review categories is not same.
 
-#### Post Hoc Test
+#### Post Hoc Test - Review Category
 
 ```{r}
 # Perform Tukey's HSD
@@ -1853,26 +1879,96 @@ different review categories is between 0+ and 1M+ as expected.
 For easier Ratings and Reviews vs Installs we can group Installs into
 categories given
 
+#### Test for Installs by Category
+
+```{r}
+# Ensure that Category is treated as a factor
+data_final$Category <- as.factor(data_final$Category)
+
+# Perform one-way ANOVA
+anova_result <- aov(log_Installs ~ Category, data = data_final)
+
+# Summary of the ANOVA result
+summary(anova_result)
+```
+
+Since the ANOVA indicates significant differences among the groups, conducting a post-hoc analysis (Tukey’s HSD) to determine which specific categories differ from each other.
+
+```{r}
+# Post-hoc test (as ANOVA is significant)
+TukeyHSD(anova_result)
+```
+Observations:
+- Installs for the Business category are significantly lower than those for Art and Design.
+- installs for the Entertainment category being higher than those for Art and Design.
+- Medical Category have lower Installs compared to Art and Design.
+- Installs in the Shopping category being higher than in Auto and Vehicles.
+- Installs for Game are significantly higher than those for Beauty.
+ Many other comparisions do not have significance bwteen the categories as they have p value greater than 0.05.
+ 
+#### Android version with mean(Installs)
+```{r}
+# Ensure that Android.Ver is treated as a factor
+data_final$Android.Ver <- as.factor(data_final$Android.Ver)
+
+# Perform one-way ANOVA
+anova_result <- aov(Installs ~ Android.Ver, data = data_final)
+
+# Summary of the ANOVA result
+anova_summary <- summary(anova_result)
+print(anova_summary)
+```
+
+The ANOVA results above indicate that there are significant differences among the group means for Android.Ver.
+
+
+```{r}
+# As ANOVA is significant, performing a post-hoc test
+if (anova_summary[[1]][["Pr(>F)"]][1] < 0.05) {
+  posthoc_result <- TukeyHSD(anova_result)
+  print(posthoc_result)
+}
+
+```
+
 #### ANOVA test for Content Rating vs Installs 
 ```{r}
-# 1. Encode content rating (e.g., as factor levels or one-hot encoding)
-data_final$Content.Rating <- as.factor(data_final$Content.Rating)
+# Filter out rows where Installs is 0 or NA and where Content.Rating is NA
+data_for_anova <- data_final %>%
+  filter(!is.na(Content.Rating), !is.na(Installs), Installs > 0)
 
-data_final <- data_final %>%
-  filter(!is.na(Installs) & Installs > 0)
+# Re-run the ANOVA test
+install_anova <- aov(log10(Installs) ~ Content.Rating, data = data_for_anova)
 
-# ANOVA test for difference in installs between content ratings
-install_anova <- aov(log10(Installs) ~ Content.Rating, data = data_final)
-
+# Display the results
 print("\nANOVA test results for Installs by Content Rating:")
 print(summary(install_anova))
-
 
 ```
 
 
 ANOVA analysis : 
 Revealed significant differences in install counts based on content rating (F(5, 9638) = 41.95, p < 2e-16). This indicates that various content ratings have a substantial impact on the number of installs, highlighting the importance of content quality and type in attracting users.
+
+
+#### Chi-square Test for Content Rating vs Last Updated 
+```{r}
+# 3.2 Statistical Tests
+
+# Chi-square test for independence
+contingency_table <- table(data_time_analysis$Content.Rating, data_time_analysis$update_quarter)
+
+# Perform the Chi-square test
+chi_test <- chisq.test(contingency_table)
+print("\nChi-square test for independence between Content Rating and Update Quarter:")
+print(chi_test)
+
+```
+The P value is small signifying that there is statistically significant relationship between Content Rating and Last Updated quarter 
+
+
+Implications
+These findings suggest that regular updates are important for sustaining app installs, and that different content ratings can influence user engagement. Strategies aimed at timely updates and optimizing content ratings could enhance app performance and user acquisition.
 
 
 # Correlation 
@@ -1912,7 +2008,6 @@ print(correlation_matrix1)
 
 # Step 6: Plot the correlation matrix
 corrplot(correlation_matrix, method = "color", addCoef.col = "black")
-corrplot(correlation_matrix1, method = "color", addCoef.col = "black")
 
 ```
 As seen installs has the highest correlation with the reviews.
@@ -1920,7 +2015,7 @@ As seen installs has the highest correlation with the reviews.
 As we can see from the both pearson and spearman have relatively different correlation matrices and plots.
 We can refer to the categorical variables correlation from the spearman.
 
-### Correlation Reviews
+#### Correlation Reviews
 
 
 ```{r}
@@ -1974,12 +2069,12 @@ Rating is not much correlated with any of the variables, only slightly positivel
 
 #### Correlation with Price 
 ```{r}
-# Spearman correlation for Price
+# correlation for Price
 price_correlation_factor1 <- correlation_matrix1[, "Price", drop = FALSE]
 print("Spearman Correlation of Price with Other Variables:")
 print(price_correlation_factor1)
 
-# Plot for Spearman correlation with Price
+# Plot for correlation with Price
 corrplot(price_correlation_factor1, method = "color", addCoef.col = "black", 
          title = "Correlation of Price with Other Variables (Spearman)", 
          tl.col = "black", tl.srt = 45)
@@ -1989,51 +2084,60 @@ corrplot(price_correlation_factor1, method = "color", addCoef.col = "black",
 Price vs. Log_Installs: -0.06, suggesting a very weak negative
 relationship between price and the number of installs.
 
+#### Correlation with Category
+```{r}
+# Correlation for Category
+# convert the category variable into a suitable format if necessary
+category_correlation_factor1 <- correlation_matrix1[, "Category", drop = FALSE]
+print("Spearman Correlation of Category with Other Variables:")
+print(category_correlation_factor1)
+
+# Plot for correlation with Category
+corrplot(category_correlation_factor1, method = "color", addCoef.col = "black", 
+         title = "Correlation of Category with Other Variables (Spearman)", 
+         tl.col = "black", tl.srt = 45)
+```
+
+
+```{r}
+# Correlation for Android Version
+# Make sure to convert the category variable into a suitable format if necessary
+version_correlation_factor1 <- correlation_matrix1[, "Android.Ver", drop = FALSE]
+print("Spearman Correlation of Category with Other Variables:")
+print(category_correlation_factor1)
+
+# Plot for correlation with Category
+corrplot(version_correlation_factor1, method = "color", addCoef.col = "black", 
+         title = "Correlation of Category with Other Variables (Spearman)", 
+         tl.col = "black", tl.srt = 45)
+```
 
 #### Correlation between time analysis variables VS Installs
 
 ```{r}
-
 # Create a new data frame with relevant variables for correlation analysis
-#correlation_data <- data_analysis %>%
-#  select(days_since_update, update_year, update_month) %>%
-#  mutate(log_installs = log10(data_final$Installs))
+correlation_data <- data_time_analysis %>%
+  select(days_since_update, update_year, update_month) %>%
+  mutate(log_installs = log10(data_final$Installs))
 
 # Calculate the correlation matrix
-#correlation_matrix <- cor(correlation_data, method = "spearman", use = "complete.obs")
+correlation_matrix <- cor(correlation_data, method = "spearman", use = "complete.obs")
 
 # Print the correlation matrix
-#print("Spearman Correlation Matrix:")
-#corrplot(correlation_matrix, method = "color", 
-#          col = colorRampPalette(c("red", "white", "blue"))(200),
-#          type = "upper", 
-#          tl.col = "black", tl.srt = 45, 
-#          addCoef.col = "black", # Add correlation coefficients
-#          number.cex = 0.7,      # Adjust size of numbers
-#          title = "Correlation Matrix", # Title
-#          mar = c(0, 0, 1, 0))   # Margins
+print("Spearman Correlation Matrix:")
+corrplot(correlation_matrix, method = "color", 
+          col = colorRampPalette(c("red", "white", "blue"))(200),
+          type = "upper", 
+          tl.col = "black", tl.srt = 45, 
+          addCoef.col = "black", # Add correlation coefficients
+          number.cex = 0.7,      # Adjust size of numbers
+          title = "Correlation Matrix", # Title
+          mar = c(0, 0, 1, 0))   # Margins
 
 ```
 
 Correlation Analysis:
 A moderate negative correlation :(ρ=−0.3317) was found between the number of days since the last update and the log-transformed installs. This indicates that as the time since the last update increases, the number of installs tends to decrease. The relationship is statistically significant (p < 2.2e-16), suggesting that timely updates may be crucial for maintaining user engagement.
-
-#### Chi-square Test for Content Rating vs Last Updated 
-```{r}
-# 3.2 Statistical Tests
-
-# Chi-square test for independence
-contingency_table <- table(data_final$Content.Rating, data_final$update_quarter)
-chi_test <- chisq.test(contingency_table)
-print("\nChi-square test for independence between Content Rating and Update Quarter:")
-print(chi_test)
-
-```
-The P value is small signifying that there is statistically significant relationship between Content Rating and Last Updated quarter 
-
-
-Implications
-These findings suggest that regular updates are important for sustaining app installs, and that different content ratings can influence user engagement. Strategies aimed at timely updates and optimizing content ratings could enhance app performance and user acquisition.
 
 
 ##correlation between Installs Vs Size
