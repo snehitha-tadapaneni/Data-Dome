@@ -60,7 +60,7 @@ library(knitr)
 library(kableExtra)
 ```
 
-### Data Preparation and Cleaning
+# Data Preparation and Cleaning
 
 Here, we have loaded the dataset 'Google Play Store Apps' stored in csv file using ()
 
@@ -130,21 +130,10 @@ Duplicate App Analysis:
 * After removing duplicates, the dataset now contains 9660 unique apps.
 * Total duplicates removed: 1181 apps.
 
-
+#### After dropping duplicate
 
 ```{r}
-#DataFrame includes unique values and Na for all variables in data after removing duplicates
-
-unique_values_list <- lapply(data_clean, unique)  
-unique_counts_list <- lapply(data_clean, function(col) length(unique(col)))
-null_counts_list <- lapply(data_clean, function(col) sum(is.na(col)))  
-
-unique_df <- data.frame(
-  Unique_Values = sapply(unique_values_list, function(x) paste(x, collapse = ", ")),  
-  Unique_Counts = unlist(unique_counts_list),
-  Null_Counts = unlist(null_counts_list)
-)
-
+str(data_clean$App)
 ```
 
 ## Price
@@ -202,10 +191,240 @@ summary(data_clean$Price)
 
 ##### Missing values removed succesfully. (Price)
 
-#### Count Plot for the Price distribution
+
+## Type
+
+```{r ST2}
+#Checking the type of Type variable
+table(data_clean$Type)
+```
+From the price column, we can see 8903 apps are free but it is misread somewhere in the Type column. So lets check!
+```{r}
+#Checking for Missing values
+print(paste("Missing values:",sum(is.na(data_clean$Type))))
+
+data_clean[is.na(data_clean$Type), ]
+
+```
+
+
 
 ```{r}
-ggplot(data_clean, aes(x=Price)) +
+# Replace NaN or missing values in the Type column with "Free"
+data_clean$Type[is.na(data_clean$Type)] <- "Free"
+```
+There is one row 9150, has a missing value for Type. As the price is 0,
+replaced it with "Free".
+
+##### Missing values handles succesfully. (Type)
+
+
+## Size
+
+```{r}
+# Checking the type of the Size 
+typeof(data_apps$Size)
+```
+#### Replacing Misiing values with the mean (Size)
+```{r}
+# Replace "Varies with Device" in the Size column with NA
+data_clean$Size[data_clean$Size == "Varies with device"] <- NA
+data_clean <- data_clean[!grepl("\\+", data_clean$Size), ]
+data_clean$Size <- ifelse(grepl("k", data_clean$Size),
+                          as.numeric(gsub("k", "", data_clean$Size)) *
+0.001,  # Convert "K" to MB
+                          as.numeric(gsub("M", "", data_clean$Size)))
+# Remove "M" for megabytes
+# Calculate and display the mean size for each category in the 'Type' column
+mean_size_by_type <- tapply(data_clean$Size, data_clean$Category,
+mean, na.rm = TRUE)
+print(mean_size_by_type)
+
+
+# Loop through each row and replace NA values in the Size column with the mean size of the corresponding category
+data_clean$Size <- ifelse(
+  is.na(data_clean$Size),  # Check if Size is NA
+  round(mean_size_by_type[data_clean$Category], 1),  # Replace with the mean size based on the Category
+  data_clean$Size  # Keep the original size if it's not NA
+)
+
+```
+
+
+## Installs
+
+####Remove the '+' sign, Remove the commas, Convert to numeric
+
+```{r A.J}
+#clean installations
+clean_installs <- function(Installs) {
+  Installs <- gsub("\\+", "", Installs)  
+  Installs <- gsub(",", "", Installs)    
+  return(as.numeric(Installs))           
+}
+
+data_clean$Installs <- sapply(data_clean$Installs, clean_installs)
+
+nan_rows <- sapply(data_clean[, c("Size", "Installs")], function(x) any(is.nan(x)))
+
+# Display only rows that contain NaN in either Size or Installs
+data_clean[,nan_rows]
+
+
+datatable((data_clean), options = list(scrollX = TRUE ))
+```
+
+#### Display the unique values
+
+```{r A.J1}
+data_clean <- data_clean %>%
+  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
+
+# Identify the unique values in the 'Installs' column
+unique_values <- unique(data_clean$Installs)
+
+# Display the unique values
+print(unique_values)
+
+# Function to convert the installs to numeric
+convert_to_numeric <- function(x) {
+  # Remove non-numeric characters and convert to numeric
+  as.numeric(gsub("[^0-9]", "", x)) * 10^(length(gregexpr(",", x)[[1]]) - 1)
+}
+
+# Sort unique values based on the custom numeric conversion
+sorted_values <- unique_values[order(sapply(unique_values, convert_to_numeric))]
+
+
+```
+
+## Rating and Reviews
+
+```{r}
+# Checking the type of the Rating 
+typeof(data_clean$Rating)
+```
+
+```{r}
+# Checking the type of the Reviews 
+typeof(data_clean$Reviews)
+```
+
+#### Checking the format of Rating and Reviews
+
+```{r summary statistics, echo=FALSE}
+str(data_clean$Reviews)
+str(data_clean$Rating)
+```
+
+As we can see the Review column is in string format which could be
+converted into int for more insights.
+
+#### Change the column reviews from Str to int
+
+```{r , echo=FALSE}
+data_clean$Reviews <- as.numeric(data_clean$Reviews)
+str(data_clean)
+xkablesummary(data_clean)
+```
+
+There are 1463 missing values in rating. 
+
+
+
+As it could observed the Family category apps have the highest NA values. Let's not drop them but handle them by replacing with the mean value for the category.
+
+```{r}
+#Replace NA in Ratings with Overall Mean
+data_clean <- data_clean %>%
+  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
+
+xkablesummary(data_clean)
+
+```
+
+Now there are no missing values in reviews.
+
+#### Checking for Outliers For rating by seeing frequency for each rating
+
+```{r}
+ breaks = seq(15,20,by = 1)
+frequency_table = table(data_clean$Rating)
+frequency_table
+```
+
+From above it can be seen all the rating are between 1 and 5.
+
+
+## Category
+
+```{r W}
+# Checking the type of the Category 
+typeof(data_apps$Category)
+```
+```{r}
+length(unique(data_clean$Category))
+length(unique(data_clean$Genres))
+```
+
+
+There are 33 categories in the the data frame with 118 genres. This means
+that in each category, there are multiple genres. Given that, the later
+analyses in this project can be proceeded with Category variable.
+
+Below is the graph for the distribution of Categories for the dataset
+after removing duplicates.
+
+
+## Current Version & Genres
+
+Due to the inconsistent formatting of values in the `Current.Ver`
+column, this column is dropped and will be excluded from the analysis.
+
+```{r}
+data_final <- data_clean %>% select(-c('Genres', 'Current.Ver'))
+data_final$Category <- factor(data_final$Category)
+data_final$Android.Ver <- factor(data_final$Android.Ver)
+```
+
+
+## Content Rating, Last Updated
+
+```{r}
+# Remove leading and trailing spaces and convert all text to a consistent format 
+data_final$Content.Rating <- trimws(tolower(data_final$Content.Rating))
+
+cr_missing <- sum(is.na(data_final$`Content Rating`))
+
+print(paste("Number of missing values in 'Content Rating':", cr_missing))
+```
+There are no missing values for Content rating.
+
+```{r}
+# Convert Last Updated to Date format
+data_final$Last.Updated <- as.Date(data_final$Last.Updated, format = "%B %d, %Y")
+
+# Verify the cleaning
+print("\nSummary of Last.Updated after cleaning:")
+print(summary(data_clean$Last.Updated))
+```
+
+
+#### After cleaning the Data
+```{r}
+str(data_final)
+```
+
+
+
+
+# Data Exploring and Visualization
+
+#### Visualization for Price Distribution
+
+```{r}
+# Count Plot for the Price distribution
+ggplot(data_final, aes(x=Price)) +
   geom_histogram(binwidth=2, fill="pink", color="black") +
    xlim(0, 500) + ylim(0, 500) +
   labs(title="Price Distribution", x="Price", y="Frequency") +
@@ -217,11 +436,13 @@ The data is highly skewed as there are many zero price entries.
 
 ```{r}
 # Boxplot for the same
-ggplot(data_clean, aes(y=Price)) +
+ggplot(data_final, aes(y=Price)) +
   geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 1, fill="pink", color="black") +
   labs(title="Price Boxplot", y="Price") +
   theme_minimal()
 ```
+
+#### Checking outliers for Price
 
 ```{r}
 outlierKD2 <- function(df, var, rm = FALSE, boxplt = FALSE, histogram = TRUE, qqplt = FALSE) {
@@ -279,75 +500,43 @@ outlierKD2 <- function(df, var, rm = FALSE, boxplt = FALSE, histogram = TRUE, qq
     cat("Mean without removing outliers:", round(m1, 2), "\n")
     cat("Mean if we remove outliers:", round(mean(var_name, na.rm = TRUE), 2), "\n")
   }
-  
-  # Remove outliers if `rm = TRUE`
-  if (rm) {
-    dt[as.character(substitute(var))] <- invisible(var_name)
-    cat("Outliers successfully removed", "\n")
-    return(invisible(dt))
-  } else {
-    cat("Nothing changed", "\n")
-    return(invisible(df))
-  }
 }
 
 ```
 
 ```{r}
 #outlier function is defined in previous chunck of code.
-outlier_check_price = outlierKD2(data_clean, Price, rm = FALSE, boxplt = TRUE, qqplt = TRUE)
+outlier_check_price = outlierKD2(data_final, Price, rm = FALSE, boxplt = TRUE, qqplt = TRUE)
 ```
 
 The price values in the dataset, including both typical and extreme values, are valid observations for our analysis. As such, removing these outliers may not be beneficial for our study.
 
 ```{r}
 #To check the value ranges
-table(data_clean$Price)
+table(data_final$Price)
 ```
 As aldready mentioned, there are 8903 free apps (More apps with price as 0).
 
-## Type
 
-```{r ST2}
-#Checking the type of Type variable
-table(data_clean$Type)
-```
-From the price column, we can see 8903 apps are free but it is misread somewhere in the Type column. So lets check!
-```{r}
-#Checking for Missing values
-print(paste("Missing values:",sum(is.na(data_clean$Type))))
-
-data_clean[is.na(data_clean$Type), ]
-
-```
-
+#### Visualization for Type Distribution
 
 
 ```{r}
-# Replace NaN or missing values in the Type column with "Free"
-data_clean$Type[is.na(data_clean$Type)] <- "Free"
-```
-There is one row 9150, has a missing value for Type. As the price is 0,
-replaced it with "Free".
-
-##### Missing values handles succesfully. (Type)
-
-#### Bar Plot for the Type Distribution
-
-```{r}
-ggplot(data_clean, aes(x = Type)) +
+# Bar Plot for the Type Distribution
+ggplot(data_final, aes(x = Type)) +
   geom_bar(fill = "pink", color = "black") +
   labs(title = "Distribution of App Types (Free vs Paid)", x = "Type", y = "Count") +
   theme_minimal()
 ```
 As it is clear, there are more free apps.
+
 ```{r}
 #Display statistics for the Price of apps grouped by their Type
-data_clean$Type <- as.factor(data_clean$Type)
+data_final$Type <- as.factor(data_final$Type)
 
 
 summary_by_type <- data.frame(
-  Type = levels(data_clean$Type),
+  Type = levels(data_final$Type),
   Min_Price = tapply(data_clean$Price, data_clean$Type, min, na.rm = TRUE),
   Max_Price = tapply(data_clean$Price, data_clean$Type, max, na.rm = TRUE),
   Mean_Price = tapply(data_clean$Price, data_clean$Type, mean, na.rm = TRUE),
@@ -360,17 +549,18 @@ print(summary_by_type)
 
 ```{r}
 #Scatter plot for price distribution by app type
-ggplot(data_clean, aes(x = Type, y = Price, fill = Type)) +
+ggplot(data_final, aes(x = Type, y = Price, fill = Type)) +
   geom_boxplot() +
   labs(title = "Price Distribution by App Type", 
        x = "App Type", 
        y = "Price ($)") +
   theme_minimal()
 ```
+
 #### Histogram for price distribution by App Type
 
 ```{r}
-ggplot(data_clean, aes(x = Price, fill = Type)) +
+ggplot(data_final, aes(x = Price, fill = Type)) +
   geom_histogram(binwidth = 60, alpha = 0.7, position = "identity") +
   facet_wrap(~ Type) +
   labs(title = "Price Distribution by App Type", 
@@ -386,101 +576,172 @@ Hence, Removing the Type column...
 #### Dropping the Type column
 ```{r}
 #Using subset function
-data_clean <- subset(data_clean, select = -Type)
+data_final <- subset(data_final, select = -Type)
 ```
 
 ```{r}
 #After removing the Type column and duplicated values
-str(data_clean)
-head(data_clean)
+str(data_final)
 ```
 
-The Type column is successfully removed.
+##### The Type column is successfully removed.
 
-## Size
+Let's do bivariate analysis on price and other variables starting from here.
+
+#### Visualization for Price vs Installs 
+
+```{r ST3}
+#Plotting a scatter plot between Price and installs
+ggplot(data_final, aes(x=Price, y=log(data_clean$Installs))) +
+  geom_point(color = 'red', size = 1, alpha = 0.5) + 
+  geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
+  labs(title = "Price vs Installs", x = "Price (USD)", y = "Number of Installs") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+From the scatter plot, we can see that there are more number of installations with price value 0. 
 
 ```{r}
-# Checking the type of the Size 
-typeof(data_apps$Size)
+# Categorize the apps as "Free" or "Paid" based on Price
+Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
+str(data_final$Price)
+str(Price_Category)
+#str(log(data_clean$Installs))
+
 ```
-#### Replacing Misiing values with the mean (Size)
+For a better visualization, we are categorizing price values 0 as free apps and plotting abox plot. 
 ```{r}
-# Replace "Varies with Device" in the Size column with NA
-data_clean$Size[data_clean$Size == "Varies with device"] <- NA
-data_clean <- data_clean[!grepl("\\+", data_clean$Size), ]
-data_clean$Size <- ifelse(grepl("k", data_clean$Size),
-                          as.numeric(gsub("k", "", data_clean$Size)) *
-0.001,  # Convert "K" to MB
-                          as.numeric(gsub("M", "", data_clean$Size)))
-# Remove "M" for megabytes
-# Calculate and display the mean size for each category in the 'Type' column
-mean_size_by_type <- tapply(data_clean$Size, data_clean$Category,
-mean, na.rm = TRUE)
-print(mean_size_by_type)
+# Box plot of Price Category vs. log-transformed Installs
+ggplot(data_final, aes(x = Price_Category, y = log(data_clean$Installs))) +
+  geom_boxplot(fill = "lightblue", color = "darkblue", alpha = 0.6) +
+  labs(title = "Price Categories vs. Log-Transformed Installs", 
+       x = "Price Category", 
+       y = "Log(Installs)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+```
 
+"Free" apps tend to have more installs than "Paid" apps. The difference between the means on the log scale is estimated to be between 3.47 and
+3.97.
 
-# Loop through each row and replace NA values in the Size column with the mean size of the corresponding category
-data_clean$Size <- ifelse(
-  is.na(data_clean$Size),  # Check if Size is NA
-  round(mean_size_by_type[data_clean$Category], 1),  # Replace with the mean size based on the Category
-  data_clean$Size  # Keep the original size if it's not NA
-)
+```{r}
+# Categorize the apps as "Free" or "Paid" based on Price
+Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
+str(data_final$Price)
+str(Price_Category)
+#str(data_final$log(data_clean$Installs))
+
+table(Price_Category)
 
 ```
 
+```{r}
+# Add Price_Category to data_final
+data_duplicate <- data_final
+data_duplicate$Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
 
-## Installs
+# Create a summarized table for Price_Category and log_Installs
+summary_table <- data_duplicate %>%
+  group_by(Price_Category) %>%
+  summarise(Average_Log_Installs = mean(log(data_clean$Installs), na.rm = TRUE),
+            Count = n())
 
-```{r A.J}
-#clean installations: Remove the '+' sign, Remove the commas, Convert to numeric
-clean_installs <- function(Installs) {
-  Installs <- gsub("\\+", "", Installs)  
-  Installs <- gsub(",", "", Installs)    
-  return(as.numeric(Installs))           
-}
-
-data_clean$Installs <- sapply(data_clean$Installs, clean_installs)
-
-nan_rows <- sapply(data_clean[, c("Size", "Installs")], function(x) any(is.nan(x)))
-
-# Display only rows that contain NaN in either Size or Installs
-data_clean[,nan_rows]
-
-
-datatable((data_clean), options = list(scrollX = TRUE ))
-```
-
-#### Display the unique values
-
-```{r A.J1}
-data_clean <- data_clean %>%
-  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
-
-# Identify the unique values in the 'Installs' column
-unique_values <- unique(data_clean$Installs)
-
-# Display the unique values
-print(unique_values)
-
-# Function to convert the installs to numeric
-convert_to_numeric <- function(x) {
-  # Remove non-numeric characters and convert to numeric
-  as.numeric(gsub("[^0-9]", "", x)) * 10^(length(gregexpr(",", x)[[1]]) - 1)
-}
-
-# Sort unique values based on the custom numeric conversion
-sorted_values <- unique_values[order(sapply(unique_values, convert_to_numeric))]
-
+# View the summarized table
+kable(summary_table, format = "html", col.names = c("Price Category", "Mean Log(Installs)", "App Count")) %>%
+  kable_styling(full_width = FALSE, position = "center") 
 
 ```
 
-#### Bar plot for distribution of Installs
+#### Visualization for Price vs Reviews & Rating
+
+```{r}
+# Plot Price vs. Reviews
+ggplot(data_final, aes(x=Price, y=Reviews)) +
+  geom_point(color = 'blue') +
+  geom_smooth(method = 'lm', color = 'red', se = FALSE) +
+  labs(title = "Price vs Reviews", x = "Price (USD)", y = "Number of Reviews") +
+  theme_minimal() + 
+  theme(
+    panel.background = element_rect(fill = "white"),  # Set panel background to white
+    plot.background = element_rect(fill = "white"),   # Set plot background to white
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+# Plot Price vs. Rating
+ggplot(data_final, aes(x=Price, y=Rating)) +
+  geom_point(color = 'green') +
+  geom_smooth(method = 'lm', color = 'red', se = FALSE) +
+  labs(title = "Price vs Rating", x = "Price (USD)", y = "Rating") +
+  theme_minimal() + 
+  theme(
+    panel.background = element_rect(fill = "white"),  # Set panel background to white
+    plot.background = element_rect(fill = "white"),   # Set plot background to white
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+```
+
+Price vs Reviews with installation: Cheaper products tend to have more
+reviews, indicating higher popularity or more frequent purchases. In
+contrast, expensive products tend to have fewer reviews, possibly
+because fewer people buy higher-priced items.
+
+Price vs Ratings with installation: Price does not strongly affect the
+average rating, but there is a slight trend where lower-priced products
+have more variation in ratings, while higher-priced products tend to
+receive more consistent ratings around 4. May be higher price apps are
+meeting the customer expectations.
+
+ 
+#### Visualization for Price vs Reviews vs Installs
+
+```{r}
+# Scatter plot of Price vs. Ratings with log_Installs as  color
+ggplot(data_final, aes(x = Price, y = Rating,color = log(data_clean$Installs))) +
+  geom_point(alpha = 0.6) +
+  scale_color_gradient(low = "blue", high = "red") +  
+  labs(title = "Price vs. Ratings with Installs as Color by Price", 
+       x = "Price", 
+       y = "Rating", 
+       color = "log(Installs)") +
+  theme_minimal()
+
+# Scatter plot of Price vs. Reviews with log_Installs as color
+ggplot(data_final, aes(x = Price, y = Reviews,color = log(data_clean$Installs))) +
+  geom_point(alpha = 0.6) +
+  scale_color_gradient(low = "darkgreen", high = "yellow") +  
+  labs(title = "Price vs. reviewss with Installs as Color by Price", 
+       x = "Price", 
+       y = "Reviews", 
+       color = "log(Installs)") +
+  theme_minimal()
+```
+
+Concluding: Apps with lower prices, have more ratings and installs while
+apps priced higher tend to have fewer installs and more scattered
+ratings. Similarly, for reviews.
+
+#### Visualization for Price vs Size 
+
+```{r}
+# Plot Price vs Size
+ggplot(data_final, aes(x=Price, y=Size)) +
+  geom_point(color = 'red') + 
+  geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
+  labs(title = "Price vs Size", x = "Price (USD)", y = "App Size (MB)") +
+  theme_minimal() 
+```
+
+
+#### Visulization for Distribution of Installs
 
 ```{r A.J2}
+# Bar plot for distribution of Installs
 # Create a new data frame to store the factor levels
-data_clean1_factor <- data_clean  
+data_clean1_factor <- data_final  
 
-data_clean1_factor$Installs <- factor(data_clean$Installs, levels = sorted_values)
+data_clean1_factor$Installs <- factor(data_final$Installs, levels = sorted_values)
 
 # Create a bar plot with the ordered factor
 ggplot(data_clean1_factor, aes(x = Installs)) +
@@ -492,67 +753,10 @@ ggplot(data_clean1_factor, aes(x = Installs)) +
 ```
 
 
-## Rating and Reviews
+### Visualization for Rating Distribution
 
 ```{r}
-# Checking the type of the Rating 
-typeof(data_clean$Rating)
-```
-
-```{r}
-# Checking the type of the Reviews 
-typeof(data_clean$Reviews)
-```
-
-### Checking the format of Rating and Reviews
-
-```{r summary statistics, echo=FALSE}
-str(data_clean$Reviews)
-str(data_clean$Rating)
-```
-
-As we can see the Review column is in string format which could be
-converted into int for more insights.
-
-### Change the column reviews from Str to int
-
-```{r , echo=FALSE}
-data_clean$Reviews <- as.numeric(data_clean$Reviews)
-str(data_clean)
-xkablesummary(data_clean)
-```
-
-There are 1463 missing values in rating. 
-
-
-
-As it could observed the Family category apps have the highest NA values. Let's not drop them but handle them by replacing with the mean value for the category.
-
-```{r}
-#Replace NA in Ratings with Overall Mean
-data_clean <- data_clean %>%
-  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
-
-xkablesummary(data_clean)
-
-```
-
-Now there are no missing values in reviews.
-
-### Checking for Outliers For rating by seeing frequency for each rating
-
-```{r}
- breaks = seq(15,20,by = 1)
-frequency_table = table(data_clean$Rating)
-frequency_table
-```
-
-From above it can be seen all the rating are between 1 and 5.
-
-### Visualizing the Rating Distribution
-
-```{r}
-boxplot(data_clean$Rating,ylab = "Rating", xlab = "Count",col = "Blue")
+boxplot(data_final$Rating,ylab = "Rating", xlab = "Count",col = "Blue")
 hist(data_clean$Rating, main="Histogram of Apps Rating after cleaning", xlab="Rating (count)", col = 'blue', breaks = 100 )
 qqnorm(data_clean$Rating)
 qqline(data_clean$Rating, col = "red")
@@ -563,18 +767,18 @@ to other outliers from 1-3 rating but as these may be the reason from
 which we could find why the apps are low rated hencecannot be removed
 from our dataset.
 
-### Plotting for Reviews
+### Visualization for Reviews
 
 ```{r}
 
-boxplot(data_clean$Reviews,ylab = "Reviews", xlab = "Count",col = 'Blue')
-hist(data_clean$Reviews, main="Histogram of Apps Reviews", xlab="Reviews (count)", col = 'blue', breaks = 100 )
-ggplot(data_clean, aes(x = log(Reviews))) +
+boxplot(data_final$Reviews,ylab = "Reviews", xlab = "Count",col = 'Blue')
+hist(data_final$Reviews, main="Histogram of Apps Reviews", xlab="Reviews (count)", col = 'blue', breaks = 100 )
+ggplot(data_final, aes(x = log(Reviews))) +
   geom_histogram(binwidth = 0.1, fill = "blue", color = "black") +
   labs(title = "Log-Transformed Histogram of Ratings", x = "Log(Rating)", y = "Count")
 
-qqnorm(data_clean$Reviews)
-qqline(data_clean$Reviews, col = "red")
+qqnorm(data_final$Reviews)
+qqline(data_final$Reviews, col = "red")
 
 ```
 
@@ -583,18 +787,18 @@ Hence, we can use the log plot of reviews for the visualisation which is
 normalised version of Reviews. As they are skewed, they donot follow
 normal distribution.
 
-### Review frequency table
+#### Review frequency table
 
 ```{r}
-xkablesummary(data_clean)
-outlierKD2(data_clean,Reviews)
+xkablesummary(data_final)
+outlierKD2(data_final, Reviews)
 ```
 
 To check which are outliers lets make sections of data that is create
 bins to check which bins have maximum data, this would help us see how
 reviews are distributed.
 
-### Binned reviews
+#### Binned reviews
 
 Binning into equal count in each bin to check averge rating for each bin
 
@@ -607,7 +811,7 @@ Binning into equal count in each bin to check averge rating for each bin
 breaks <- c(0, 100, 500, 1000, 2500, 5000, 10000, 25000,50000,100000, 300000,1000000,Inf)
 
 # Create a categorical variable based on the new breaks
-Review_Category <- cut(data_clean$Reviews, breaks = breaks, right = FALSE, 
+Review_Category <- cut(data_final$Reviews, breaks = breaks, right = FALSE, 
                    labels = c("0+","100+", "500+", "1K+",
                               "2.5K+", "5K+", "10K+","25K+",
                               "50K+", "100K+","300K+","1M+"))
@@ -635,10 +839,10 @@ ggplot(bin_counts, aes(x = Review_Category, y = Count, group = 1)) +
 Hence, high reviews can be observed in less apps and less reviews can be
 observed in more apps which is expected.
 
-### Boxplots: Rating vs Reviews
+#### Boxplots for Rating vs Reviews
 
 ```{r}
-boxplot( data_clean$Rating~ Review_Category, data = data_clean, 
+boxplot( data_final$Rating~ Review_Category, data = data_clean, 
         main = "Boxplot of Review Counts by Review Category", 
         xlab = "Review Category", 
         ylab = "Review Rating",
@@ -651,12 +855,12 @@ In this we could observe that, as reviews increase the median of rating
 increased and the values clustered around higher ratings which could
 show that high reviews, could mean a better rated app.
 
-### Mean value of Ratings for each Review bins
+#### Mean value of Ratings for each Review bins
 
 ```{r}
 
 # Calculate the mean Rating for each Review_Category
-mean_ratings <- tapply(data_clean$Rating, Review_Category, mean, na.rm = TRUE)
+mean_ratings <- tapply(data_final$Rating, Review_Category, mean, na.rm = TRUE)
 
 # Convert the result to a data frame for better readability
 mean_ratings_df <- data.frame(Review_Category = names(mean_ratings), Mean_Rating = as.numeric(mean_ratings))
@@ -685,11 +889,11 @@ ggplot(mean_ratings_df, aes(x = Review_Category, y = Mean_Rating)) +
 
 As we can see, the mean rating increases as the reviews increase.
 
-### Histogram of Reviews and Rating
+#### Histogram for Reviews and Rating
 
 ```{r}
 # Create a new data frame for plotting
-plot_data <- data.frame(Rating = data_clean$Rating, Review_Category = Review_Category)
+plot_data <- data.frame(Rating = data_final$Rating, Review_Category = Review_Category)
 
 # Create a histogram of Ratings, faceted by Review_Category
 ggplot(plot_data, aes(x = Rating)) +
@@ -701,7 +905,7 @@ ggplot(plot_data, aes(x = Rating)) +
 
 This is another representation of ratings vs reviews.
 
-## Reviews vs Installs
+#### Visualization for Reviews vs Installs
 
 ```{r A.J3}
 
@@ -715,9 +919,10 @@ ggplot(data_clean1_factor, aes(x = Reviews, y = Installs)) +
 
 ```
 
+#### Visualization for Rating vs Installs
 ```{r A.J4}
 # Scatter plot of log-transformed Installs vs. Rating
-ggplot(data_clean, aes(x = log(data_clean$Installs), y = Rating)) +
+ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
   geom_point(color = "blue", alpha = 0.6) +
   geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add a regression line
   labs(title = "Log-Transformed Installs vs. Rating", 
@@ -727,10 +932,12 @@ ggplot(data_clean, aes(x = log(data_clean$Installs), y = Rating)) +
 
 ```
 
+#### Visualization for Rating vs Installs by Category
+
 ```{r A.J5, echo=FALSE, fig.width=12, fig.height=8, out.width='100%', fig.align='center'}
 
 # Plot the combined graph with different colors based on Rating
-ggplot(data_clean, aes(x = log(data_clean$Installs), y = Rating)) +
+ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
   geom_point(aes(color = as.factor(Rating), shape = Category), alpha = 0.6, size = 3) +  # Points colored by Rating and shaped by Category
   scale_color_discrete(name = "Rating") +  # Discrete color scale
   labs(title = "Rating vs Installs (Log-Transformed Installs) by Category",
@@ -742,29 +949,10 @@ ggplot(data_clean, aes(x = log(data_clean$Installs), y = Rating)) +
 ```
 
 
-## Category
-
-```{r W}
-# Checking the type of the Category 
-typeof(data_apps$Category)
-```
-```
+#### Visualization for Category Distribution
 
 ```{r}
-length(unique(data_clean$Category))
-length(unique(data_clean$Genres))
-```
-
-There are 33 categories in the the data frame with 118 genres. This means
-that in each category, there are multiple genres. Given that, the later
-analyses in this project can be proceeded with Category variable.
-
-Below is the graph for the distribution of Categories for the dataset
-after removing duplicates.
-
-```{r}
-#Distribution for Category
-category_counts <- table(data_clean$Category)
+category_counts <- table(data_final$Category)
 
 # Convert to data frame for plotting
 category_counts_df <- as.data.frame(category_counts)
@@ -786,13 +974,13 @@ ggplot(category_counts_df, aes(x = reorder(Category, Frequency), y = Frequency))
 AS it can be seen from the graph above, most of the apps in the dataset belong to the Family category, and Beauty has the least number of apps. 
 
 
-### Category vs. Installs
+#### Visualization for Category vs. Installs
 
 Below is a boxplot show the distribution of number of installs for each
 category order by mean from highest to lowest. 
 
 ```{r}
-ggplot(data_clean, aes(x = reorder(Category, log(data_clean$Installs),  FUN = mean), y = log(data_clean$Installs))) +
+ggplot(data_clean, aes(x = reorder(Category, log(data_final$Installs),  FUN = mean), y = log(data_clean$Installs))) +
   geom_boxplot(outlier.color = "#f05555", outlier.shape = 1, color='#1f3374', fill="#efefef") +  # Red outliers for emphasis
   coord_flip() +  # Flip for better readability
   scale_y_log10() +
@@ -808,7 +996,7 @@ ggplot(data_clean, aes(x = reorder(Category, log(data_clean$Installs),  FUN = me
 ```
 It can be seen from the graph that, on average, Entertainment apps receive the highest number of installations, followed by Education, Game, Photography, and Weather apps. In contrast, Art & Design apps have the fewest installations.
 
-### Category vs. App Size
+#### Visualization for Category vs. App Size
 
 
 ```{r}
@@ -880,14 +1068,14 @@ ggplot(data_clean, aes(x = reorder(Category, Size, FUN = median), y = Size)) +
 
 As it can be seen from the two figures above, most categories exhibit right-skewed app sizes, with the majority being under 50MB. However, the Game category stands out with a significantly larger median app size compared to other categories.
 
-### Category vs. Reviews
+#### Visualization for Category vs. Reviews
 
 
 Below is the graph displaying the distribution of reviews left by users for each category.
 
 ```{r}
 
-df_aggregated <- data_clean %>% 
+df_aggregated <- data_final %>% 
   group_by(Category) %>% 
   summarise(Total_Reviews = sum(Reviews, na.rm = TRUE))
 
@@ -911,12 +1099,12 @@ ggplot(df_aggregated, aes(x = reorder(Category, -Total_Reviews), y = log10(Total
 ```
 AS it can be seen that game apps have most reviews while events apps have the least reviews.
 
-### Category vs. Rating
+#### Histogram for Category vs. Rating
 
 Below is the figure demonstrating the distribution of number of rating for each category. 
 
 ```{r}
-ggplot(data_clean, aes(x = Rating)) + 
+ggplot(data_final, aes(x = Rating)) + 
   geom_histogram(binwidth = 0.5, fill = "#1f3374", color='#efefef') + 
   facet_wrap(~ Category, scales = "free_y") +  # Facet by Category with independent y-axis
   scale_x_continuous(limits = c(1, 5), breaks = seq(1, 5, by = 0.5)) +  # Restrict x-axis to 1-5
@@ -938,12 +1126,7 @@ ggplot(data_clean, aes(x = Rating)) +
 As illustrated in the graph above, all categories have app ratings that range between 4.0 and 5.0.
 
 
-### Current Version
-
-Due to the inconsistent formatting of values in the `Current.Ver`
-column, this column is dropped and will be excluded from the analysis.
-
-### Android Version
+#### Visualization for Android Version
 
 Below is the figure showing the distribution of Android versions.
 
@@ -968,11 +1151,11 @@ extract_version <- function(version) {
 ```
 
 ```{r}
-df_clean <- data_clean %>%
+df_clean <- data_final %>%
   mutate(Android_Ver = sapply(Android.Ver, extract_version)) %>%
   filter(!is.na(Android_Ver))  # Remove rows with NA in Android_Ver
 
-android_installs <- data_clean %>% 
+android_installs <- data_final %>% 
   group_by(Android.Ver) %>% 
   summarize(Total_Installs = sum(Installs, na.rm = TRUE))
 
@@ -1012,12 +1195,12 @@ extract_version <- function(version) {
 
 ```
 
-### Android Version vs. Installs
+#### Bar plot for Android Version vs. Installs
 
 Below is the graph showing the number of installs for each minimum required Android Version. 
 
 ```{r}
-ggplot(data_clean, aes(x = reorder(Android.Ver, Installs), y = Installs)) + 
+ggplot(data_final, aes(x = reorder(Android.Ver, Installs), y = Installs)) + 
   geom_bar(stat = "identity", fill = "#1f3374") + 
   coord_flip() +  # Flip coordinates for better readability
   scale_y_continuous(labels = scales::comma) +  # Format y-axis with commas
@@ -1036,12 +1219,12 @@ ggplot(data_clean, aes(x = reorder(Android.Ver, Installs), y = Installs)) +
 
 It can be seen that the highest number of installation is when there is different requirements of the versions for the app to run. 
 
-### Android Version vs. Reviews
+#### Boxplot for Android Version vs. Reviews
 
 Below is the distribution of reviews for each minimum required Android Version.
 
 ```{r}
-df_clean <- data_clean %>% 
+df_clean <- data_final %>% 
   filter(!is.na(Android.Ver) & !is.na(Reviews)) %>% 
   mutate(Scaled_Reviews = log10(Reviews + 1))
 ```
@@ -1066,7 +1249,7 @@ ggplot(df_clean, aes(x = reorder(Android.Ver, Scaled_Reviews, FUN = median), y =
 It can be seen that the version from 4.1 to 7.1.1 have the highest number of reviews, whiel version from 5.0 to 7.1.1 have the least number of reviews. 
 
 
-### Android Version vs. Rating
+####  Histogram for Android Version vs. Rating
 
 Below is the plot showing the number of ratings for each Android Version. 
 
@@ -1090,188 +1273,9 @@ ggplot(df_clean, aes(x = Rating, fill = Android.Ver)) +
 It can be seen that most Android Version have ratings range between 4.0 and 5.0.
 
 
-```{r}
-data_final <- data_clean %>% select(-c('Genres', 'Current.Ver'))
-data_final$Category <- factor(data_final$Category)
-data_final$Android.Ver <- factor(data_final$Android.Ver)
-
-str(data_final)
-```
-
-Let's do bivariate analysis on price and other variables starting from here.
-
-### Price vs Installs
-
-```{r ST3}
-library(ggplot2)
-#Plotting a scatter plot between Price and installs
-ggplot(data_final, aes(x=Price, y=log(data_clean$Installs))) +
-  geom_point(color = 'red', size = 1, alpha = 0.5) + 
-  geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
-  labs(title = "Price vs Installs", x = "Price (USD)", y = "Number of Installs") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-```
-From the scatter plot, we can see that there are more number of installations with price value 0. 
+#### Distribution for Content.Rating
 
 ```{r}
-# Categorize the apps as "Free" or "Paid" based on Price
-Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
-str(data_final$Price)
-str(Price_Category)
-#str(log(data_clean$Installs))
-
-```
-For a better visualization, we are categorizing price values 0 as free apps and plotting abox plot. 
-```{r}
-# Box plot of Price Category vs. log-transformed Installs
-ggplot(data_final, aes(x = Price_Category, y = log(data_clean$Installs))) +
-  geom_boxplot(fill = "lightblue", color = "darkblue", alpha = 0.6) +
-  labs(title = "Price Categories vs. Log-Transformed Installs", 
-       x = "Price Category", 
-       y = "Log(Installs)") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
-```
-
-"Free" apps tend to have more installs than "Paid" apps. The difference between the means on the log scale is estimated to be between 3.47 and
-3.97.
-
-```{r}
-# Categorize the apps as "Free" or "Paid" based on Price
-Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
-str(data_final$Price)
-str(Price_Category)
-#str(data_final$log(data_clean$Installs))
-
-table(Price_Category)
-
-```
-
-```{r}
-# Add Price_Category to data_final
-data_duplicate <- data_final
-data_duplicate$Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
-
-# Create a summarized table for Price_Category and log_Installs
-summary_table <- data_duplicate %>%
-  group_by(Price_Category) %>%
-  summarise(Average_Log_Installs = mean(log(data_clean$Installs), na.rm = TRUE),
-            Count = n())
-
-# View the summarized table
-kable(summary_table, format = "html", col.names = c("Price Category", "Mean Log(Installs)", "App Count")) %>%
-  kable_styling(full_width = FALSE, position = "center") 
-
-```
-
-## Price vs Reviews
-
-```{r}
-# Plot Price vs. Reviews
-ggplot(data_final, aes(x=Price, y=Reviews)) +
-  geom_point(color = 'blue') +
-  geom_smooth(method = 'lm', color = 'red', se = FALSE) +
-  labs(title = "Price vs Reviews", x = "Price (USD)", y = "Number of Reviews") +
-  theme_minimal() + 
-  theme(
-    panel.background = element_rect(fill = "white"),  # Set panel background to white
-    plot.background = element_rect(fill = "white"),   # Set plot background to white
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-# Plot Price vs. Rating
-ggplot(data_final, aes(x=Price, y=Rating)) +
-  geom_point(color = 'green') +
-  geom_smooth(method = 'lm', color = 'red', se = FALSE) +
-  labs(title = "Price vs Rating", x = "Price (USD)", y = "Rating") +
-  theme_minimal() + 
-  theme(
-    panel.background = element_rect(fill = "white"),  # Set panel background to white
-    plot.background = element_rect(fill = "white"),   # Set plot background to white
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-```
-
-Price vs Reviews with installation: Cheaper products tend to have more
-reviews, indicating higher popularity or more frequent purchases. In
-contrast, expensive products tend to have fewer reviews, possibly
-because fewer people buy higher-priced items.
-
-Price vs Ratings with installation: Price does not strongly affect the
-average rating, but there is a slight trend where lower-priced products
-have more variation in ratings, while higher-priced products tend to
-receive more consistent ratings around 4. May be higher price apps are
-meeting the customer expectations.
-
-
-
-
- 
-## Price vs Reviews vs Installs
-
-```{r}
-# Scatter plot of Price vs. Ratings with log_Installs as  color
-ggplot(data_final, aes(x = Price, y = Rating,color = log(data_clean$Installs))) +
-  geom_point(alpha = 0.6) +
-  scale_color_gradient(low = "blue", high = "red") +  
-  labs(title = "Price vs. Ratings with Installs as Color by Price", 
-       x = "Price", 
-       y = "Rating", 
-       color = "log(Installs)") +
-  theme_minimal()
-
-# Scatter plot of Price vs. Reviews with log_Installs as color
-ggplot(data_final, aes(x = Price, y = Reviews,color = log(data_clean$Installs))) +
-  geom_point(alpha = 0.6) +
-  scale_color_gradient(low = "darkgreen", high = "yellow") +  
-  labs(title = "Price vs. reviewss with Installs as Color by Price", 
-       x = "Price", 
-       y = "Reviews", 
-       color = "log(Installs)") +
-  theme_minimal()
-```
-
-Concluding: Apps with lower prices, have more ratings and installs while
-apps priced higher tend to have fewer installs and more scattered
-ratings. Similarly, for reviews.
-
-## Price vs Size 
-
-```{r}
-# Plot Price vs Size
-ggplot(data_final, aes(x=Price, y=Size)) +
-  geom_point(color = 'red') + 
-  geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
-  labs(title = "Price vs Size", x = "Price (USD)", y = "App Size (MB)") +
-  theme_minimal() 
-```
-
-### Content Rating, Last Updated
-
-```{r}
-# Remove leading and trailing spaces and convert all text to a consistent format 
-data_final$Content.Rating <- trimws(tolower(data_final$Content.Rating))
-
-cr_missing <- sum(is.na(data_final$`Content Rating`))
-
-print(paste("Number of missing values in 'Content Rating':", cr_missing))
-```
-There are no missing values for Content rating.
-
-```{r}
-# Convert Last Updated to Date format
-data_final$Last.Updated <- as.Date(data_final$Last.Updated, format = "%B %d, %Y")
-
-# Verify the cleaning
-print("\nSummary of Last.Updated after cleaning:")
-print(summary(data_clean$Last.Updated))
-```
-
-```{r}
-
 # Clean and prepare the Last Updated  and Content column
 data_final <- data_final %>%
   mutate(
@@ -1283,6 +1287,9 @@ content_rating_dist <- table(data_final$Content.Rating)
 print("Content Rating Distribution:")
 print(content_rating_dist)
 ```
+
+#### Visualization for Content Rating
+
 ```{r}
 # Bar plot for Content Rating
 ggplot(data_final, aes(x = Content.Rating)) +
@@ -1603,7 +1610,7 @@ ggplot(seasonal_intensity, aes(x = season, y = update_intensity, fill = Content.
 
 
 
-### Content Rating vs Installs
+#### Visualization for Content Rating vs Installs
 
 ```{r}
 # 1. Basic statistics for Installs by Content Rating
@@ -1630,7 +1637,7 @@ ggplot(data_final, aes(x = Content.Rating, y = log10(Installs))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-## Last Updated vs Installs
+#### Visualization for Last Updated vs Installs
 ```{r}
 data_analysis <- data_final %>%
   mutate(
@@ -1669,7 +1676,7 @@ ggplot(data_analysis, aes(x = Content.Rating, y = log10(Installs), fill = update
 ```
 
 
-### Last Updated vs Content Rating vs Installs 
+#### Visualization for Last Updated vs Content Rating vs Installs 
 ```{r}
 # 3. Timeline analysis: Average installs over time by content rating
 installs_timeline <- data_final %>%
@@ -1689,7 +1696,7 @@ ggplot(installs_timeline, aes(x = Last.Updated, y = log10(avg_installs), color =
 
 # Statistical Tests
 
-## Statistical test for Installs and Price 
+#### Statistical test for Installs and Price 
 
 ```{r}
 # Check for missing values and ensure no negative/zero values in log_Installs
@@ -1720,7 +1727,7 @@ more popular than paid apps, which can be considered true in the app
 market.
 
 
-## T-Test for Reviews and Price 
+#### T-Test for Reviews and Price 
 ```{r}
 #Confirming with a t-test
 # Perform t-test for Reviews between Free and Paid
@@ -1740,7 +1747,7 @@ print(t_test_rating)
 * There is a statistically significant difference between the mean ratings for Free and Paid apps. Paid apps have slightly higher ratings on average, though the difference is small.
 
 
-## ANOVA Test for Reviews vs Ratings
+#### ANOVA Test for Reviews vs Ratings
 
 The tests below are to test whether or not different review categories have
 different average ratings.
@@ -1752,7 +1759,7 @@ summary(anova_result)
 
 According to p-value, it is significant hence we can say that the average rating for all review categories is not same.
 
-## Post Hoc Test
+#### Post Hoc Test
 
 ```{r}
 # Perform Tukey's HSD
@@ -1776,7 +1783,7 @@ different review categories is between 0+ and 1M+ as expected.
 For easier Ratings and Reviews vs Installs we can group Installs into
 categories given
 
-## ANOVA test for Content Rating vs Installs 
+#### ANOVA test for Content Rating vs Installs 
 ```{r}
 # 1. Encode content rating (e.g., as factor levels or one-hot encoding)
 data_final$Content.Rating <- as.factor(data_final$Content.Rating)
@@ -1793,20 +1800,16 @@ print(summary(install_anova))
 
 ```
 
+
 ANOVA analysis : 
 Revealed significant differences in install counts based on content rating (F(5, 9638) = 41.95, p < 2e-16). This indicates that various content ratings have a substantial impact on the number of installs, highlighting the importance of content quality and type in attracting users.
 
 
 # Correlation 
 
-## Correlation for all variables in data_final
+#### Correlation for all variables in data_final
 Lets convert all the categorical variables into factors and then convert into numerical dataframe for calucalting the correlation matrix 
 ```{r}
-
-
-library(dplyr)
-library(corrplot)
-
 # Step 1: Create a copy of the original data without specific columns
 columns_to_remove <- c("App", "Scaled_Reviews", "update_year", "update_month", 
                         "update_quarter", "days_since_update", "week_of_year", "Last.Updated","day_of_week","month_of_year","season")
@@ -1849,7 +1852,7 @@ As seen installs has the highest correlation with the reviews.
 As we can see from the both pearson and spearman have relatively different correlation matrices and plots.
 We can refer to the categorical variables correlation from the spearman.
 
-#Correlation Reviews
+### Correlation Reviews
 
 
 ```{r}
@@ -1876,7 +1879,7 @@ corrplot(reviews_correlation_factor1, method = "color", addCoef.col = "black",
 As seen reviews has the highest correlation(positive) with the installs and then in spearman correlation matrix it has high correlation(positive) with content rating and android version meaning
 
 
-## Correlation with Rating
+#### Correlation with Rating
 
 ```{r}
 rating_correlation_factor <- correlation_matrix[, "Rating", drop = FALSE]
@@ -1900,18 +1903,40 @@ corrplot(rating_correlation_factor1, method = "color", addCoef.col = "black",
 ```
 
 Rating is not much correlated with any of the variables, only slightly positively correlated with reviews and installs which was also demonstrated through visualisation previously.
-## Correlation with Price 
+
+#### Correlation with Price 
 ```{r}
-# # Check correlation between variables
-# log_Installs = log10(data_final$Installs)
-# correlation_matrix <- data_final %>%
-#   select(Price, Reviews, Rating, log_Installs) %>%
-#   cor(use = "complete.obs")
-# 
-# correlation_matrix
-# 
-# # Create a colorful correlation matrix
-# corrplot(correlation_matrix, method = "color", 
+# Spearman correlation for Price
+price_correlation_factor1 <- correlation_matrix1[, "Price", drop = FALSE]
+print("Spearman Correlation of Price with Other Variables:")
+print(price_correlation_factor1)
+
+# Plot for Spearman correlation with Price
+corrplot(price_correlation_factor1, method = "color", addCoef.col = "black", 
+         title = "Correlation of Price with Other Variables (Spearman)", 
+         tl.col = "black", tl.srt = 45)
+
+```
+
+Price vs. Log_Installs: -0.06, suggesting a very weak negative
+relationship between price and the number of installs.
+
+
+#### Correlation between time analysis variables VS Installs
+
+```{r}
+
+# Create a new data frame with relevant variables for correlation analysis
+#correlation_data <- data_analysis %>%
+#  select(days_since_update, update_year, update_month) %>%
+#  mutate(log_installs = log10(data_final$Installs))
+
+# Calculate the correlation matrix
+#correlation_matrix <- cor(correlation_data, method = "spearman", use = "complete.obs")
+
+# Print the correlation matrix
+#print("Spearman Correlation Matrix:")
+#corrplot(correlation_matrix, method = "color", 
 #          col = colorRampPalette(c("red", "white", "blue"))(200),
 #          type = "upper", 
 #          tl.col = "black", tl.srt = 45, 
@@ -1922,48 +1947,10 @@ Rating is not much correlated with any of the variables, only slightly positivel
 
 ```
 
-Price vs. Log_Installs: -0.06, suggesting a very weak negative
-relationship between price and the number of installs.
-
-
-## Spearsman correlation for Last Updated vs Installs
-```{r}
-
-data_final$days_since_update <- as.numeric(difftime(Sys.Date(), data_final$Last.Updated, units = "days"))
-correlation_update_installs <- cor.test(data_final$days_since_update, log10(data_final$Installs), method = "spearman")
-print(correlation_update_installs)
-
-```
-
-
 Correlation Analysis:
 A moderate negative correlation :(ρ=−0.3317) was found between the number of days since the last update and the log-transformed installs. This indicates that as the time since the last update increases, the number of installs tends to decrease. The relationship is statistically significant (p < 2.2e-16), suggesting that timely updates may be crucial for maintaining user engagement.
 
-## Correlation between Last updated VS Installs
-```{r}
-# Remove rows where Installs has NA, NaN, or non-positive values (because log10 of 0 or negative is undefined)
-
-
-# 5. Create time-based features for correlation analysis
-data_analysis <- data_final %>%
-  mutate(
-    days_since_update = as.numeric(difftime(max(Last.Updated), Last.Updated, units = "days")),
-    update_year = year(Last.Updated),
-    update_month = month(Last.Updated)
-  )
-
-# Calculate correlation between days since update and installs
-correlation_result <- cor.test(data_analysis$days_since_update, 
-                             log10(data_analysis$Installs), 
-                             method = "spearman")
-
-print("\nCorrelation between days since update and installs:")
-print(correlation_result)
-```
-
-
-
-## Chi-square Test for Content Rating vs Last Updated 
+#### Chi-square Test for Content Rating vs Last Updated 
 ```{r}
 # 3.2 Statistical Tests
 
@@ -1979,3 +1966,4 @@ The P value is small signifying that there is statistically significant relation
 
 Implications
 These findings suggest that regular updates are important for sustaining app installs, and that different content ratings can influence user engagement. Strategies aimed at timely updates and optimizing content ratings could enhance app performance and user acquisition.
+
