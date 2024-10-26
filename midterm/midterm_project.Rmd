@@ -1741,6 +1741,107 @@ Revealed significant differences in install counts based on content rating (F(5,
 
 # Correlation 
 
+## Correlation for all variables in data_final
+Lets convert all the categorical variables into factors and then convert into numerical dataframe for calucalting the correlation matrix 
+```{r}
+
+
+library(dplyr)
+library(corrplot)
+
+# Step 1: Create a copy of the original data without specific columns
+columns_to_remove <- c("App", "Scaled_Reviews", "update_year", "update_month", 
+                        "update_quarter", "days_since_update", "week_of_year", "Last.Updated","day_of_week","month_of_year","season")
+
+data_numeric_or_factor <- data_final %>%
+  select(-one_of(columns_to_remove))
+
+
+
+# Step 2: Convert specified categorical columns to factors
+data_numeric_or_factor$Android.Ver <- as.factor(data_numeric_or_factor$Android.Ver)
+data_numeric_or_factor$Category <- as.factor(data_numeric_or_factor$Category)
+
+data_factor <- data_numeric_or_factor
+
+# Step 3: Identify categorical columns
+categorical_columns <- sapply(data_numeric_or_factor, is.factor)
+
+# Step 4: Convert each categorical variable to numeric
+data_final_numeric <- data_numeric_or_factor  # Copy of the data
+data_final_numeric[categorical_columns] <- lapply(data_numeric_or_factor[categorical_columns], 
+                                                   function(x) as.numeric(as.factor(x)))
+
+
+# Step 5: Calculate Pearson correlation
+correlation_matrix <- cor(data_final_numeric,method = "pearson", use = "complete.obs")
+print(correlation_matrix)
+
+# Caluclate the spearman 
+correlation_matrix1 <- cor(data_final_numeric, method = "spearman", use = "complete.obs")
+print(correlation_matrix1)
+
+# Step 6: Plot the correlation matrix
+corrplot(correlation_matrix, method = "color", addCoef.col = "black")
+corrplot(correlation_matrix1, method = "color", addCoef.col = "black")
+
+```
+As seen installs has the highest correlation with the reviews.
+
+As we can see from the both pearson and spearman have relatively different correlation matrices and plots.
+We can refer to the categorical variables correlation from the spearman.
+
+#Correlation Reviews
+
+
+```{r}
+reviews_correlation_factor <- correlation_matrix[, "Reviews", drop = FALSE]
+
+reviews_correlation_factor1 <- correlation_matrix1[, "Reviews", drop = FALSE]
+
+# Print the correlation matrix for Reviews from numeric factor data
+print(reviews_correlation_factor)
+
+# Step 6: Create a correlation plot for Reviews in data_numeric_or_factor
+corrplot(reviews_correlation_factor, method = "color", addCoef.col = "black", 
+         title = "Correlation of Reviews with Other Variables (Factor Data)", 
+         tl.col = "black", tl.srt = 45)
+
+
+corrplot(reviews_correlation_factor1, method = "color", addCoef.col = "black", 
+         title = "Correlation of Reviews with Other Variables (Factor Data)", 
+         tl.col = "black", tl.srt = 45)
+
+
+```
+
+As seen reviews has the highest correlation(positive) with the installs and then in spearman correlation matrix it has high correlation(positive) with content rating and android version meaning
+
+
+## Correlation with Rating
+
+```{r}
+rating_correlation_factor <- correlation_matrix[, "Rating", drop = FALSE]
+
+rating_correlation_factor1 <- correlation_matrix1[, "Rating", drop = FALSE]
+
+# Print the correlation matrix for Reviews from numeric factor data
+print(rating_correlation_factor)
+
+# Step 6: Create a correlation plot for Reviews in data_numeric_or_factor
+corrplot(rating_correlation_factor, method = "color", addCoef.col = "black", 
+         title = "Correlation of Reviews with Other Variables (Factor Data)", 
+         tl.col = "black", tl.srt = 45)
+
+
+corrplot(rating_correlation_factor1, method = "color", addCoef.col = "black", 
+         title = "Correlation of Reviews with Other Variables (Factor Data)", 
+         tl.col = "black", tl.srt = 45)
+
+
+```
+
+Rating is not much correlated with any of the variables, only slightly positively correlated with reviews and installs which was also demonstrated through visualisation previously.
 ## Correlation with Price 
 ```{r}
 # # Check correlation between variables
