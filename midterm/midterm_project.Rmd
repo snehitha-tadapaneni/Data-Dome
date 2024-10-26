@@ -73,6 +73,8 @@ data_apps <- data.frame(read.csv("googleplaystore.csv"))
 #Checking the structure of the data
 str(data_apps)
 ```
+
+
 ```{r}
 #First 5 rows of the dataset
 head(data_apps)
@@ -320,6 +322,16 @@ str(data_clean$Rating)
 As we can see the Review column is in string format which could be
 converted into int for more insights.
 
+#### Checking the unique values for reviews and rating
+```{r}
+unique_values <- unique(data_clean$Reviews)
+unique_values1 <- unique(data_clean$Rating)
+# Display the unique values
+print(unique_values)
+print(unique_values1)
+```
+
+
 #### Change the column reviews from Str to int
 
 ```{r , echo=FALSE}
@@ -334,6 +346,16 @@ There are 1463 missing values in rating.
 
 As it could observed the Family category apps have the highest NA values. Let's not drop them but handle them by replacing with the mean value for the category.
 
+#### Checking for Outliers For rating by seeing frequency for each rating
+
+```{r}
+ breaks = seq(15,20,by = 1)
+frequency_table = table(data_clean$Rating)
+frequency_table
+```
+From above it can be seen all the rating are between 1 and 5.But, most of them are above 4
+
+#### Replacing NA values in Rating with mean
 ```{r}
 #Replace NA in Ratings with Overall Mean
 data_clean <- data_clean %>%
@@ -345,15 +367,6 @@ xkablesummary(data_clean)
 
 Now there are no missing values in reviews.
 
-#### Checking for Outliers For rating by seeing frequency for each rating
-
-```{r}
- breaks = seq(15,20,by = 1)
-frequency_table = table(data_clean$Rating)
-frequency_table
-```
-
-From above it can be seen all the rating are between 1 and 5.
 
 
 ## Category
@@ -362,6 +375,8 @@ From above it can be seen all the rating are between 1 and 5.
 # Checking the type of the Category 
 typeof(data_apps$Category)
 ```
+
+
 ```{r}
 length(unique(data_clean$Category))
 length(unique(data_clean$Genres))
@@ -383,8 +398,9 @@ column, this column is dropped and will be excluded from the analysis.
 
 ```{r}
 data_final <- data_clean %>% select(-c('Genres', 'Current.Ver'))
-data_final$Category <- factor(data_final$Category)
-data_final$Android.Ver <- factor(data_final$Android.Ver)
+data_final$Category <- as.factor(data_final$Category)
+data_final$Android.Ver <- as.factor(data_final$Android.Ver)
+
 ```
 
 
@@ -622,8 +638,7 @@ ggplot(data_final, aes(x = Price_Category, y = log(data_clean$Installs))) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  
 ```
 
-"Free" apps tend to have more installs than "Paid" apps. The difference between the means on the log scale is estimated to be between 3.47 and
-3.97.
+"Free" apps tend to have more installs than "Paid" apps. The difference between the means on the log scale is estimated to be between 3.47 and 3.97.
 
 ```{r}
 # Categorize the apps as "Free" or "Paid" based on Price
@@ -741,7 +756,7 @@ ggplot(data_final, aes(x=Price, y=Size)) +
 # Create a new data frame to store the factor levels
 data_clean1_factor <- data_final  
 
-data_clean1_factor$Installs <- factor(data_final$Installs, levels = sorted_values)
+data_clean1_factor$Installs <- factor(data_final$Installs, levels = c(0,1,5,10,50,100,500,1000,5000,10000,50000,100000,500000,1000000,5000000,10000000,50000000,100000000,500000000,1000000000))
 
 # Create a bar plot with the ordered factor
 ggplot(data_clean1_factor, aes(x = Installs)) +
@@ -910,8 +925,9 @@ This is another representation of ratings vs reviews.
 ```{r A.J3}
 
 # Scatter plot for Installs vs Reviews
-ggplot(data_clean1_factor, aes(x = Reviews, y = Installs)) +
+ggplot(data_clean1_factor, aes(x = Review_Category, y = Installs)) +
   geom_point(color = "blue", alpha = 0.5) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add a regression line
   labs(title = "Scatter Plot of Installs vs Reviews", 
        x = "Number of Reviews", 
        y = "Number of Installs") +
@@ -919,15 +935,42 @@ ggplot(data_clean1_factor, aes(x = Reviews, y = Installs)) +
 
 ```
 
+It could be observed that more the number of installs, more the number of reviews.
+
+#### Visualisation of Mean for different Install Categories
+```{r}
+# Calculate the mean Rating for each Review_Category
+mean_ratings <- tapply(data_final$Rating, data_clean1_factor$Installs, mean, na.rm = TRUE)
+
+# Convert the result to a data frame for better readability
+mean_ratings_df <- data.frame(Installs = names(mean_ratings), Mean_Rating = as.numeric(mean_ratings))
+
+# Print the mean ratings for each review bin
+print(mean_ratings_df)
+
+mean_ratings_df$Installs = factor(mean_ratings_df$Installs, levels = c(0,1,5,10,50,100,500,1000,5000,10000,50000,100000,500000,1000000,5000000,10000000,50000000,100000000,500000000,1000000000))
+
+# Plot the mean ratings for each review bin in the correct order
+ggplot(mean_ratings_df, aes(x = Installs, y = Mean_Rating)) +
+  geom_bar(stat = "identity", fill = "steelblue") +  # Use bar plot
+  labs(title = "Mean Rating by Install Category",
+       x = "Installs Category",
+       y = "Mean Rating") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+```
+Observing the flucuation of Rating for different Installs it could be seen that there is no constant increase or deacrease trend seen for Installs and rating, which could be expected as more Rating doesnot necessarily mean more Installs. But high Installs and high Rating could be seen as good app.
+
 #### Visualization for Rating vs Installs
 ```{r A.J4}
 # Scatter plot of log-transformed Installs vs. Rating
-ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
+ggplot(data_final, aes(x = log(Installs) , y = Rating)) +
   geom_point(color = "blue", alpha = 0.6) +
   geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add a regression line
   labs(title = "Log-Transformed Installs vs. Rating", 
-       x = "Log(Installs)", 
-       y = "Rating") +
+       x = "Rating", 
+       y = "Installs") +
   theme_minimal()
 
 ```
@@ -971,7 +1014,7 @@ ggplot(category_counts_df, aes(x = reorder(Category, Frequency), y = Frequency))
   )
 ```
 
-AS it can be seen from the graph above, most of the apps in the dataset belong to the Family category, and Beauty has the least number of apps. 
+AS it can be seen from the graph above, most of the apps in the dataset belong to the Family and Game, tools category, and Beauty,comics have the least number of apps. 
 
 
 #### Visualization for Category vs. Installs
@@ -1820,8 +1863,6 @@ data_numeric_or_factor <- data_final %>%
 
 
 # Step 2: Convert specified categorical columns to factors
-data_numeric_or_factor$Android.Ver <- as.factor(data_numeric_or_factor$Android.Ver)
-data_numeric_or_factor$Category <- as.factor(data_numeric_or_factor$Category)
 
 data_factor <- data_numeric_or_factor
 
