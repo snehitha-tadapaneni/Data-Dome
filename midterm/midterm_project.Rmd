@@ -46,7 +46,7 @@ installs, using data from Google Play Store apps from 2010 to 2018?”
 
 ```{r required libraries, include=F}
 # The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
-# Some of the frequently used functions are loadPkg(), xkabledply(), xkablesummary(), uzscale(), etc.
+# Importing the necessary libraries
 library(ezids)
 library(dplyr)
 library(ggplot2)
@@ -60,7 +60,12 @@ library(knitr)
 library(kableExtra)
 ```
 
+### Data Preparation and Cleaning
+
+Here, we have loaded the dataset 'Google Play Store Apps' stored in csv file using ()
+
 ```{r}
+#Loading the Dataset
 data_apps <- data.frame(read.csv("googleplaystore.csv"))
 ```
 
@@ -68,10 +73,37 @@ data_apps <- data.frame(read.csv("googleplaystore.csv"))
 #Checking the structure of the data
 str(data_apps)
 ```
+```{r}
+#First 5 rows of the dataset
+head(data_apps)
+```
+
+#### Description of the App Dataset Columns
+1) App: The name of the application, represented as a character string.
+2) Category: The main category of the app, such as "ART_AND_DESIGN," represented as a character string.
+3) Rating: The average user rating of the app, recorded as a numeric value.
+4) Reviews: The total number of user reviews for the app, shown as a character string.
+5) Size: The size of the application, represented as a character string.
+6) Installs: The approximate number of installations for the app, stored as a character string.
+7) Type: Indicates whether the app is free or paid, represented as a character string.
+8) Price: The price of the app, stored as a character string. Free apps are listed as "0," while paid apps have a dollar amount.
+9) Content.Rating: The target age group for the app, represented as a character string.
+10) Genres: The genre(s) of the app.
+11) Last.Updated: The date of the app's last update, stored as a character string.
+12) Current.Ver: The current version of the app, represented as a character string.
+13) Android.Ver: The minimum Android version required to run the app, stored as a character string.
+
 
 ## Apps
 
 ```{r ST0}
+# Checking the type of the App 
+typeof(data_apps$App)
+```
+
+#### Checking for duplicated apps and removing
+
+```{r}
 #Display all the duplicated Apps
 duplicate_apps <- aggregate(App ~ ., data = data_apps, FUN = length)  
 duplicate_apps <- duplicate_apps[duplicate_apps$App > 1, ] 
@@ -121,7 +153,7 @@ unique_df <- data.frame(
 typeof(data_apps$Price)
 ```
 
-Convertion of Price to numerical is required.
+#### Convertion of Price to numerical 
 There is '$' present after each price of the App. Check and remove before conversion.
 
 ```{r}
@@ -146,8 +178,9 @@ summary(data_clean$Price)
 
 From the unique_df, there is a missing value present in the Price column. Let's handle it!
 
+#### Checking for missing values in Price
+
 ```{r}
-#Checking for missing values in Price
 missing_na <- is.na(data_clean$Price)    
 missing_blank <- data_clean$Price == "" 
 
@@ -167,10 +200,11 @@ Have removed one row #10473 which app does not have a category nameas it is not 
 summary(data_clean$Price)
 ```
 
-Missing values removed succesfully. (Price)
+##### Missing values removed succesfully. (Price)
+
+#### Count Plot for the Price distribution
 
 ```{r}
-#Count Plot for the Price distribution
 ggplot(data_clean, aes(x=Price)) +
   geom_histogram(binwidth=2, fill="pink", color="black") +
    xlim(0, 500) + ylim(0, 500) +
@@ -275,11 +309,12 @@ As aldready mentioned, there are 8903 free apps (More apps with price as 0).
 ## Type
 
 ```{r ST2}
+#Checking the type of Type variable
 table(data_clean$Type)
 ```
 From the price column, we can see 8903 apps are free but it is misread somewhere in the Type column. So lets check!
 ```{r}
-#Missing values
+#Checking for Missing values
 print(paste("Missing values:",sum(is.na(data_clean$Type))))
 
 data_clean[is.na(data_clean$Type), ]
@@ -295,6 +330,10 @@ data_clean$Type[is.na(data_clean$Type)] <- "Free"
 There is one row 9150, has a missing value for Type. As the price is 0,
 replaced it with "Free".
 
+##### Missing values handles succesfully. (Type)
+
+#### Bar Plot for the Type Distribution
+
 ```{r}
 ggplot(data_clean, aes(x = Type)) +
   geom_bar(fill = "pink", color = "black") +
@@ -303,6 +342,7 @@ ggplot(data_clean, aes(x = Type)) +
 ```
 As it is clear, there are more free apps.
 ```{r}
+#Display statistics for the Price of apps grouped by their Type
 data_clean$Type <- as.factor(data_clean$Type)
 
 
@@ -319,6 +359,7 @@ print(summary_by_type)
 ```
 
 ```{r}
+#Scatter plot for price distribution by app type
 ggplot(data_clean, aes(x = Type, y = Price, fill = Type)) +
   geom_boxplot() +
   labs(title = "Price Distribution by App Type", 
@@ -326,6 +367,7 @@ ggplot(data_clean, aes(x = Type, y = Price, fill = Type)) +
        y = "Price ($)") +
   theme_minimal()
 ```
+#### Histogram for price distribution by App Type
 
 ```{r}
 ggplot(data_clean, aes(x = Price, fill = Type)) +
@@ -341,6 +383,7 @@ Upon analyzing the price distribution across different app types, we found that 
 
 Hence, Removing the Type column...
 
+#### Dropping the Type column
 ```{r}
 #Using subset function
 data_clean <- subset(data_clean, select = -Type)
@@ -354,14 +397,15 @@ head(data_clean)
 
 The Type column is successfully removed.
 
-
 ## Size
 
-
 ```{r}
-#clean size
+# Checking the type of the Size 
+typeof(data_apps$Size)
+```
+#### Replacing Misiing values with the mean (Size)
+```{r}
 # Replace "Varies with Device" in the Size column with NA
-library(DT)
 data_clean$Size[data_clean$Size == "Varies with device"] <- NA
 data_clean <- data_clean[!grepl("\\+", data_clean$Size), ]
 data_clean$Size <- ifelse(grepl("k", data_clean$Size),
@@ -369,7 +413,7 @@ data_clean$Size <- ifelse(grepl("k", data_clean$Size),
 0.001,  # Convert "K" to MB
                           as.numeric(gsub("M", "", data_clean$Size)))
 # Remove "M" for megabytes
-# Step 3: Calculate and display the mean size for each category in the 'Type' column
+# Calculate and display the mean size for each category in the 'Type' column
 mean_size_by_type <- tapply(data_clean$Size, data_clean$Category,
 mean, na.rm = TRUE)
 print(mean_size_by_type)
@@ -384,15 +428,15 @@ data_clean$Size <- ifelse(
 
 ```
 
+
 ## Installs
 
 ```{r A.J}
-
-#clean installations
+#clean installations: Remove the '+' sign, Remove the commas, Convert to numeric
 clean_installs <- function(Installs) {
-  Installs <- gsub("\\+", "", Installs)  # Remove the '+' sign
-  Installs <- gsub(",", "", Installs)    # Remove the commas
-  return(as.numeric(Installs))           # Convert to numeric
+  Installs <- gsub("\\+", "", Installs)  
+  Installs <- gsub(",", "", Installs)    
+  return(as.numeric(Installs))           
 }
 
 data_clean$Installs <- sapply(data_clean$Installs, clean_installs)
@@ -406,13 +450,13 @@ data_clean[,nan_rows]
 datatable((data_clean), options = list(scrollX = TRUE ))
 ```
 
+#### Display the unique values
+
 ```{r A.J1}
-
-
 data_clean <- data_clean %>%
   mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
 
-# Step 1: Identify the unique values in the 'Installs' column
+# Identify the unique values in the 'Installs' column
 unique_values <- unique(data_clean$Installs)
 
 # Display the unique values
@@ -426,11 +470,15 @@ convert_to_numeric <- function(x) {
 
 # Sort unique values based on the custom numeric conversion
 sorted_values <- unique_values[order(sapply(unique_values, convert_to_numeric))]
+
+
 ```
+
+#### Bar plot for distribution of Installs
 
 ```{r A.J2}
 # Create a new data frame to store the factor levels
-data_clean1_factor <- data_clean  # Assuming you want to keep the original data intact
+data_clean1_factor <- data_clean  
 
 data_clean1_factor$Installs <- factor(data_clean$Installs, levels = sorted_values)
 
@@ -439,15 +487,22 @@ ggplot(data_clean1_factor, aes(x = Installs)) +
   geom_bar() +
   xlab("Installs") +
   ylab("Count") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # Rotate x-axis labels for readability
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  
   ggtitle("Distribution of App Installs")
-
-
 ```
 
----- Should add cleaning of Ratings and Reviews here -----
 
 ## Rating and Reviews
+
+```{r}
+# Checking the type of the Rating 
+typeof(data_clean$Rating)
+```
+
+```{r}
+# Checking the type of the Reviews 
+typeof(data_clean$Reviews)
+```
 
 ### Checking the format of Rating and Reviews
 
@@ -474,7 +529,7 @@ There are 1463 missing values in rating.
 As it could observed the Family category apps have the highest NA values. Let's not drop them but handle them by replacing with the mean value for the category.
 
 ```{r}
-# Method 1: Replace NA in Ratings with Overall Mean
+#Replace NA in Ratings with Overall Mean
 data_clean <- data_clean %>%
   mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
 
@@ -583,7 +638,6 @@ observed in more apps which is expected.
 ### Boxplots: Rating vs Reviews
 
 ```{r}
-
 boxplot( data_clean$Rating~ Review_Category, data = data_clean, 
         main = "Boxplot of Review Counts by Review Category", 
         xlab = "Review Category", 
@@ -647,15 +701,8 @@ ggplot(plot_data, aes(x = Rating)) +
 
 This is another representation of ratings vs reviews.
 
-
-
-
-
-
-
-
-
 ## Reviews vs Installs
+
 ```{r A.J3}
 
 # Scatter plot for Installs vs Reviews
@@ -669,9 +716,6 @@ ggplot(data_clean1_factor, aes(x = Reviews, y = Installs)) +
 ```
 
 ```{r A.J4}
-
-
-
 # Scatter plot of log-transformed Installs vs. Rating
 ggplot(data_clean, aes(x = log(data_clean$Installs), y = Rating)) +
   geom_point(color = "blue", alpha = 0.6) +
@@ -698,12 +742,15 @@ ggplot(data_clean, aes(x = log(data_clean$Installs), y = Rating)) +
 ```
 
 
-
-
-
 ## Category
 
 ```{r W}
+# Checking the type of the Category 
+typeof(data_apps$Category)
+```
+```
+
+```{r}
 length(unique(data_clean$Category))
 length(unique(data_clean$Genres))
 ```
