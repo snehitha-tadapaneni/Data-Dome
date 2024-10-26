@@ -736,16 +736,19 @@ ggplot(category_counts_df, aes(x = reorder(Category, Frequency), y = Frequency))
   )
 ```
 
+AS it can be seen from the graph above, most of the apps in the dataset belong to the Family category, and Beauty has the least number of apps. 
+
+
 ### Category vs. Installs
 
 Below is a boxplot show the distribution of number of installs for each
-category.
+category order by mean from highest to lowest. 
 
 ```{r}
-ggplot(data_clean, aes(x = reorder(Category, log(data_clean$Installs)), y = log(data_clean$Installs))) +
+ggplot(data_clean, aes(x = reorder(Category, log(data_clean$Installs),  FUN = mean), y = log(data_clean$Installs))) +
   geom_boxplot(outlier.color = "#f05555", outlier.shape = 1, color='#1f3374', fill="#efefef") +  # Red outliers for emphasis
   coord_flip() +  # Flip for better readability
-  scale_y_log10() +  # Log scale for clearer comparison
+  scale_y_log10() +
   theme_minimal() +
   labs(title = "Distribution of Installs by Category",
        x = "Category",
@@ -756,8 +759,10 @@ ggplot(data_clean, aes(x = reorder(Category, log(data_clean$Installs)), y = log(
     axis.text.y = element_text(size = 5.5)
   )
 ```
+It can be seen from the graph that, on average, Entertainment apps receive the highest number of installations, followed by Education, Game, Photography, and Weather apps. In contrast, Art & Design apps have the fewest installations.
 
 ### Category vs. App Size
+
 
 ```{r}
 #convert_size <- function(size) {
@@ -781,6 +786,8 @@ ggplot(data_clean, aes(x = reorder(Category, log(data_clean$Installs)), y = log(
     #}
 ```
 
+Below is the figure showing the distribution of app sizes in each category. 
+
 ```{r}
 #df_clean <- data_clean %>%
  # mutate(Size = sapply(Size, convert_size)) %>%
@@ -797,13 +804,15 @@ ggplot(data_clean, aes(x = Size)) +
     y = "Count"
   ) +
   theme(
-    strip.text = element_text(size = 8),
+    strip.text = element_text(size = 5),
     axis.text.x = element_text(size = 7, angle = 45, hjust = 1)
   )
 
 str(data_clean)
 
 ```
+
+
 
 ```{r}
 ggplot(data_clean, aes(x = reorder(Category, Size, FUN = median), y = Size)) + 
@@ -822,7 +831,12 @@ ggplot(data_clean, aes(x = reorder(Category, Size, FUN = median), y = Size)) +
 
 ```
 
+As it can be seen from the two figures above, most categories exhibit right-skewed app sizes, with the majority being under 50MB. However, the Game category stands out with a significantly larger median app size compared to other categories.
+
 ### Category vs. Reviews
+
+
+Below is the graph displaying the distribution of reviews left by users for each category.
 
 ```{r}
 
@@ -848,33 +862,11 @@ ggplot(df_aggregated, aes(x = reorder(Category, -Total_Reviews), y = log10(Total
 
 
 ```
+AS it can be seen that game apps have most reviews while events apps have the least reviews.
 
 ### Category vs. Rating
 
-### Distribution of NA Ratings by Category.
-
-```{r}
-df_na_rating <- data_clean %>% filter(is.na(Rating))
-
-# Group by Category and count the number of NA ratings for each category
-na_rating_distribution <- df_na_rating %>%
-  group_by(Category) %>%
-  summarise(count = n()) %>%
-  arrange(desc(count))
-
-
-ggplot(na_rating_distribution, aes(x = reorder(Category, -count), y = count)) +
-  geom_bar(stat = "identity", fill = "steelblue") +
-  geom_text(aes(label = count), 
-            position = position_stack(vjust = 0.5),  # Center the text within the bars
-            color = "white", size = 3) +  # Adjust text color and size
-  coord_flip() +  
-  theme_minimal() +
-  labs(title = "Distribution of NA Ratings by Category",
-       x = "Category",
-       y = "Count of NA Ratings") +
-  theme(axis.text.y = element_text(size = 8))
-```
+Below is the figure demonstrating the distribution of number of rating for each category. 
 
 ```{r}
 ggplot(data_clean, aes(x = Rating)) + 
@@ -896,6 +888,8 @@ ggplot(data_clean, aes(x = Rating)) +
 
 
 ```
+As illustrated in the graph above, all categories have app ratings that range between 4.0 and 5.0.
+
 
 ### Current Version
 
@@ -951,6 +945,7 @@ ggplot(df_clean, aes(x = Android_Ver)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
+As it can be seen that, the minimum required Android Version for most apps is 4.0 and up. 
 
 ```{r}
 extract_version <- function(version) {
@@ -972,8 +967,10 @@ extract_version <- function(version) {
 
 ### Android Version vs. Installs
 
+Below is the graph showing the number of installs for each minimum required Android Version. 
+
 ```{r}
-ggplot(data_clean, aes(x = reorder(Android.Ver, -Installs), y = Installs)) + 
+ggplot(data_clean, aes(x = reorder(Android.Ver, Installs), y = Installs)) + 
   geom_bar(stat = "identity", fill = "#1f3374") + 
   coord_flip() +  # Flip coordinates for better readability
   scale_y_continuous(labels = scales::comma) +  # Format y-axis with commas
@@ -990,16 +987,20 @@ ggplot(data_clean, aes(x = reorder(Android.Ver, -Installs), y = Installs)) +
 
 ```
 
+It can be seen that the highest number of installation is when there is different requirements of the versions for the app to run. 
+
 ### Android Version vs. Reviews
 
+Below is the distribution of reviews for each minimum required Android Version.
+
 ```{r}
-data_clean <- data_clean %>% 
+df_clean <- data_clean %>% 
   filter(!is.na(Android.Ver) & !is.na(Reviews)) %>% 
   mutate(Scaled_Reviews = log10(Reviews + 1))
 ```
 
 ```{r}
-ggplot(data_clean, aes(x = reorder(Android.Ver, Scaled_Reviews, FUN = median), y = Scaled_Reviews)) + 
+ggplot(df_clean, aes(x = reorder(Android.Ver, Scaled_Reviews, FUN = median), y = Scaled_Reviews)) + 
   geom_boxplot(outlier.color = "#f05555", outlier.shape = 1) +  # Boxplot with red outliers
   coord_flip() +  # Flip coordinates for better readability
   theme_minimal() + 
@@ -1015,7 +1016,12 @@ ggplot(data_clean, aes(x = reorder(Android.Ver, Scaled_Reviews, FUN = median), y
 
 ```
 
+It can be seen that the version from 4.1 to 7.1.1 have the highest number of reviews, whiel version from 5.0 to 7.1.1 have the least number of reviews. 
+
+
 ### Android Version vs. Rating
+
+Below is the plot showing the number of ratings for each Android Version. 
 
 ```{r}
 ggplot(df_clean, aes(x = Rating, fill = Android.Ver)) + 
@@ -1034,13 +1040,18 @@ ggplot(df_clean, aes(x = Rating, fill = Android.Ver)) +
   )
 
 ```
+It can be seen that most Android Version have ratings range between 4.0 and 5.0.
+
 
 ```{r}
 data_final <- data_clean %>% select(-c('Genres', 'Current.Ver'))
+data_final$Category <- factor(data_final$Category)
+data_final$Android.Ver <- factor(data_final$Android.Ver)
+
 str(data_final)
 ```
 
-Lets do bivariate analysis on price and other variables from now.
+Let's do bivariate analysis on price and other variables starting from here.
 
 ### Price vs Installs
 
