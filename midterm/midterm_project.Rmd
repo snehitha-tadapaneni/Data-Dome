@@ -1,6 +1,15 @@
 ---
-title: "DATS 6101 - Midterm"
-output: html_document
+title: "DATS 6101 - App Trends and Insights: EDA of Google Play Store Data"
+output:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
 date: "`r Sys.Date()`"
 author: "Name: Snehitha Tadapaneni, Sai Rachana Kandikattu, Amrutha Jayachandradhara, Wilona Nguyen, Pramod Krishnachari
 "
@@ -11,7 +20,9 @@ editor_options:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(warning = F, results = "markdown", message = F)
+
 ```
+
 
 # Introduction
 
@@ -66,22 +77,17 @@ library(hexbin)
 Here, we have loaded the dataset ‘Google Play Store Apps’ stored in a CSV file using the read.csv function, which reads the CSV file into a data frame, and then we assigned it to the variable data_apps.
 
 ```{r}
-#Loading the Dataset
-data_apps <- data.frame(read.csv("googleplaystore.csv"))
+data_apps <- data.frame(read.csv("googleplaystore.csv")) #Loading the Dataset
+str(data_apps)#Checking the structure of the data
 ```
 
-```{r}
-#Checking the structure of the data
-str(data_apps)
-```
-
-
+# Display dataset
 ```{r}
 #First 5 rows of the dataset
 head(data_apps)
 ```
 
-#### Description of the App Dataset Columns
+#### Description of the Dataset Columns
 1) App: The name of the application, represented as a character string.
 2) Category: The main category of the app, such as "ART_AND_DESIGN," represented as a character string.
 3) Rating: The average user rating of the app, recorded as a numeric value.
@@ -98,15 +104,11 @@ head(data_apps)
 
 
 ## Apps
-
-```{r ST0}
-# Checking the type of the App 
-typeof(data_apps$App)
-```
-
 #### Checking for duplicated apps and removing
 
 ```{r}
+# Checking the type of the App 
+#typeof(data_apps$App)
 #Display all the duplicated Apps
 duplicate_apps <- aggregate(App ~ ., data = data_apps, FUN = length)  
 duplicate_apps <- duplicate_apps[duplicate_apps$App > 1, ] 
@@ -140,11 +142,6 @@ str(data_clean$App)
 ```
 
 ## Price
-
-```{r ST1}
-typeof(data_apps$Price)
-```
-
 #### Convertion of Price to numerical 
 There is '$' present after each price of the App. Check and remove before conversion.
 
@@ -154,13 +151,9 @@ There is '$' present after each price of the App. Check and remove before conver
 ```
 
 ```{r}
+typeof(data_apps$Price)
 # Remove dollar symbols and convert to numeric
 data_clean$Price <- as.numeric(gsub("\\$", "", data_clean$Price))
-```
-
-```{r}
-#Recheck for dollar symbol
-#data_clean$Price[]
 ```
 All the dollar symbols are removed succesfully.
 ```{r}
@@ -287,7 +280,7 @@ data_clean <- data_clean %>%
 unique_values <- unique(data_clean$Installs)
 
 # Display the unique values
-print(unique_values)
+#print(unique_values)
 
 # Function to convert the installs to numeric
 convert_to_numeric <- function(x) {
@@ -329,8 +322,8 @@ converted into int for more insights.
 unique_values <- unique(data_clean$Reviews)
 unique_values1 <- unique(data_clean$Rating)
 # Display the unique values
-print(unique_values)
-print(unique_values1)
+#print(unique_values)
+#print(unique_values1)
 ```
 
 
@@ -786,7 +779,8 @@ ggplot(data_clean1_factor, aes(x = Installs)) +
   geom_bar() +
   xlab("Installs") +
   ylab("Count") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        plot.title = element_text(hjust = 0.5))  +  
   ggtitle("Distribution of App Installs")
 ```
 
@@ -1008,13 +1002,15 @@ Observing the flucuation of Rating for different Installs it could be seen that 
 
 ```{r A.J4}
 # Scatter plot of log-transformed Installs vs. Rating
-ggplot(data_final, aes(x = log(Installs) , y = Rating)) +
-  geom_point(color = "blue", alpha = 0.6) +
-  geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add a regression line
-  labs(title = "Log-Transformed Installs vs. Rating", 
-       x = "Rating", 
-       y = "Installs") +
-  theme_minimal()
+ggplot(data_clean, aes(x = Size, y = log(Installs))) +
+  geom_hex(bins = 30) +
+  scale_fill_viridis_c() + # Adds color gradient
+  labs(title = "Plot of App Size vs. Installs (Log Scale)",
+       x = "Size (MB)",
+       y = "Installs (Log Scale)") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) # Centers the title
+
 
 ```
 
