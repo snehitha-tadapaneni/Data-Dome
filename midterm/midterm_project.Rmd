@@ -972,45 +972,46 @@ ggplot(data_clean1_factor, aes(x = Review_Category, y = Installs)) +
 This scatter plot shows that as apps get more downloads, they tend to get more reviews from users. Most apps fall in the lower range of downloads (like 0 to 50K installs), meaning they get a moderate number of reviews. Popular apps with over a million downloads often have thousands of reviews, showing strong user engagement. However, very few apps reach extremely high review counts (like 100K+ reviews), indicating that only a few apps become extremely popular. In short, the more installs an app has, the more likely it is to gather user feedback in the form of reviews.
 
 
-#### Visualisation of Mean for different Install Categories
+
 
 ```{r}
-# Calculate the mean Rating for each Review_Category
-mean_ratings <- tapply(data_final$Rating, data_clean1_factor$Installs, mean, na.rm = TRUE)
+#### Visualisation of Mean for different Install Categories
+# # Calculate the mean Rating for each Review_Category
+# mean_ratings <- tapply(data_final$Rating, data_clean1_factor$Installs, mean, na.rm = TRUE)
+# 
+# # Convert the result to a data frame for better readability
+# mean_ratings_df <- data.frame(Installs = names(mean_ratings), Mean_Rating = as.numeric(mean_ratings))
+# 
+# # Print the mean ratings for each review bin
+# print(mean_ratings_df)
+# 
+# mean_ratings_df$Installs = factor(mean_ratings_df$Installs, levels = c(0,1,5,10,50,100,500,1000,5000,10000,50000,100000,500000,1000000,5000000,10000000,50000000,100000000,500000000,1000000000))
+# 
+# # Plot the mean ratings for each review bin in the correct order
+# ggplot(mean_ratings_df, aes(x = Installs, y = Mean_Rating)) +
+#   geom_bar(stat = "identity", fill = "steelblue") +  # Use bar plot
+#   labs(title = "Mean Rating by Install Category",
+#        x = "Installs Category",
+#        y = "Mean Rating") +
+#   theme_minimal() +
+#   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
 
-# Convert the result to a data frame for better readability
-mean_ratings_df <- data.frame(Installs = names(mean_ratings), Mean_Rating = as.numeric(mean_ratings))
 
-# Print the mean ratings for each review bin
-print(mean_ratings_df)
-
-mean_ratings_df$Installs = factor(mean_ratings_df$Installs, levels = c(0,1,5,10,50,100,500,1000,5000,10000,50000,100000,500000,1000000,5000000,10000000,50000000,100000000,500000000,1000000000))
-
-# Plot the mean ratings for each review bin in the correct order
-ggplot(mean_ratings_df, aes(x = Installs, y = Mean_Rating)) +
-  geom_bar(stat = "identity", fill = "steelblue") +  # Use bar plot
-  labs(title = "Mean Rating by Install Category",
-       x = "Installs Category",
-       y = "Mean Rating") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
-
+# Observing the flucuation of Rating for different Installs it could be seen that there is no constant increase or deacrease trend seen for Installs and rating, which could be expected as more Rating doesnot necessarily mean more Installs. But high Installs and high Rating could be seen as good app.
 ```
-Observing the flucuation of Rating for different Installs it could be seen that there is no constant increase or deacrease trend seen for Installs and rating, which could be expected as more Rating doesnot necessarily mean more Installs. But high Installs and high Rating could be seen as good app.
+
 
 #### Visualization for Rating vs Installs
 
 ```{r A.J4}
 # Scatter plot of log-transformed Installs vs. Rating
-ggplot(data_clean, aes(x = Size, y = log(Installs))) +
-  geom_hex(bins = 30) +
-  scale_fill_viridis_c() + # Adds color gradient
-  labs(title = "Plot of App Size vs. Installs (Log Scale)",
-       x = "Size (MB)",
-       y = "Installs (Log Scale)") +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5)) # Centers the title
-
+ggplot(data_final, aes(x = log(Installs) , y = Rating)) +
+  geom_point(color = "blue", alpha = 0.6) +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add a regression line
+  labs(title = "Log-Transformed Installs vs. Rating", 
+       x = "Rating", 
+       y = "Installs") +
+  theme_minimal()
 
 ```
 
@@ -2145,6 +2146,31 @@ cor_test <- cor.test(data_clean$Size, data_clean$Installs, method = "pearson")
 cor_test
 ```
 
+####Correlation heat map
+```{r}
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+
+# Calculate the correlation matrix for Size and Installs
+cor_matrix <- cor(data_clean[, c("Size", "Installs")], use = "complete.obs", method = "pearson")
+
+# Melt the correlation matrix for easy plotting with ggplot2
+melted_cor_matrix <- melt(cor_matrix)
+
+# Plot the heatmap
+ggplot(data = melted_cor_matrix, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1)) +
+  ggtitle("Correlation Heatmap: Size vs Installs") +
+  labs(x = "Variables", y = "Variables")
+
+```
 According to the relational hypothesis testing:
 1. Correlation Coefficient (cor):Pearson correlation coefficient is 0.0407. This indicates a very weak positive relationship between Size and Installs—meaning that as app size increases, installs slightly tend to increase as well, but the effect is minimal.
 
