@@ -58,6 +58,7 @@ library(scales)
 library(cluster)
 library(knitr)
 library(kableExtra)
+library(psych)
 ```
 
 # Data Preparation and Cleaning
@@ -446,7 +447,12 @@ print(paste("Number of missing values in 'Last updated':", lu_missing))
 ```
 
 
-
+```{r}
+summary(data_apps)
+```
+```{r}
+describe(data_apps)
+```
 
 # Data Exploring and Visualization
 
@@ -933,7 +939,7 @@ ggplot(data_final, aes(x=Price, y=Rating)) +
 
 ggplot(data_final, aes(x = Rating, fill = Price)) +
   geom_density(alpha = 0.5) + 
-  labs(title = "Kernel Density Estimate of App Size by Price Category",
+  labs(title = "Kernel Density Estimate of App Ratings by Price Category",
        x = "App Size (MB)", 
        y = "Density") +
   theme_minimal() 
@@ -976,10 +982,10 @@ ggplot(data_final, aes(x = Price, y = Reviews,color = log(data_clean$Installs)))
   theme_minimal()
 
 
-# Create a KDE plot for Size based on Price_Category
+# Create a KDE plot for Installs based on Price_Category
 ggplot(data_final, aes(x = log(Installs), fill = Price)) +
   geom_density(alpha = 0.5) + 
-  labs(title = "Kernel Density Estimate of App Size by Price Category",
+  labs(title = "Kernel Density Estimate of Installations by Price Category",
        x = "App Size (MB)", 
        y = "Density") +
   theme_minimal() 
@@ -1796,6 +1802,20 @@ ggplot(installs_timeline, aes(x = Last.Updated, y = log10(avg_installs), color =
 The line graph depicts the trend of average app installs over time for different content ratings, with the y-axis on a logarithmic scale (`log10`). The curves reveal that apps with broader content ratings like "everyone" and "everyone 10+" show significant growth in average installs, particularly from 2016 onwards, reaching a peak around 2018. This indicates a surge in popularity and possibly greater user engagement or app availability during that period. Similarly, "mature 17+" apps follow a parallel trend but start with higher average installs and decline around 2012 before recovering alongside the other categories. 
 
 The "teen" content rating exhibits a unique pattern with fluctuating growth, maintaining relatively steady installs before rising sharply from 2016 onwards. In contrast, "adults only 18+" shows a limited increase, suggesting that apps with this rating have a smaller user base. The convergence of all content ratings towards higher install averages near 2018 reflects an overall trend in the app market where app downloads increased across various content ratings.
+
+```{r}
+summary(data_final)
+```
+### Descriptive Statstics
+
+The descriptive statistics for the Google Play Store dataset provide insights into app ratings, popularity, size, installation counts, and pricing.
+
+* Rating: App ratings range from 1 to 5, with an average rating of 4.17, indicating generally positive user feedback. Most ratings fall between 4 and 4.5.
+* Reviews: The number of reviews is highly skewed; while the average is over 216,000 reviews, the median is only 967, suggesting that a few popular apps have amassed the majority of reviews.
+* Size: App sizes vary widely, with a mean of 20.15 MB. Most apps fall within 5.3 to 27 MB, and the largest app size recorded is 100 MB.
+* Installs: The median app has 100,000 installs, while the mean is significantly higher at 7.78 million installs, highlighting that a small number of highly popular apps inflate the average.
+* Price: Most apps are free, with a median price of $0. A small percentage are paid, with prices ranging up to $400, though the mean price remains low at $1.10.
+* For categorical variables, apps are most commonly categorized under FAMILY, followed by GAME and TOOLS. Common Android version requirements are 4.1 and up and 4.0.3 and up. 
 
 
 # Statistical Tests
