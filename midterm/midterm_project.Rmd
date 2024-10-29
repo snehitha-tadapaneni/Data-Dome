@@ -59,26 +59,22 @@ library(cluster)
 library(knitr)
 library(kableExtra)
 library(psych)
-library(reshape2)
 ```
 
-# Loading Dataset and reviewing Structure of Data
+# Data Preparation and Cleaning
 
 Here, we have loaded the dataset 'Google Play Store Apps' stored in csv file using ()
-
-#### Loading Data set
 
 ```{r}
 #Loading the Dataset
 data_apps <- data.frame(read.csv("googleplaystore.csv"))
 ```
 
-
-#### Structure of Data
 ```{r}
 #Checking the structure of the data
 str(data_apps)
-
+```
+```{r}
 #First 5 rows of the dataset
 head(data_apps)
 ```
@@ -99,12 +95,14 @@ head(data_apps)
 13) Android.Ver: The minimum Android version required to run the app, stored as a character string.
 
 
-# Data Cleaning
+## Apps
 
-## Checking the Duplicates
+```{r ST0}
+# Checking the type of the App 
+typeof(data_apps$App)
+```
 
-
-#### Checking and Removing for duplicated apps and removing
+#### Checking for duplicated apps and removing
 
 ```{r}
 #Display all the duplicated Apps
@@ -118,15 +116,12 @@ duplicate_apps <- duplicate_apps[order(-duplicate_apps$App), ]
 print(paste("Number of duplicated Apps:",nrow(duplicate_apps)))
 
 #Removing Na values and duplicates
-data_final <- data_apps[!is.na(data_apps$App), ] 
-data_final <- data_final[!duplicated(data_final$App), ] 
+data_clean <- data_apps[!is.na(data_apps$App), ] 
+data_clean <- data_clean[!duplicated(data_clean$App), ] 
 
 #(After removing the duplicates) Unique values
-unique_apps <- length(unique(data_final$App))
+unique_apps <- length(unique(data_clean$App))
 print(paste("Number of unique apps after removing the duplicates:", unique_apps))
-
-#Verifying the structure of the App column
-str(data_final$App)
 
 ```
 
@@ -136,110 +131,267 @@ Duplicate App Analysis:
 * After removing duplicates, the dataset now contains 9660 unique apps.
 * Total duplicates removed: 1181 apps.
 
-It is not appropriate to check for duplicates of other columns as there are numrerical and categorical variables, and in above duplicate rows are removed
-
-
-## Checking and changing Datatype 
-
-
-#### Checking datatype of Features
-
-```{r ST0}
-typeof(data_apps$App)
-typeof(data_apps$Price)
-typeof(data_apps$Size)
-typeof(data_apps$Rating)
-typeof(data_apps$Reviews)
-typeof(data_apps$Category)
-typeof(data_apps$Type)
-```
-As seen the variables, which needed to be converted from character are Price,Reviews,Size into integers.
-
-
-### Formating Columns and converting to numeric for appropriate variables
+#### After dropping duplicate
 
 ```{r}
-##Price Conversion
+str(data_clean$App)
+```
+
+## Price
+
+```{r ST1}
+typeof(data_apps$Price)
+```
+
+#### Convertion of Price to numerical 
+There is '$' present after each price of the App. Check and remove before conversion.
+
+```{r}
+#To check if there is dollar symbol present 
+#data_clean$Price[]
+```
+
+```{r}
 # Remove dollar symbols and convert to numeric
-data_final$Price <- as.numeric(gsub("\\$", "", data_final$Price))
+data_clean$Price <- as.numeric(gsub("\\$", "", data_clean$Price))
+```
+
+```{r}
+#Recheck for dollar symbol
+#data_clean$Price[]
+```
+All the dollar symbols are removed succesfully.
+```{r}
+# Summary statistics for price
+summary(data_clean$Price)
+```
+
+From the unique_df, there is a missing value present in the Price column. Let's handle it!
+
+#### Checking for missing values in Price
+
+```{r}
+missing_na <- is.na(data_clean$Price)    
+missing_blank <- data_clean$Price == "" 
+
+sum(missing_na)
+sum(missing_blank, na.rm = TRUE)
+```
+
+```{r}
+# Remove row where Price is NA or blank
+data_clean <- data_clean[!is.na(data_clean$Price) & data_clean$Price != "", ]
+```
+
+Have removed one row #10473 which app does not have a category nameas it is not relevant to our analysis.
+
+```{r}
+#Recheck for missing values
+summary(data_clean$Price)
+```
+
+##### Missing values removed succesfully. (Price)
+
+
+## Type
+
+```{r ST2}
+#Checking the type of Type variable
+table(data_clean$Type)
+```
+From the price column, we can see 8903 apps are free but it is misread somewhere in the Type column. So lets check!
+```{r}
+#Checking for Missing values
+print(paste("Missing values:",sum(is.na(data_clean$Type))))
+
+data_clean[is.na(data_clean$Type), ]
+
+```
 
 
 
-#Size Converison
+```{r}
+# Replace NaN or missing values in the Type column with "Free"
+data_clean$Type[is.na(data_clean$Type)] <- "Free"
+```
+There is one row 9150, has a missing value for Type. As the price is 0,
+replaced it with "Free".
+
+##### Missing values handles succesfully. (Type)
+
+
+## Size
+
+```{r}
+# Checking the type of the Size 
+typeof(data_apps$Size)
+```
+#### Cleaning size Variable
+```{r}
 # Replace "Varies with Device" in the Size column with NA
-data_final$Size[data_final$Size == "Varies with device"] <- NA
-data_final <- data_final[!grepl("\\+", data_final$Size), ]
-data_final$Size <- ifelse(grepl("k", data_final$Size),
-                          as.numeric(gsub("k", "", data_final$Size)) *
+data_clean$Size[data_clean$Size == "Varies with device"] <- NA
+data_clean <- data_clean[!grepl("\\+", data_clean$Size), ]
+data_clean$Size <- ifelse(grepl("k", data_clean$Size),
+                          as.numeric(gsub("k", "", data_clean$Size)) *
 0.001,  # Convert "K" to MB
-                          as.numeric(gsub("M", "", data_final$Size)))
+                          as.numeric(gsub("M", "", data_clean$Size)))
 # Remove "M" for megabytes
 
 
-#Installs Conversion
+```
+
+
+#### Replacing missing Size values with mean value
+```{r}
+# Calculate and display the mean size for each category in the 'Type' column
+mean_size_by_type <- tapply(data_clean$Size, data_clean$Category,
+mean, na.rm = TRUE)
+print(mean_size_by_type)
+
+
+# Loop through each row and replace NA values in the Size column with the mean size of the corresponding category
+data_clean$Size <- ifelse(
+  is.na(data_clean$Size),  # Check if Size is NA
+  round(mean_size_by_type[data_clean$Category], 1),  # Replace with the mean size based on the Category
+  data_clean$Size  # Keep the original size if it's not NA
+)
+
+summary(data_clean$Size)
+```
+
+
+## Installs
+
+####Remove the '+' sign, Remove the commas, Convert to numeric
+
+```{r A.J}
+#clean installations
 clean_installs <- function(Installs) {
   Installs <- gsub("\\+", "", Installs)  
   Installs <- gsub(",", "", Installs)    
   return(as.numeric(Installs))           
 }
-data_final$Installs <- sapply(data_final$Installs, clean_installs)
-nan_rows <- sapply(data_final[, c("Size", "Installs")], function(x) any(is.nan(x)))
+
+data_clean$Installs <- sapply(data_clean$Installs, clean_installs)
+
+nan_rows <- sapply(data_clean[, c("Size", "Installs")], function(x) any(is.nan(x)))
+
 # Display only rows that contain NaN in either Size or Installs
-data_final[,nan_rows]
-datatable((data_final), options = list(scrollX = TRUE ))
+data_clean[,nan_rows]
+
+
+datatable((data_clean), options = list(scrollX = TRUE ))
+```
+
+#### Display the unique values
+
+```{r A.J1}
+
+
 # Identify the unique values in the 'Installs' column
-unique_values <- unique(data_final$Installs)
+unique_values <- unique(data_clean$Installs)
+
+# Display the unique values
+print(unique_values)
+
 # Function to convert the installs to numeric
 convert_to_numeric <- function(x) {
   # Remove non-numeric characters and convert to numeric
   as.numeric(gsub("[^0-9]", "", x)) * 10^(length(gregexpr(",", x)[[1]]) - 1)
 }
+
 # Sort unique values based on the custom numeric conversion
 sorted_values <- unique_values[order(sapply(unique_values, convert_to_numeric))]
+
 # Convert sorted values to character without scientific notation
 formatted_values <- format(sorted_values, scientific = FALSE, trim = TRUE)
-# Update the original 'Installs' column in data_final based on the numeric conversion
-data_final$Installs <- format(data_final$Installs, scientific = FALSE, trim = TRUE)
-data_final$Installs <- as.numeric(data_final$Installs)
 
-# Review Conversion
-data_final$Reviews <- as.numeric(data_final$Reviews)
+# Update the original 'Installs' column in data_clean based on the numeric conversion
+data_clean$Installs <- format(data_clean$Installs, scientific = FALSE, trim = TRUE)
 
-#Content Rating 
-# Remove leading and trailing spaces and convert all text to a consistent format 
-data_final$Content.Rating <- trimws(tolower(data_final$Content.Rating))
+data_clean$Installs <- as.numeric(data_clean$Installs)
+# Display summary of the updated 'Installs' column
+summary(data_clean$Installs)
+```
 
-#Date Formatting for Last Updated
-# Convert Last Updated to Date format
-data_final$Last.Updated <- as.Date(data_final$Last.Updated, format = "%Y-%m-%d")
+## Rating and Reviews
 
-#Verifying the Data structure again
-str(data_final)
+```{r}
+# Checking the type of the Rating 
+typeof(data_clean$Rating)
+```
+
+```{r}
+# Checking the type of the Reviews 
+typeof(data_clean$Reviews)
+```
+
+#### Checking the format of Rating and Reviews
+
+```{r summary statistics, echo=FALSE}
+str(data_clean$Reviews)
+str(data_clean$Rating)
+```
+
+As we can see the Review column is in string format which could be
+converted into int for more insights.
+
+#### Change the column reviews from Str to int
+
+```{r , echo=FALSE}
+data_clean$Reviews <- as.numeric(data_clean$Reviews)
+str(data_clean)
+xkablesummary(data_clean)
+```
+
+There are 1463 missing values in rating. 
+
+#### Handle rating missing values
+
+```{r}
+#Replace NA in Ratings with Overall Mean
+data_clean <- data_clean %>%
+  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
+
+xkablesummary(data_clean)
 
 ```
-All the $ symbols in Price column, '+' sign in Installs are removed, size is converted from KB, MB to numeric values by adding zeroes
 
-### Checking unique values and factoring them for Categorical Variables and removing unecessary columns
+As there are many missing values in Rating, they are replaced with mean of Rating instead of dropping all he columns and there are no missing values in Reviews
+
+#### Checking for Outliers For rating by seeing frequency for each rating
+
+```{r}
+ breaks = seq(15,20,by = 1)
+frequency_table = table(data_clean$Rating)
+frequency_table
+```
+
+From above it can be seen all the rating are between 1 and 5 and most of them lie from 3-5
+
+
+## Category
+
+#### Checking type and unique values of Category column
 
 ```{r W}
 # Checking the type of the Category 
+typeof(data_apps$Category)
 
-length(unique(data_final$Category))
-length(unique(data_final$Genres))
-data_final <- data_final
-data_final$Category <- factor(data_final$Category)
-data_final$Android.Ver <- factor(data_final$Android.Ver)
-data_final <- data_final %>% select(-c('Genres', 'Current.Ver'))
-
-
-xkablesummary(data_final)
-
+length(unique(data_clean$Category))
+length(unique(data_clean$Genres))
 ```
+
 
 There are 33 categories in the the data frame with 118 genres. This means
 that in each category, there are multiple genres. Given that, the later
 analyses in this project can be proceeded with Category variable.
 
+Below is the graph for the distribution of Categories for the dataset
+after removing duplicates.
+
+
+## Current Version, Genres
 
 Due to the inconsistent formatting of values in the `Current.Ver`column, and 
 genre column which is same as Category column, these columns will be 
@@ -247,62 +399,60 @@ dropped and excluded from the analysis.
 
 
 
-### Handling missing values 
+```{r}
+data_final <- data_clean %>% select(-c('Genres', 'Current.Ver'))
+
+```
+
+## Category and Android version
+
+#### Fromatted Category and Android Version columns
 
 ```{r}
 
-#Missing values in Price 
-missing_na <- is.na(data_final$Price)    
-missing_blank <- data_final$Price == "" 
-sum(missing_na)
-sum(missing_blank, na.rm = TRUE)
-# Remove row where Price is NA or blank
-data_final <- data_final[!is.na(data_final$Price) & data_final$Price != "", ]
+data_final$Category <- factor(data_final$Category)
+data_final$Android.Ver <- factor(data_final$Android.Ver)
+xkablesummary(data_final)
+str(data_final$Category)
+str(data_final$Android.Ver)
+```
 
 
-#Checking the type of Type variable
-table(data_final$Type)
-#Checking for Missing values
-print(paste("Missing values:",sum(is.na(data_final$Type))))
-data_final[is.na(data_final$Type), ]
+## Content Rating, Last Updated
+
+#### Format Content Rating and Last Updated columns
+```{r}
+# Remove leading and trailing spaces and convert all text to a consistent format 
+data_final$Content.Rating <- trimws(tolower(data_final$Content.Rating))
 
 
-#Checking for Size variable
-# Calculate and display the mean size for each category in the 'Type' column
-mean_size_by_type <- tapply(data_final$Size, data_final$Category,
-mean, na.rm = TRUE)
-print(mean_size_by_type)
-# Loop through each row and replace NA values in the Size column with the mean size of the corresponding category
-data_final$Size <- ifelse(
-  is.na(data_final$Size),  # Check if Size is NA
-  round(mean_size_by_type[data_final$Category], 1),  # Replace with the mean size based on the Category
-  data_final$Size  # Keep the original size if it's not NA
-)
+# Convert Last Updated to Date format
+data_final$Last.Updated <- as.Date(data_final$Last.Updated, format = "%B %d, %Y")
 
-#Replace NA in Ratings with Overall Mean
-data_final <- data_final %>%
-  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
+# Verify the cleaning
+print("\nSummary of Last.Updated after cleaning:")
+print(c(summary(data_clean$Last.Updated),summary(data_clean$Content.Rating)))
+str(data_clean$Last.Updated)
+```
 
-#NA values in Content Rating
+#### Checking missing values
+
+```{r}
 cr_missing <- sum(is.na(data_final$`Content Rating`))
-#Last updated NA values
 lu_missing <- sum(is.na(data_final$Last.Updated))
+print(paste("Number of missing values in 'Content Rating':", cr_missing))
 
+print(paste("Number of missing values in 'Last updated':", lu_missing))
 
 ```
-After handling the missing values:
-
-* Have removed one row #10473 with missing price value which app does not have a category name as it is not relevant to our analysis.
-
-* For type column, the price 0 is misread as Paid, due to inconsistency changed the variable.
-
-* For size column the missing values are replaced with mean of size for particular category
-
-* For Rating column the missing values were replaced with mean of Ratings 
-
-* For Content Rating and Last Updated, there are No missing values
 
 
+```{r}
+summary(data_apps)
+```
+```{r}
+describe(data_apps)
+```
 
 # Data Exploring and Visualization
 
@@ -312,8 +462,6 @@ After handling the missing values:
 
 ```{r}
 # Count Plot for the Price distribution
-
-
 ggplot(data_final, aes(x=Price)) +
   geom_histogram(binwidth=2, fill="pink", color="black") +
    xlim(0, 500) + ylim(0, 500) +
@@ -429,10 +577,10 @@ data_final$Type <- as.factor(data_final$Type)
 
 summary_by_type <- data.frame(
   Type = levels(data_final$Type),
-  Min_Price = tapply(data_final$Price, data_final$Type, min, na.rm = TRUE),
-  Max_Price = tapply(data_final$Price, data_final$Type, max, na.rm = TRUE),
-  Mean_Price = tapply(data_final$Price, data_final$Type, mean, na.rm = TRUE),
-  Median_Price = tapply(data_final$Price, data_final$Type, median, na.rm = TRUE)
+  Min_Price = tapply(data_clean$Price, data_clean$Type, min, na.rm = TRUE),
+  Max_Price = tapply(data_clean$Price, data_clean$Type, max, na.rm = TRUE),
+  Mean_Price = tapply(data_clean$Price, data_clean$Type, mean, na.rm = TRUE),
+  Median_Price = tapply(data_clean$Price, data_clean$Type, median, na.rm = TRUE)
 )
 
 
@@ -489,12 +637,12 @@ Let's do bivariate analysis on price and other variables starting from here.
 ```{r A.J2}
 # Bar plot for distribution of Installs
 # Create a new data frame to store the factor levels
-data_final1_factor <- data_final  
+data_clean1_factor <- data_final  
 
-data_final1_factor$Installs <- factor(data_final$Installs)
+data_clean1_factor$Installs <- factor(data_final$Installs)
 
 # Create a bar plot with the ordered factor
-ggplot(data_final1_factor, aes(x = Installs)) +
+ggplot(data_clean1_factor, aes(x = Installs)) +
   geom_bar() +
   xlab("Installs") +
   ylab("Count") +
@@ -507,9 +655,9 @@ ggplot(data_final1_factor, aes(x = Installs)) +
 
 ```{r}
 boxplot(data_final$Rating,ylab = "Rating", xlab = "Count",col = "Blue")
-hist(data_final$Rating, main="Histogram of Apps Rating after cleaning", xlab="Rating (count)", col = 'blue', breaks = 100 )
-qqnorm(data_final$Rating)
-qqline(data_final$Rating, col = "red")
+hist(data_clean$Rating, main="Histogram of Apps Rating after cleaning", xlab="Rating (count)", col = 'blue', breaks = 100 )
+qqnorm(data_clean$Rating)
+qqline(data_clean$Rating, col = "red")
 ```
 
 Here, it could be seen the plots are much clearer but still skewed due
@@ -698,7 +846,7 @@ Everyone is the most dominant Category with 81.82% of all apps and Adults 18+ be
 
 ```{r ST3}
 #Plotting a scatter plot between Price and installs
-ggplot(data_final, aes(x=Price, y=log(data_final$Installs))) +
+ggplot(data_final, aes(x=Price, y=log(data_clean$Installs))) +
   geom_point(color = 'red', size = 1, alpha = 0.5) + 
   geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
   labs(title = "Price vs Installs", x = "Price (USD)", y = "Number of Installs") +
@@ -716,10 +864,10 @@ For a better visualization, we are categorizing price values 0 as free apps and 
 Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
 str(data_final$Price)
 str(Price_Category)
-#str(log(data_final$Installs))
+#str(log(data_clean$Installs))
 
 # Box plot of Price Category vs. log-transformed Installs
-ggplot(data_final, aes(x = Price_Category, y = log(data_final$Installs))) +
+ggplot(data_final, aes(x = Price_Category, y = log(data_clean$Installs))) +
   geom_boxplot(fill = "lightblue", color = "darkblue", alpha = 0.6) +
   labs(title = "Price Categories vs. Log-Transformed Installs", 
        x = "Price Category", 
@@ -731,7 +879,7 @@ ggplot(data_final, aes(x = Price_Category, y = log(data_final$Installs))) +
 Price_Category <- ifelse(data_final$Price == 0, "Free", "Paid")
 str(data_final$Price)
 str(Price_Category)
-#str(data_final$log(data_final$Installs))
+#str(data_final$log(data_clean$Installs))
 
 table(Price_Category)
 
@@ -814,7 +962,7 @@ meeting the customer expectations.
 
 ```{r}
 # Scatter plot of Price vs. Ratings with log_Installs as  color
-ggplot(data_final, aes(x = Price, y = Rating,color = log(data_final$Installs))) +
+ggplot(data_final, aes(x = Price, y = Rating,color = log(data_clean$Installs))) +
   geom_point(alpha = 0.6) +
   scale_color_gradient(low = "blue", high = "red") +  
   labs(title = "Price vs. Ratings with Installs as Color by Price", 
@@ -824,7 +972,7 @@ ggplot(data_final, aes(x = Price, y = Rating,color = log(data_final$Installs))) 
   theme_minimal()
 
 # Scatter plot of Price vs. Reviews with log_Installs as color
-ggplot(data_final, aes(x = Price, y = Reviews,color = log(data_final$Installs))) +
+ggplot(data_final, aes(x = Price, y = Reviews,color = log(data_clean$Installs))) +
   geom_point(alpha = 0.6) +
   scale_color_gradient(low = "darkgreen", high = "yellow") +  
   labs(title = "Price vs. reviewss with Installs as Color by Price", 
@@ -878,7 +1026,7 @@ ggplot(data_final, aes(x = Size, fill = Price)) +
 #### Boxplots for Rating vs Reviews
 
 ```{r}
-boxplot( data_final$Rating~ Review_Category, data = data_final, 
+boxplot( data_final$Rating~ Review_Category, data = data_clean, 
         main = "Boxplot of Review Counts by Review Category", 
         xlab = "Review Category", 
         ylab = "Review Rating",
@@ -932,7 +1080,7 @@ As we can see, the mean rating increases as the reviews increase.
 ```{r A.J3}
 
 # Scatter plot for Installs vs Reviews
-ggplot(data_final1_factor, aes(x = Review_Category, y = Installs)) +
+ggplot(data_clean1_factor, aes(x = Review_Category, y = Installs)) +
   geom_point(color = "blue", alpha = 0.5) +
   labs(title = "Scatter Plot of Installs vs Reviews", 
        x = "Number of Reviews", 
@@ -944,7 +1092,7 @@ ggplot(data_final1_factor, aes(x = Review_Category, y = Installs)) +
 #### Visualization for Rating vs Installs
 ```{r A.J4}
 # Scatter plot of log-transformed Installs vs. Rating
-ggplot(data_final, aes(x = log(data_final$Installs), y = Rating)) +
+ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
   geom_point(color = "blue", alpha = 0.6) +
   geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add a regression line
   labs(title = "Log-Transformed Installs vs. Rating", 
@@ -959,7 +1107,7 @@ ggplot(data_final, aes(x = log(data_final$Installs), y = Rating)) +
 ```{r A.J5, echo=FALSE, fig.width=12, fig.height=8, out.width='100%', fig.align='center'}
 
 # Plot the combined graph with different colors based on Rating
-ggplot(data_final, aes(x = log(data_final$Installs), y = Rating)) +
+ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
   geom_point(aes(color = as.factor(Rating), shape = Category), alpha = 0.6, size = 3) +  # Points colored by Rating and shaped by Category
   scale_color_discrete(name = "Rating") +  # Discrete color scale
   labs(title = "Rating vs Installs (Log-Transformed Installs) by Category",
@@ -980,7 +1128,7 @@ Below is a boxplot show the distribution of number of installs for each
 category order by mean from highest to lowest. 
 
 ```{r}
-ggplot(data_final, aes(x = reorder(Category, log(data_final$Installs),  FUN = mean), y = log(data_final$Installs))) +
+ggplot(data_clean, aes(x = reorder(Category, log(data_final$Installs),  FUN = mean), y = log(data_clean$Installs))) +
   geom_boxplot(outlier.color = "#f05555", outlier.shape = 1, color='#1f3374', fill="#efefef") +  # Red outliers for emphasis
   coord_flip() +  # Flip for better readability
   scale_y_log10() +
@@ -1025,12 +1173,12 @@ It can be seen from the graph that, on average, Entertainment apps receive the h
 Below is the figure showing the distribution of app sizes in each category. 
 
 ```{r}
-#df_clean <- data_final %>%
+#df_clean <- data_clean %>%
  # mutate(Size = sapply(Size, convert_size)) %>%
 #  filter(!is.na(Size))
 
 # Plot the histogram with faceting by category
-ggplot(data_final, aes(x = Size)) +
+ggplot(data_clean, aes(x = Size)) +
   geom_histogram(binwidth = 5, fill = "#304ba6", color = "black") +
   facet_wrap(~ Category, scales = "free_y") +
   theme_minimal() +
@@ -1044,12 +1192,12 @@ ggplot(data_final, aes(x = Size)) +
     axis.text.x = element_text(size = 7, angle = 45, hjust = 1)
   )
 
-str(data_final)
+str(data_clean)
 
 
 
 
-ggplot(data_final, aes(x = reorder(Category, Size, FUN = median), y = Size)) + 
+ggplot(data_clean, aes(x = reorder(Category, Size, FUN = median), y = Size)) + 
   geom_boxplot(outlier.color = "#f05555", outlier.shape = 1) + 
   coord_flip() + 
   theme_minimal() + 
@@ -1210,14 +1358,14 @@ It can be seen that most Android Version have ratings range between 4.0 and 5.0.
 ```{r}
 # Last Updated Analysis
 # Create summary of updates by month and year
-#updates_by_month <- data_updated %>%
-#  mutate(
-#    update_month = format(Last.Updated, "%Y-%m"),
- #   update_year = year(Last.Updated)
- # ) %>%
-  #group_by(update_month) %>%
- # summarize(count = n()) %>%
- # arrange(update_month)
+updates_by_month <- data_updated %>%
+  mutate(
+    update_month = format(Last.Updated, "%Y-%m"),
+    update_year = year(Last.Updated)
+  ) %>%
+  group_by(update_month) %>%
+  summarize(count = n()) %>%
+  arrange(update_month)
 ```
 
 ```{r}
@@ -1232,7 +1380,7 @@ It can be seen that most Android Version have ratings range between 4.0 and 5.0.
  # theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-```{r check}
+```{r}
 # Content Rating and Update Frequency Relationship
 update_frequency_by_rating <- data_updated %>%
   group_by(Content.Rating) %>%
@@ -1263,19 +1411,18 @@ print(installs_by_rating)
 #### Last updated vs Content Rating
 
 ```{r}
-str(data_final)
-
-```
-
-```{r}
 # Required libraries
-
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+library(reshape2)
 
 # Create days_since_update and data preparation
 data_updated <- data_final %>%
   mutate(
     # Convert Last.Updated to proper date format (assuming it's in standard format)
-    last_updated = as.Date(Last.Updated, format = "%B %d, %Y"),
+    last_updated = as.Date(Last.Updated),
     current_date = Sys.Date(),
     # Calculate days since last update
     days_since_update = as.numeric(difftime(current_date, last_updated, units = "days")),
@@ -1434,11 +1581,18 @@ print(update_intervals)
 
 
 ```{r}
+# Required libraries
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+library(reshape2)
+library(scales)
 
 # Create data_updated with seasonal information while keeping data_final unchanged
 data_updated <- data_final %>%
   mutate(
-    last_updated = as.Date(Last.Updated, format = "%B %d, %Y"),
+    last_updated = as.Date(Last.Updated),
     current_date = Sys.Date(),
     days_since_update = as.numeric(difftime(current_date, last_updated, units = "days")),
     update_month = month(last_updated),
@@ -1587,7 +1741,6 @@ ggplot(data_updated, aes(x = Content.Rating, y = log10(Installs))) +
 ```{r}
 data_analysis <- data_updated %>%
   mutate(
-    Last.Updated = as.Date(Last.Updated, format = "%Y-%m-%d"),
     days_since_update = as.numeric(difftime(max(Last.Updated), Last.Updated, units = "days")),
     update_year = year(Last.Updated),
     update_month = month(Last.Updated)
@@ -1664,83 +1817,6 @@ The descriptive statistics for the Google Play Store dataset provide insights in
 * Price: Most apps are free, with a median price of $0. A small percentage are paid, with prices ranging up to $400, though the mean price remains low at $1.10.
 * For categorical variables, apps are most commonly categorized under FAMILY, followed by GAME and TOOLS. Common Android version requirements are 4.1 and up and 4.0.3 and up. 
 
-# Correlation 
-
-#### Correlation for all variables in data_final
-Lets convert all the categorical variables into factors and then convert into numerical dataframe for caluclating the correlation matrix 
-
-```{r}
-
-# Step 1: Create a copy of the original data without specific columns
-columns_to_remove <- c("App", "Scaled_Reviews", "update_year", "update_month", 
-                      "update_quarter", "days_since_update", "week_of_year", 
-                      "Last.Updated", "day_of_week", "month_of_year", "season")
-data_numeric_or_factor <- data_final %>%
-  select(-any_of(columns_to_remove))  # Changed to any_of to handle missing columns gracefully
-
-# Step 2: Identify and convert character columns to factors
-data_numeric_or_factor <- data_numeric_or_factor %>%
-  mutate(across(where(is.character), as.factor))
-
-# Step 3: Create a copy for factor data
-data_factor <- data_numeric_or_factor
-
-# Step 4: Identify numeric and factor columns
-numeric_columns <- sapply(data_numeric_or_factor, is.numeric)
-factor_columns <- sapply(data_numeric_or_factor, is.factor)
-
-# Step 5: Convert factors to numeric while preserving numeric columns
-data_final_numeric <- data_numeric_or_factor %>%
-  mutate(across(where(is.factor), ~as.numeric(as.factor(.))))
-
-# Step 6: Check for any non-numeric columns and remove them
-non_numeric_cols <- names(data_final_numeric)[!sapply(data_final_numeric, is.numeric)]
-if(length(non_numeric_cols) > 0) {
-  data_final_numeric <- data_final_numeric %>%
-    select(-all_of(non_numeric_cols))
-}
-
-# Step 7: Calculate correlations
-# Pearson correlation
-pearson_correlation <- cor(data_final_numeric, 
-                         method = "pearson", 
-                         use = "complete.obs")
-
-# Spearman correlation
-spearman_correlation <- cor(data_final_numeric, 
-                          method = "spearman", 
-                          use = "complete.obs")
-
-
-corrplot(pearson_correlation,
-         method = "color",
-         type = "upper",
-         order = "hclust",
-         addCoef.col = "black",
-         tl.col = "black",
-         tl.srt = 45,
-         number.cex = 0.7,
-         title = "Pearson Correlation Matrix",
-         mar = c(0,0,1,0))
-
-# Spearman correlation plot
-corrplot(spearman_correlation,
-         method = "color",
-         type = "upper",
-         order = "hclust",
-         addCoef.col = "black",
-         tl.col = "black",
-         tl.srt = 45,
-         number.cex = 0.7,
-         title = "Spearman Correlation Matrix",
-         mar = c(0,0,1,0))
-
-
-
-
-
-```
-
 
 # Statistical Tests
 
@@ -1779,11 +1855,10 @@ market.
 ```{r}
 #Confirming with a t-test
 # Perform t-test for Reviews between Free and Paid
-
-t_test_reviews <- t.test(Reviews ~ Price_Category, data = data_duplicate)
+t_test_reviews <- t.test(Reviews ~ Price_Category, data = data_updated)
 
 # Perform t-test for Rating between Free and Paid
-t_test_rating <- t.test(Rating ~ Price_Category, data = data_duplicate)
+t_test_rating <- t.test(Rating ~ Price_Category, data = data_updated)
 
 # Print the results
 print(t_test_reviews)
@@ -1802,7 +1877,7 @@ The tests below are to test whether or not different review categories have
 different average ratings.
 
 ```{r}
-anova_result <- aov(Rating ~ as.factor(Review_Category), data = data_final)
+anova_result <- aov(Rating ~ as.factor(Review_Category), data = data_clean)
 summary(anova_result)
 ```
 
@@ -1835,13 +1910,13 @@ categories given
 #### ANOVA test for Content Rating vs Installs 
 ```{r}
 # 1. Encode content rating (e.g., as factor levels or one-hot encoding)
-data_final$Content.Rating <- as.factor(data_final$Content.Rating)
+data_updated$Content.Rating <- as.factor(data_updated$Content.Rating)
 
-data_final <- data_final %>%
+data_updated <- data_updated %>%
   filter(!is.na(Installs) & Installs > 0)
 
 # ANOVA test for difference in installs between content ratings
-install_anova <- aov(log10(Installs) ~ Content.Rating, data = data_final)
+install_anova <- aov(log10(Installs) ~ Content.Rating, data = data_updated)
 
 print("\nANOVA test results for Installs by Content Rating:")
 print(summary(install_anova))
@@ -1853,36 +1928,274 @@ print(summary(install_anova))
 ANOVA analysis : 
 Revealed significant differences in install counts based on content rating (F(5, 9638) = 41.95, p < 2e-16). This indicates that various content ratings have a substantial impact on the number of installs, highlighting the importance of content quality and type in attracting users.
 
+#### Chi-square Test for Content Rating vs Last Updated 
+```{r}
+
+data_updated <- data_final %>%
+  mutate(
+    update_year = year(Last.Updated),
+    update_month = month(Last.Updated),
+    update_quarter = quarter(Last.Updated),
+    days_since_update = as.numeric(difftime(max(Last.Updated), Last.Updated, units = "days"))
+  )
+
+# Monthly update pattern
+monthly_updates <- data_updated %>%
+  group_by(update_year, update_month) %>%
+  summarize(count = n()) %>%
+  mutate(date = as.Date(paste(update_year, update_month, "01", sep = "-")))
+
+filtered_data <- data_updated %>%
+  filter(!is.na(Content.Rating) & !is.na(update_quarter))
+
+# Step 2: Create the contingency table
+contingency_table <- table(filtered_data$Content.Rating, filtered_data$update_quarter)
+
+# Step 3: Perform the Chi-square test
+chi_test <- chisq.test(contingency_table)
+
+# Step 4: Print the results
+cat("\nChi-square test for independence between Content Rating and Update Quarter:\n")
+print(chi_test)
+```
+
+
+The P value is small signifying that there is statistically significant relationship between Content Rating and Last Updated quarter
+
+
+# Correlation 
+
+#### Correlation for all variables in data_final
+Lets convert all the categorical variables into factors and then convert into numerical dataframe for calucalting the correlation matrix 
+```{r}
+
+# Step 1: Create a copy of the original data without specific columns
+columns_to_remove <- c("App", "Scaled_Reviews", "update_year", "update_month", 
+                      "update_quarter", "days_since_update", "week_of_year", 
+                      "Last.Updated", "day_of_week", "month_of_year", "season")
+data_numeric_or_factor <- data_updated %>%
+  select(-any_of(columns_to_remove))  # Changed to any_of to handle missing columns gracefully
+
+# Step 2: Identify and convert character columns to factors
+data_numeric_or_factor <- data_numeric_or_factor %>%
+  mutate(across(where(is.character), as.factor))
+
+# Step 3: Create a copy for factor data
+data_factor <- data_numeric_or_factor
+
+# Step 4: Identify numeric and factor columns
+numeric_columns <- sapply(data_numeric_or_factor, is.numeric)
+factor_columns <- sapply(data_numeric_or_factor, is.factor)
+
+# Step 5: Convert factors to numeric while preserving numeric columns
+data_final_numeric <- data_numeric_or_factor %>%
+  mutate(across(where(is.factor), ~as.numeric(as.factor(.))))
+
+# Step 6: Check for any non-numeric columns and remove them
+non_numeric_cols <- names(data_final_numeric)[!sapply(data_final_numeric, is.numeric)]
+if(length(non_numeric_cols) > 0) {
+  data_final_numeric <- data_final_numeric %>%
+    select(-all_of(non_numeric_cols))
+}
+
+# Step 7: Calculate correlations
+# Pearson correlation
+pearson_correlation <- cor(data_final_numeric, 
+                         method = "pearson", 
+                         use = "complete.obs")
+
+# Spearman correlation
+spearman_correlation <- cor(data_final_numeric, 
+                          method = "spearman", 
+                          use = "complete.obs")
+
+# Step 8: Identify strong correlations (added this step)
+# Create a matrix of TRUE/FALSE values where correlations are strong
+strong_correlation_matrix <- abs(pearson_correlation) >= 0.5 & 
+                           upper.tri(pearson_correlation, diag = FALSE)
+
+# Get the indices of strong correlations
+strong_correlations <- which(strong_correlation_matrix, arr.ind = TRUE)
+
+# Step 9: Create enhanced correlation plots
+# Pearson correlation plot
+par(mfrow = c(1, 2))
+corrplot(pearson_correlation,
+         method = "color",
+         type = "upper",
+         order = "hclust",
+         addCoef.col = "black",
+         tl.col = "black",
+         tl.srt = 45,
+         number.cex = 0.7,
+         title = "Pearson Correlation Matrix",
+         mar = c(0,0,1,0))
+
+# Spearman correlation plot
+corrplot(spearman_correlation,
+         method = "color",
+         type = "upper",
+         order = "hclust",
+         addCoef.col = "black",
+         tl.col = "black",
+         tl.srt = 45,
+         number.cex = 0.7,
+         title = "Spearman Correlation Matrix",
+         mar = c(0,0,1,0))
+
+# Reset plot parameters
+par(mfrow = c(1, 1))
+
+# Step 10: Create correlation summary if strong correlations exist
+if(nrow(strong_correlations) > 0) {
+  correlation_summary <- data.frame(
+    Variable1 = rownames(pearson_correlation)[strong_correlations[,1]],
+    Variable2 = colnames(pearson_correlation)[strong_correlations[,2]],
+    Pearson_Correlation = pearson_correlation[strong_correlations],
+    Spearman_Correlation = spearman_correlation[strong_correlations]
+  ) %>%
+    arrange(desc(abs(Pearson_Correlation)))
+  
+  print(correlation_summary)
+}
 
 
 
+```
 As seen installs has the highest correlation with the reviews.
 
 As we can see from the both pearson and spearman have relatively different correlation matrices and plots.
 We can refer to the categorical variables correlation from the spearman.
 
+### Correlation Reviews
 
+
+```{r}
+# Calculate correlation matrices for both factor and numeric data
+# For factor data
+correlation_matrix <- cor(data_final_numeric, 
+                        method = "pearson",
+                        use = "complete.obs")
+
+# For numeric data
+correlation_matrix1 <- cor(data_numeric_or_factor %>% 
+                           select(where(is.numeric)),
+                         method = "pearson",
+                         use = "complete.obs")
+
+# Extract correlations with Reviews
+reviews_correlation_factor <- correlation_matrix[, "Reviews", drop = FALSE]
+reviews_correlation_factor1 <- correlation_matrix1[, "Reviews", drop = FALSE]
+
+# Print the correlation matrix for Reviews from factor data
+print("Correlations with Reviews (Factor Data):")
+print(reviews_correlation_factor)
+
+# Print the correlation matrix for Reviews from numeric data
+print("\nCorrelations with Reviews (Numeric Data):")
+print(reviews_correlation_factor1)
+
+# Create correlation plots
+# For factor data
+par(mfrow = c(1, 2))
+corrplot(reviews_correlation_factor, 
+         method = "color", 
+         addCoef.col = "black", 
+         title = "Correlation of Reviews\nwith Other Variables (Factor Data)", 
+         tl.col = "black", 
+         tl.srt = 45,
+         mar = c(0,0,2,0))
+
+# For numeric data
+corrplot(reviews_correlation_factor1, 
+         method = "color", 
+         addCoef.col = "black", 
+         title = "Correlation of Reviews\nwith Other Variables (Numeric Data)", 
+         tl.col = "black", 
+         tl.srt = 45,
+         mar = c(0,0,2,0))
+
+# Reset plot parameters
+par(mfrow = c(1, 1))
+
+
+```
 
 As seen reviews has the highest correlation(positive) with the installs and then in spearman correlation matrix it has high correlation(positive) with content rating and android version meaning
 
 
+#### Correlation with Rating
+
+```{r}
+rating_correlation_factor <- correlation_matrix[, "Rating", drop = FALSE]
+
+rating_correlation_factor1 <- correlation_matrix1[, "Rating", drop = FALSE]
+
+# Print the correlation matrix for Reviews from numeric factor data
+print(rating_correlation_factor)
+
+# Step 6: Create a correlation plot for Reviews in data_numeric_or_factor
+corrplot(rating_correlation_factor, method = "color", addCoef.col = "black", 
+         title = "Correlation of Reviews with Other Variables (Factor Data)", 
+         tl.col = "black", tl.srt = 45)
 
 
+corrplot(rating_correlation_factor1, method = "color", addCoef.col = "black", 
+         title = "Correlation of Reviews with Other Variables (Factor Data)", 
+         tl.col = "black", tl.srt = 45)
 
+
+```
 
 Rating is not much correlated with any of the variables, only slightly positively correlated with reviews and installs which was also demonstrated through visualisation previously.
 
+#### Correlation with Price 
+```{r}
+# Spearman correlation for Price
+price_correlation_factor1 <- correlation_matrix1[, "Price", drop = FALSE]
+print("Spearman Correlation of Price with Other Variables:")
+print(price_correlation_factor1)
 
+# Plot for Spearman correlation with Price
+corrplot(price_correlation_factor1, method = "color", addCoef.col = "black", 
+         title = "Correlation of Price with Other Variables (Spearman)", 
+         tl.col = "black", tl.srt = 45)
+
+```
 
 Price vs. Log_Installs: -0.06, suggesting a very weak negative
 relationship between price and the number of installs.
 
 
+#### Correlation between Lastupdated vs Installs
 
+```{r}
+
+# Create a new data frame with relevant variables for correlation analysis
+correlation_data <- data_analysis %>%
+  select(days_since_update, update_year, update_month) %>%
+  mutate(log_installs = log10(data_final$Installs))
+
+# Calculate the correlation matrix
+correlation_matrix <- cor(correlation_data, method = "spearman", use = "complete.obs")
+
+# Print the correlation matrix
+print("Spearman Correlation Matrix:")
+corrplot(correlation_matrix, method = "color",
+          col = colorRampPalette(c("red", "white", "blue"))(200),
+          type = "upper",
+          tl.col = "black", tl.srt = 45,
+          addCoef.col = "black", # Add correlation coefficients
+          number.cex = 0.7,      # Adjust size of numbers
+          title = "Correlation Matrix", # Title
+          mar = c(0, 0, 1, 0))   # Margins
+
+```
 
 Correlation Analysis:
 A moderate negative correlation :(ρ=−0.3317) was found between the number of days since the last update and the log-transformed installs. This indicates that as the time since the last update increases, the number of installs tends to decrease. The relationship is statistically significant (p < 2.2e-16), suggesting that timely updates may be crucial for maintaining user engagement.
 
+ 
 
 
 Implications
