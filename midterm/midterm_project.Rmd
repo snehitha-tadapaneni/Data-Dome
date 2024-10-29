@@ -641,25 +641,13 @@ data_clean1_factor <- data_final
 
 data_clean1_factor$Installs <- factor(data_final$Installs)
 
-# Define new breaks for more even intervals for Installs
-install_breaks <- c(0,500, 1000, 5000, 10000,50000, 100000, 300000, 1000000,5000000, 10000000,Inf)
-
-# Create a categorical variable for installs based on these breaks
-data_clean1_factor$Installs_Category <- cut(
-  as.numeric(as.character(data_final$Installs)), 
-  breaks = install_breaks, 
-  right = FALSE, 
-  labels = c("0+", "500+", "1K+", "5K+", "10K+",  "50K+", "100K+", "300K+", "1M+","5M+","Above 10M+")
-)
-
-# Plot the categorized Installs data
-library(ggplot2)
-ggplot(data_clean1_factor, aes(x = Installs_Category)) +
+# Create a bar plot with the ordered factor
+ggplot(data_clean1_factor, aes(x = Installs)) +
   geom_bar() +
   xlab("Installs") +
   ylab("Count") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  ggtitle("Distribution of App Installs by Category")
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  
+  ggtitle("Distribution of App Installs")
 ```
 
 
@@ -748,17 +736,6 @@ ggplot(bin_counts, aes(x = Review_Category, y = Count, group = 1)) +
 
 Hence, high reviews can be observed in less apps and less reviews can be
 observed in more apps which is expected.
-
-#### Visulization for Installs Vs Size
-```{r}
-ggplot(data_clean, aes(x = Size, y = log(Installs))) +
-  geom_hex(bins = 30) +
-  scale_fill_viridis_c() + # Adds color gradient
-  labs(title = "Plot of App Size vs. Installs (Log Scale)",
-       x = "Size (MB)",
-       y = "Installs (Log Scale)") +
-  theme_minimal()
-```
 
 #### Visualization for Category Distribution
 
@@ -1115,7 +1092,7 @@ ggplot(data_clean1_factor, aes(x = Review_Category, y = Installs)) +
 #### Visualization for Rating vs Installs
 ```{r A.J4}
 # Scatter plot of log-transformed Installs vs. Rating
-ggplot(data_final, aes(x = log(data_final$Installs), y = Rating)) +
+ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
   geom_point(color = "blue", alpha = 0.6) +
   geom_smooth(method = "lm", color = "red", se = FALSE) +  # Add a regression line
   labs(title = "Log-Transformed Installs vs. Rating", 
@@ -1130,7 +1107,7 @@ ggplot(data_final, aes(x = log(data_final$Installs), y = Rating)) +
 ```{r A.J5, echo=FALSE, fig.width=12, fig.height=8, out.width='100%', fig.align='center'}
 
 # Plot the combined graph with different colors based on Rating
-ggplot(data_final, aes(x = log(data_final$Installs), y = Rating)) +
+ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
   geom_point(aes(color = as.factor(Rating), shape = Category), alpha = 0.6, size = 3) +  # Points colored by Rating and shaped by Category
   scale_color_discrete(name = "Rating") +  # Discrete color scale
   labs(title = "Rating vs Installs (Log-Transformed Installs) by Category",
@@ -2172,7 +2149,6 @@ corrplot(rating_correlation_factor1, method = "color", addCoef.col = "black",
 
 Rating is not much correlated with any of the variables, only slightly positively correlated with reviews and installs which was also demonstrated through visualisation previously.
 
-
 #### Correlation with Price 
 ```{r}
 # Spearman correlation for Price
@@ -2189,47 +2165,6 @@ corrplot(price_correlation_factor1, method = "color", addCoef.col = "black",
 
 Price vs. Log_Installs: -0.06, suggesting a very weak negative
 relationship between price and the number of installs.
-
-#### Correlation with Install Vs Price
-```{r A.J6}
-# Load necessary libraries
-library(ggplot2)
-library(reshape2)
-
-# Calculate the correlation matrix for Size and Installs
-cor_matrix <- cor(data_final[, c("Size", "Installs")], use = "complete.obs", method = "pearson")
-
-# Melt the correlation matrix for easy plotting with ggplot2
-melted_cor_matrix <- melt(cor_matrix)
-
-# Plot the heatmap
-ggplot(data = melted_cor_matrix, aes(x = Var1, y = Var2, fill = value)) +
-  geom_tile(color = "white") +
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                       midpoint = 0, limit = c(-1,1), space = "Lab", 
-                       name="Pearson\nCorrelation") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                   size = 12, hjust = 1)) +
-  ggtitle("Correlation Heatmap: Size vs Installs") +
-  labs(x = "Variables", y = "Variables")
-```
-
-#### Correlation between Install Vs Size
-```{r}
-# Calculate Pearson correlation and perform the test
-cor_test <- cor.test(data_final$Size, data_final$Installs, method = "pearson")
-
-# Output the correlation coefficient and p-value
-cor_test
-```
-
-According to the relational hypothesis testing:
-1. Correlation Coefficient (cor):Pearson correlation coefficient is 0.0407. This indicates a very weak positive relationship between Size and Installs—meaning that as app size increases, installs slightly tend to increase as well, but the effect is minimal.
-
-P-value): The p-value is 6.198e-05 (or 0.00006198), which is much smaller than the conventional significance level (e.g., 0.05). This low p-value means that we can reject the null hypothesis (that there is no correlation) and conclude that x and y are not independent.
-
-Confidence Interval: The 95% confidence interval for the correlation coefficient is between 0.0208 and 0.0606. This range is quite narrow and close to zero, further confirming that while the relationship is significant, the strength of the correlation is very low.
 
 
 #### Correlation between Lastupdated vs Installs
