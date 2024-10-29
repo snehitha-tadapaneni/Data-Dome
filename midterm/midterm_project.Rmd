@@ -692,7 +692,7 @@ Everyone is the most dominant Category with 81.82% of all apps and Adults 18+ be
 
 
 
-## Bivariate Analysis
+## Multivariate Analysis
 
 #### Visualization for Price vs Installs 
 
@@ -792,7 +792,7 @@ ggplot(data_final, aes(x=Price, y=Rating)) +
 ggplot(data_final, aes(x = Rating, fill = Price)) +
   geom_density(alpha = 0.5) + 
   labs(title = "Kernel Density Estimate of App Ratings by Price Category",
-       x = "App Size (MB)", 
+       x = "Rating", 
        y = "Density") +
   theme_minimal() 
 
@@ -809,39 +809,6 @@ have more variation in ratings, while higher-priced products tend to
 receive more consistent ratings around 4. May be higher price apps are
 meeting the customer expectations.
 
- 
-#### Visualization for Price vs Reviews vs Installs
-
-```{r}
-# Scatter plot of Price vs. Ratings with log_Installs as  color
-ggplot(data_final, aes(x = Price, y = Rating,color = log(data_final$Installs))) +
-  geom_point(alpha = 0.6) +
-  scale_color_gradient(low = "blue", high = "red") +  
-  labs(title = "Price vs. Ratings with Installs as Color by Price", 
-       x = "Price", 
-       y = "Rating", 
-       color = "log(Installs)") +
-  theme_minimal()
-
-# Scatter plot of Price vs. Reviews with log_Installs as color
-ggplot(data_final, aes(x = Price, y = Reviews,color = log(data_final$Installs))) +
-  geom_point(alpha = 0.6) +
-  scale_color_gradient(low = "darkgreen", high = "yellow") +  
-  labs(title = "Price vs. reviewss with Installs as Color by Price", 
-       x = "Price", 
-       y = "Reviews", 
-       color = "log(Installs)") +
-  theme_minimal()
-
-
-# Create a KDE plot for Installs based on Price_Category
-ggplot(data_final, aes(x = log(Installs), fill = Price)) +
-  geom_density(alpha = 0.5) + 
-  labs(title = "Kernel Density Estimate of Installations by Price Category",
-       x = "App Size (MB)", 
-       y = "Density") +
-  theme_minimal() 
-```
 
 Concluding: Apps with lower prices, have more ratings and installs while
 apps priced higher tend to have fewer installs and more scattered
@@ -996,33 +963,7 @@ ggplot(data_final, aes(x = reorder(Category, log(data_final$Installs),  FUN = me
 ```
 It can be seen from the graph that, on average, Entertainment apps receive the highest number of installations, followed by Education, Game, Photography, and Weather apps. In contrast, Art & Design apps have the fewest installations.
 
-
-#### Visualization for Category vs. App Size
-
-
-```{r}
-#convert_size <- function(size) {
-#    size <- gsub(",", "", size)  # Remove commas
-#    size <- tolower(size)  # Make lowercase for consistency
-      
-      # Handle "varies with device" by assigning NA
-#    if (size == "varies with device") return(NA)
-      
-      # Convert "k" to MB (1 MB = 1000 KB)
- #   if (grepl("k", size)) return(as.numeric(gsub("k", "", size)) / 1000)
-      
-      # Convert "M" to numeric MB
-  #  if (grepl("m", size)) return(as.numeric(gsub("m", "", size)))
-      
-      # Handle numeric values directly (e.g., "1000+")
-   # if (grepl("\\d+\\+", size)) return(as.numeric(gsub("\\+", "", size)) / 1000)
-      
-      # Default case: return as numeric if possible
-    #return(as.numeric(size))
-    #}
-```
-
-Below is the figure showing the distribution of app sizes in each category. 
+### Visualization of App size vs Category
 
 ```{r}
 #df_clean <- data_final %>%
@@ -1151,33 +1092,6 @@ ggplot(data_final, aes(x = reorder(Android.Ver, Installs), y = Installs)) +
 It can be seen that the highest number of installation is when there is different requirements of the versions for the app to run. 
 
 
-#### Boxplot for Android Version vs. Reviews
-
-Below is the distribution of reviews for each minimum required Android Version.
-
-```{r}
-df_clean <- data_final %>% 
-  filter(!is.na(Android.Ver) & !is.na(Reviews)) %>% 
-  mutate(Scaled_Reviews = log10(Reviews + 1))
-
-ggplot(df_clean, aes(x = reorder(Android.Ver, Scaled_Reviews, FUN = median), y = Scaled_Reviews)) + 
-  geom_boxplot(outlier.color = "#f05555", outlier.shape = 1) +  # Boxplot with red outliers
-  coord_flip() +  # Flip coordinates for better readability
-  theme_minimal() + 
-  labs(
-    title = "Distribution of Scaled Reviews by Android Version", 
-    x = "Android Version", 
-    y = "Scaled Reviews (Log10)"
-  ) + 
-  theme(
-    axis.text.y = element_text(size = 8),  # Adjust y-axis text size
-    plot.title = element_text(hjust = 0.5)  # Center the plot title
-  )
-
-```
-
-It can be seen that the version from 4.1 to 7.1.1 have the highest number of reviews, while version from 5.0 to 7.1.1 have the least number of reviews. 
-
 
 ####  Histogram for Android Version vs. Rating
 
@@ -1204,37 +1118,12 @@ It can be seen that most Android Version have ratings range between 4.0 and 5.0.
 
 
 
+### Update Frequency
 
-
-
-```{r}
-# Last Updated Analysis
-# Create summary of updates by month and year
-#updates_by_month <- data_updated %>%
-#  mutate(
-#    update_month = format(Last.Updated, "%Y-%m"),
- #   update_year = year(Last.Updated)
- # ) %>%
-  #group_by(update_month) %>%
- # summarize(count = n()) %>%
- # arrange(update_month)
-```
-
-```{r}
-# Plot updates over time
-#ggplot(updates_by_month, aes(x = as.Date(paste0(update_month, "-01")), y = count)) +
-  #geom_line(color = "blue") +
-  #geom_point(color = "red") +
-  #labs(title = "Number of App Updates Over Time",
-  #     x = "Date",
-  #     y = "Number of Updates") +
-  #theme_minimal() +
- # theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
 
 ```{r check}
 # Content Rating and Update Frequency Relationship
-update_frequency_by_rating <- data_updated %>%
+update_frequency_by_rating <- data_final %>%
   group_by(Content.Rating) %>%
   summarize(
     avg_last_update = mean(Last.Updated),
@@ -1245,9 +1134,10 @@ print("\nUpdate Frequency by Content Rating:")
 print(update_frequency_by_rating)
 ```
 
+
 ```{r}
 # Basic statistics for Installs by Content Rating
-installs_by_rating <- data_updated %>%
+installs_by_rating <- data_final %>%
   group_by(Content.Rating) %>%
   summarise(
     mean_installs = mean(Installs, na.rm = TRUE),
@@ -1262,10 +1152,6 @@ print(installs_by_rating)
 ```
 #### Last updated vs Content Rating
 
-```{r}
-str(data_final)
-
-```
 
 ```{r}
 # Required libraries
@@ -1379,41 +1265,7 @@ summary_stats <- data_updated %>%
 print("\nOverall Summary Statistics for Days Since Update:")
 print(summary_stats)
 ```
-### Observation for Update Frequency Velocity Analysis:
-This column represents the average number of updates per app for each content rating category. It reflects how frequently apps in each category receive updates.
 
-```{r}
-# # 1. Update Cycle Analysis
-# data_updated <- data_updated %>%
-#   mutate(
-#     Last.Updated = as.Date(Last.Updated, format = "%B %d, %Y"),
-#     day_of_week = wday(Last.Updated, label = TRUE),
-#     week_of_year = week(Last.Updated),
-#     month_of_year = month(Last.Updated, label = TRUE),
-#     season = case_when(
-#       month_of_year %in% c("Dec", "Jan", "Feb") ~ "Winter",
-#       month_of_year %in% c("Mar", "Apr", "May") ~ "Spring",
-#       month_of_year %in% c("Jun", "Jul", "Aug") ~ "Summer",
-#       TRUE ~ "Fall"
-#     )
-#   )
-# 
-# # Day of Week Update Pattern by Content Rating
-# dow_pattern <- data_updated %>%
-#   group_by(Content.Rating, day_of_week) %>%
-#   summarise(count = n()) %>%
-#   group_by(Content.Rating) %>%
-#   mutate(percentage = count/sum(count) * 100)
-# 
-# ggplot(dow_pattern, aes(x = day_of_week, y = percentage, fill = Content.Rating)) +
-#   geom_bar(stat = "identity", position = "dodge") +
-#   facet_wrap(~Content.Rating) +
-#   labs(title = "Update Day Preferences by Content Rating",
-#        x = "Day of Week",
-#        y = "Percentage of Updates") +
-#   theme_minimal() +
-#   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-```
 
 ```{r}
 # Update Interval Analysis
