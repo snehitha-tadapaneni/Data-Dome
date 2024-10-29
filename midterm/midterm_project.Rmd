@@ -775,7 +775,11 @@ ggplot(category_counts_df, aes(x = reorder(Category, Frequency), y = Frequency))
   coord_flip() +  
   labs(title = "Distribution of Categories", x = "Category", y = "Frequency") +
   theme_minimal() +
-   theme()
+   theme(
+    plot.background = element_rect(fill = "#efefef", color = NA),
+    panel.background = element_rect(fill = "#efefef", color = NA),
+    axis.text.y = element_text(size = 5.5)
+  )
 ```
 
 AS it can be seen from the graph above, most of the apps in the dataset belong to the Family category, and Beauty has the least number of apps. 
@@ -788,7 +792,9 @@ Below is the figure showing the distribution of Android versions.
 ```{r}
 extract_version <- function(version) {
   version <- tolower(version)  # Make lowercase for consistency
-
+  
+  # Handle "Varies with device" and "NaN"
+  if (version == "varies with device" || version == "nan") return(NA)
   
   # Extract the first version in case of ranges (e.g., "4.1 - 7.1.1" -> "4.1")
   first_version <- strsplit(version, "[- ]")[[1]][1]
@@ -809,14 +815,11 @@ android_installs <- data_final %>%
   group_by(Android.Ver) %>% 
   summarize(Total_Installs = sum(Installs, na.rm = TRUE))
 
-data_final <- data_final %>% 
-  filter(Android.Ver != 'NaN')
 
 
-
-ggplot(data_final, aes(x = Android.Ver)) + 
-  geom_bar(binwidth = 0.5, fill = "#1f3374", color='#efefef') + 
- # scale_x_continuous(breaks = seq(1, 8, by = 1.0)) +  # Set x-axis ticks from 1.0 to 8.0
+ggplot(df_clean, aes(x = Android_Ver)) + 
+  geom_histogram(binwidth = 0.5, fill = "#1f3374", color='#efefef') + 
+  scale_x_continuous(breaks = seq(1, 8, by = 1.0)) +  # Set x-axis ticks from 1.0 to 8.0
   theme_minimal() + 
   labs(
     title = "Distribution of Android Versions", 
@@ -866,7 +869,7 @@ Everyone is the most dominant Category with 81.82% of all apps and Adults 18+ be
 
 ```{r ST3}
 #Plotting a scatter plot between Price and installs
-ggplot(data_final, aes(x=Price, y=log(data_final$Installs))) +
+ggplot(data_final, aes(x=Price, y=log(data_clean$Installs))) +
   geom_point(color = 'red', size = 1, alpha = 0.5) + 
   geom_smooth(method = 'lm', color = 'blue', se = FALSE) +
   labs(title = "Price vs Installs", x = "Price (USD)", y = "Number of Installs") +
@@ -887,7 +890,7 @@ str(Price_Category)
 #str(log(data_clean$Installs))
 
 # Box plot of Price Category vs. log-transformed Installs
-ggplot(data_final, aes(x = Price_Category, y = log(data_final$Installs))) +
+ggplot(data_final, aes(x = Price_Category, y = log(data_clean$Installs))) +
   geom_boxplot(fill = "lightblue", color = "darkblue", alpha = 0.6) +
   labs(title = "Price Categories vs. Log-Transformed Installs", 
        x = "Price Category", 
@@ -982,7 +985,7 @@ meeting the customer expectations.
 
 ```{r}
 # Scatter plot of Price vs. Ratings with log_Installs as  color
-ggplot(data_final, aes(x = Price, y = Rating,color = log(data_final$Installs))) +
+ggplot(data_final, aes(x = Price, y = Rating,color = log(data_clean$Installs))) +
   geom_point(alpha = 0.6) +
   scale_color_gradient(low = "blue", high = "red") +  
   labs(title = "Price vs. Ratings with Installs as Color by Price", 
@@ -992,7 +995,7 @@ ggplot(data_final, aes(x = Price, y = Rating,color = log(data_final$Installs))) 
   theme_minimal()
 
 # Scatter plot of Price vs. Reviews with log_Installs as color
-ggplot(data_final, aes(x = Price, y = Reviews,color = log(data_final$Installs))) +
+ggplot(data_final, aes(x = Price, y = Reviews,color = log(data_clean$Installs))) +
   geom_point(alpha = 0.6) +
   scale_color_gradient(low = "darkgreen", high = "yellow") +  
   labs(title = "Price vs. reviewss with Installs as Color by Price", 
@@ -1046,7 +1049,7 @@ ggplot(data_final, aes(x = Size, fill = Price)) +
 #### Boxplots for Rating vs Reviews
 
 ```{r}
-boxplot( data_clean$Rating~ Review_Category, data = data_clean, 
+boxplot( data_final$Rating~ Review_Category, data = data_clean, 
         main = "Boxplot of Review Counts by Review Category", 
         xlab = "Review Category", 
         ylab = "Review Rating",
@@ -1064,7 +1067,7 @@ show that high reviews, could mean a better rated app.
 ```{r}
 
 # Calculate the mean Rating for each Review_Category
-mean_ratings <- tapply(data_clean$Rating, Review_Category, mean, na.rm = TRUE)
+mean_ratings <- tapply(data_final$Rating, Review_Category, mean, na.rm = TRUE)
 
 # Convert the result to a data frame for better readability
 mean_ratings_df <- data.frame(Review_Category = names(mean_ratings), Mean_Rating = as.numeric(mean_ratings))
@@ -1148,12 +1151,19 @@ Below is a boxplot show the distribution of number of installs for each
 category order by mean from highest to lowest. 
 
 ```{r}
-ggplot(data_final, aes(x = reorder(Category, log(data_final$Installs),  FUN = mean), y = log(data_final$Installs))) +
-  geom_boxplot(outlier.color = "#f05555", outlier.shape = 1, color='#1f3374') +  # Red outliers for emphasis
+ggplot(data_clean, aes(x = reorder(Category, log(data_final$Installs),  FUN = mean), y = log(data_clean$Installs))) +
+  geom_boxplot(outlier.color = "#f05555", outlier.shape = 1, color='#1f3374', fill="#efefef") +  # Red outliers for emphasis
   coord_flip() +  # Flip for better readability
   scale_y_log10() +
   theme_minimal() +
-  labs()
+  labs(title = "Distribution of Installs by Category",
+       x = "Category",
+       y = "Number of Installs (Log Scale)") +
+    theme(
+    plot.background = element_rect(fill = "#efefef", color = NA),
+    panel.background = element_rect(fill = "#efefef", color = NA),
+    axis.text.y = element_text(size = 5.5)
+  )
 ```
 It can be seen from the graph that, on average, Entertainment apps receive the highest number of installations, followed by Education, Game, Photography, and Weather apps. In contrast, Art & Design apps have the fewest installations.
 
@@ -1234,12 +1244,12 @@ As it can be seen from the two figures above, most categories exhibit right-skew
 Below is the graph displaying the distribution of reviews left by users for each category.
 
 ```{r}
-#df_aggregated
+
 df_aggregated <- data_final %>% 
   group_by(Category) %>% 
   summarise(Total_Reviews = sum(Reviews, na.rm = TRUE))
 
-
+#df_aggregated
 
 # Plot the total reviews by category using a bar chart
 ggplot(df_aggregated, aes(x = reorder(Category, -Total_Reviews), y = log10(Total_Reviews))) + 
@@ -1294,6 +1304,7 @@ Below is the graph showing the number of installs for each minimum required Andr
 ```{r}
 ggplot(data_final, aes(x = reorder(Android.Ver, Installs), y = Installs)) + 
   geom_bar(stat = "identity", fill = "#1f3374") + 
+  coord_flip() +  # Flip coordinates for better readability
   scale_y_continuous(labels = scales::comma) +  # Format y-axis with commas
   theme_minimal() + 
   labs(
@@ -1302,11 +1313,9 @@ ggplot(data_final, aes(x = reorder(Android.Ver, Installs), y = Installs)) +
     y = "Total Installs"
   ) + 
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis text labels
     axis.text.y = element_text(size = 8),  # Adjust y-axis text size
     plot.title = element_text(hjust = 0.5)  # Center the plot title
   )
-
 
 ```
 
