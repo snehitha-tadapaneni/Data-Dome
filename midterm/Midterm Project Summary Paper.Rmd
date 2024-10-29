@@ -1,0 +1,40 @@
+---
+title: "DATS 6101 - Midterm"
+output: html_document
+date: "`r Sys.Date()`"
+author: "Name: Snehitha Tadapaneni, Sai Rachana Kandikattu, Amrutha Jayachandradhara, Wilona Nguyen, Pramod Krishnachari"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = F, results = "markdown", message = F)
+```
+
+# Introduction
+
+
+---
+
+# SMART Question
+
+
+### SMART Analysis
+
+---
+
+# Data Description
+
+---
+
+# Data Limitations
+- **Missing Data**: 
+- **Time Range**: 
+- **Device-Specific Data**: 
+
+
+
+---
+
+# Exploratory Data Analysis (EDA)
