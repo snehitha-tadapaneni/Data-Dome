@@ -74,6 +74,14 @@ Further, the inclusion of data on marketing efforts, like ad spend or whether an
 “What is the impact of content rating, required Android version, app category, size, and pricing on predicting app success in terms of positive ratings and high user reviews, as well as the number of installs, using data from Google Play Store apps from 2010 to 2018?”
 
 ### SMART Analysis
+The proposed research question investigates how various factors—such as content rating, required Android version, app category, size, and pricing—affect the success of applications on the Google Play Store, specifically in terms of positive ratings, high user reviews, and download numbers. By analyzing data from 2010 to 2018, this study aims to identify patterns and correlations that could provide insights into what drives user engagement and satisfaction. Understanding these relationships will be critical for developers seeking to enhance app performance and appeal in a competitive market.
+
+Our research aims to answer the following the ques:
+1) Does price significantly impact the popularity of an app in terms of installs?
+2) Does Reviews  and Installs have significantly impact the popularity of an app in terms of installs?
+3) Does Update have significant impact on Rating?
+4) Does Content Rating and Last Updated  significantly impact the popularity of an app in terms of installs?
+5) Does app size have significant impact on the number of Installs ?
 
 
 
@@ -141,14 +149,14 @@ The visualizations we have chosen include:
 These visualizations are designed to provide insights into the factors influencing app success on the Google Play Store.
 8
 
-![Fig 1. Installs vs Price](C:/Users/Venkat/Pictures/installs_vs_price.png)
-![Fig 2. Rating vs Days since lastupdate](C:/Users/Venkat/Pictures/rating_vs_days_since_update.png)
-![Fig 3. Installs vs Update Category vs Content Rating](C:/Users/Venkat/Pictures/installs_vs_update_vs_content_rating.png)
-![Fig 4. Installs vs size](C:/Users/Venkat/Pictures/installs_vs_size.png)
-![Fig 5. Installs vs Rating ](C:/Users/Venkat/Pictures/installs_vs_rating.png)
-![Fig 6. Ratings vs Review Category](C:/Users/Venkat/Pictures/review_vs_rating.png)
+![Fig 1. Installs vs Price](installs_vs_price.png)
+![Fig 2. Rating vs Days since lastupdate](rating_vs_days_since_update.png)
+![Fig 3. Installs vs Update Category vs Content Rating](installs_vs_update_vs_content_rating.png)
+![Fig 4. Installs vs size](installs_vs_size.png)
+![Fig 5. Installs vs Rating ](installs_vs_rating.png)
+![Fig 6. Ratings vs Review Category](review_vs_rating.png)
 
-![Fig 7. Installs vs Review Category ](C:/Users/Venkat/Pictures/installs_vs_review.png)
+![Fig 7. Installs vs Review Category ](installs_vs_review.png)
 
 ![Fig 7.](C:/Users/Venkat/Pictures/top_5_cat.png)
 
