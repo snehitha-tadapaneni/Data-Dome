@@ -22,8 +22,9 @@ Understanding these preferences is crucial for developers aiming to create succe
 
 
 
----
 # Research Context and Literature Review
+
+
 During the investigation of user interactions with mobile applications, a range of methodologies was explored to gain an expert perspective. It was discovered that numerous studies have been conducted to provide insights into how users engage with apps on platforms such as the Google Play Store.  Initially, a comprehensive review of existing literature was conducted to understand the dynamics of user behavior and app engagement. Notably, the study titled "User Experience and Interaction in Mobile Applications" was analyzed, which highlighted the importance of user-centric design. This research illustrated that positive user experiences significantly contribute to app success and retention rates, suggesting that developers should prioritize understanding user needs and preferences.
 
 
@@ -32,6 +33,8 @@ Expert analyses from various sources further supported the findings, indicating 
 ---
 
 # Data Description
+
+
 The dataset we have taken is a popular Google Play Store apps dataset from Kaggle, containing details about apps available on the platform. It has 10,841 observations (rows) and 13 variables (columns), with information about each app's attributes, ratings, and more. Here’s a breakdown of each column in the dataset:
 
 App: The name of the app.
@@ -59,7 +62,10 @@ Features like user engagement metrics, for example how often the user engage wit
 
 The dataset has several missing values, particularly in the Rating column, which necessitates careful handling to avoid introducing bias into the analysis. Additionally, there is no demographic information about users, such as age, location, or device type, which restricts our ability to segment user groups or understand how various demographics interact with different app categories.
 
+An additional aspect of the data that could have been included is the reviews, which would have been valuable for assessing whether the feedback is positive or negative. This information would provide further insights into whether a higher number of reviews correlates with a positive reception.
+
 Further, the inclusion of data on marketing efforts, like ad spend or whether an app was featured on the Play Store, could clarify the impact of promotion on installs and ratings. 
+
 
 #### Missing records in our Data
 
@@ -74,10 +80,13 @@ Further, the inclusion of data on marketing efforts, like ad spend or whether an
 ---
 
 # Exploratory Data Analysis (EDA)
+
 ### Data exploring
+
 The dataset has several missing values, particularly in the Rating column, which necessitates careful handling to avoid introducing bias into the analysis. Additionally, there is no demographic information about users, such as age, location, or device type, which restricts our ability to segment user groups or understand how various demographics interact with different app categories.
 
 ### Data Cleaning
+
 The Google Play Store dataset, as analyzed, contains missing values and inconsistent formats across various columns. To clean and prepare this dataset for analysis, several steps were taken to address these data quality issues. Here is an overview of how missing records were managed and further improvements that could be considered:
 
 * Duplicates in App Names: Initially, there were 404 duplicated apps that appeared twice or even thrice. By removing these duplicates, the dataset was reduced from 10,841 to 9,660 unique apps. This ensures that only one instance of each app is considered, eliminating redundancy and potential skew in subsequent analysis.
@@ -93,6 +102,60 @@ Rows with missing or blank prices were dropped, as they were not relevant for as
 * Installs Column: The Installs column contained entries with symbols like + and commas, which were removed to convert the data into a numeric format. Some records had non-numeric entries or unusual characters, so these were cleaned systematically. A custom function was used to remove these symbols, ensuring all install counts were represented as clean, comparable integers.
 
 * Rating and Reviews Columns: The Rating column contained 1,463 missing values, predominantly in the "Family" category. Rather than dropping these records, the missing values were replaced with the mean rating of apps within the same category. This imputation method helped maintain category-wise data integrity. The Reviews column, initially in string format, was converted to integer format after addressing missing values. Converting to numeric allowed for statistical analysis, such as calculating averages or correlations with installs or ratings.
+
+* Last Updated: The date format in the "Last Updated" column was adjusted to an appropriate format to ensure accurate analysis.
+
+* Current Version: The current version of the app is unique to each application, making it unsuitable as a comparative metric across different apps. Additionally, the versio format varies from one application to another, leading to dropping the column.
+
+Additional Transformations done for effective analysis:
+
+* Review Category
+The review category was binned to ensure that each category contained an approximately equal number of reviews. This approach enhances the validity of the comparisons, as it prevents any one category from dominating the analysis due to an excessive number of reviews. Binning allows for a more balanced representation of different review sentiments across categories, facilitating a clearer understanding of how reviews impact app success.
+
+* Install Category
+The install category was created based on the distribution of installs present in the dataset. By analyzing the install figures, the data was binned into meaningful segments, ensuring that each segment reflects a realistic range of installs. This method allows for a comparative analysis of how different levels of installs correlate with other variables, such as ratings and review categories.
+
+* Log Transformed Installs
+Log transformation of installs was utilized to normalize the data, making it easier to compare and analyze the installations across various categories. This transformation is particularly useful in addressing the skewness commonly present in raw install data, enabling a more straightforward comparison of distributions. By applying the log transformation, we can better visualize relationships and draw more reliable conclusions regarding app success metrics.
+
+* Update Category
+The update category distinguishes between "Old Update" and "Recent Update," based on the update time recorded in the dataset. This categorization allows for the assessment of how recent updates may affect user perceptions and app performance. By classifying apps into these two groups, we can investigate the potential impact of frequent updates on installs and overall app ratings.
+
+
+### Data Visualization
+
+
+To illustrate the relationships between the variables, we employed various visualization methods, including bar plots, scatter plots, heat maps, and other techniques. The selection of these visualization methods was based on the types of variables being plotted and their relevance to our analysis. This approach aimed to identify which applications exhibit the highest popularity by examining the relationships among reviews, ratings, and installs. If a positive relationship is evident among these metrics, we can concentrate on the relationship with installs, as it ultimately reflects the user base for an application.
+
+The visualizations we have chosen include:
+
+1. Installs and Price
+2. Ratings and Days since last update
+3. Installs and Update Category and Content Rating
+4. Installs and size
+5. Installs and Rating
+6. Ratings and Review Category
+7. Installs and Review Category
+8. Top 5 Categories with Highest Installs
+
+These visualizations are designed to provide insights into the factors influencing app success on the Google Play Store.
+8
+
+![Fig 1. Installs vs Price](C:/Users/Venkat/Pictures/installs_vs_price.png)
+![Fig 2. Rating vs Days since lastupdate](C:/Users/Venkat/Pictures/rating_vs_days_since_update.png)
+![Fig 3. Installs vs Update Category vs Content Rating](C:/Users/Venkat/Pictures/installs_vs_update_vs_content_rating.png)
+![Fig 4. Installs vs size](C:/Users/Venkat/Pictures/installs_vs_size.png)
+![Fig 5. Installs vs Rating ](C:/Users/Venkat/Pictures/installs_vs_rating.png)
+![Fig 6. Ratings vs Review Category](C:/Users/Venkat/Pictures/review_vs_rating.png)
+
+![Fig 7. Installs vs Review Category ](C:/Users/Venkat/Pictures/installs_vs_review.png)
+
+![Fig 7.](C:/Users/Venkat/Pictures/top_5_cat.png)
+
+
+
+### Notable Observations
+
 
 
 
