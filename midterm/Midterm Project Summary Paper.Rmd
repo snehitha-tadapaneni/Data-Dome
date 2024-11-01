@@ -446,44 +446,101 @@ what drives user engagement and satisfaction. Understanding these
 relationships will be critical for developers seeking to enhance app
 performance and appeal in a competitive market.
 
-Our research aims to answer the following questions: 1. Does price
-significantly impact the popularity of an app in terms of installs? 2.
-Does Reviews and Ratings have significantly impact the popularity of an
-app in terms of installs? 3. Does Update have significant impact on
-Rating? 4. Does Content Rating and Last Updated significantly impact the
-popularity of an app in terms of installs? 5. Does app size have
-significant impact on the number of Installs ?
-
 ### Probing Smart Question: Hypothesis Testing Approach
+Our research aims to answer the following questions: 
 
--   *Question 1:* Does price significantly impact the popularity of an
-    app in terms of installs?
+***Question 1: Does price significantly impact the popularity of an
+    app in terms of installs?***
 
-*Null Hypothesis(H₀):* *Alternate Hypothesis(H₁):* *Test:*
-*Observation:* *Conclusion:*
+- **Null Hypothesis (H₀):** There is no significant difference in the mean log installs between   free and paid apps. (Price does not impact app popularity.)
 
--   *Question 2:* Does Reviews and Ratings have significantly impact the
-    popularity of an app in terms of installs?
+- **Alternate Hypothesis (H₁):** There is a significant difference in the mean log installs     between free and paid apps. (Price impacts app popularity.)
 
-*Null Hypothesis(H₀):* *Alternate Hypothesis(H₁):* *Test:*
-*Observation:* *Conclusion:*
+- **Test:**  Independent t-test
+<br>t-value: 29.042
+<br>Degrees of Freedom (df): 977.19
+<br>P-value: < 2.2e-16
 
--   *Question 3:* Does Update have significant impact on Rating?
+- **Observation:**
+<br>The p-value is extremely small (less than 0.05), which indicates strong evidence against the     null hypothesis.
+<br>The mean log installs for free apps (11.002709) is significantly higher than for paid apps    (7.284829).
 
-*Null Hypothesis(H₀):* *Alternate Hypothesis(H₁):* *Test:*
-*Observation:* *Conclusion:*
+- **Conclusion:**
+Since the p-value is very small, we reject the null hypothesis and conclude that the difference   in mean log installs between free and paid apps is statistically significant. This suggests       that price does indeed have a significant impact on app popularity in terms of installs.
 
--   *Question 4:* Does Content Rating and Last Updated significantly
-    impact the popularity of an app in terms of installs?
 
-*Null Hypothesis(H₀):* *Alternate Hypothesis(H₁):* *Test:*
-*Observation:* *Conclusion:*
+***Question 2: Does Reviews and Ratings have significantly impact the popularity of an app in terms of installs?***
 
--   *Question 5:* Does app size have significant impact on the number of
-    Installs ?
+- **Null Hypothesis (H₀):** There is no significant difference in the mean rating across different review categories. (Review count does not impact app rating.)
 
-*Null Hypothesis(H₀):* *Alternate Hypothesis(H₁):* *Test:*
-*Observation:* *Conclusion:*
+- **Alternate Hypothesis (H₁):** There is a significant difference in the mean rating across different review categories. (Review count impacts app rating.)
+
+- **Test:** ANOVA
+<br>F Value (f): 41.3
+<br>Degrees of Freedom (df): 11
+<br>P-value: < 2e-16
+
+- **Observation:**
+The p-value is extremely small (less than 0.05), indicating strong evidence against the null hypothesis.
+The mean rating generally increases with higher review categories, from 4.03 in the "100+" category to 4.43 in the "1M+" category.
+
+- **Conclusion:**
+Since the p-value is very small, we reject the null hypothesis. This suggests that the number of reviews does have a statistically significant impact on the mean rating. Higher-rated apps, particularly those with many reviews, are likely more popular, indicating that review count and rating significantly impact app popularity in terms of installs.
+
+
+***Question 3: Does Update have significant impact on Rating?***
+
+- **Null Hypothesis (H₀):**The number of days since the last update does not significantly impact the app rating.
+- **Alternate Hypothesis (H₁):** The number of days since the last update does significantly impact the app rating.
+
+- **Test:** ANOVA (Analysis of Variance)
+<br>F-value: 143.8
+<br>P-value: < 2e-16
+
+- **Observation:**
+The p-value is extremely small (less than 0.05), indicating strong evidence against the null hypothesis.
+A high F-value (143.8) further supports that there is a significant difference in app ratings based on the time since the last update.
+
+- **Conclusion:**
+Since the p-value is very small, we reject the null hypothesis and conclude that the time since the last update has a statistically significant impact on app ratings.
+
+
+***Question 4: Does Content Rating and Last Updated significantly impact the popularity of an app in terms of installs?***
+
+- **Null Hypothesis (H₀):** There is no significant difference in the mean log installs between apps with different content ratings. (Content Rating does not impact app popularity.)
+
+- **Alternate Hypothesis (H₁):** There is a significant difference in the mean log installs between apps with different content ratings. (Content Rating impacts app popularity.)
+
+- **Test:** ANOVA
+<br>F-Value: 41.95
+<br>Degrees of Freedom (df): 5, 9638
+<br>P-value: < 2e-16
+
+- **Observation:**
+The p-value is extremely small (less than 0.05), indicating strong evidence against the null hypothesis.The ANOVA results suggest a significant difference in installs between content ratings, implying that content rating categories have an impact on the number of installs.
+
+- **Conclusion:**
+Since the p-value is very small, we reject the null hypothesis and conclude that the difference in installs between content ratings is statistically significant. This suggests that content rating does indeed have a significant impact on app popularity in terms of installs.
+
+***Question 5: Does app size have significant impact on the number of Installs ?***
+
+- **Null Hypothesis (H₀):** There is no significant correlation between app size and the number of installs. (App size does not impact the number of installs.)
+
+- **Alternate Hypothesis (H₁):** There is a significant correlation between app size and the number of installs. (App size impacts the number of installs.)
+Test:
+
+- **Test**: Correlation t-test
+<br>t-value: 4.0069
+<br>Degrees of Freedom (df): 9657
+<br>P-value: 6.198e-05
+<br>Correlation Coefficient: 0.0407
+<br>95% Confidence Interval: 0.0208 to 0.0606
+
+- **Observation:**
+The p-value is very small (less than 0.05), indicating strong evidence against the null hypothesis.However, the correlation coefficient (0.0407) is close to zero, suggesting a weak positive correlation between app size and the number of installs.
+
+- **Conclusion:**
+Since the p-value is very small, we reject the null hypothesis, concluding that there is a statistically significant but weak positive correlation between app size and the number of installs. This suggests that app size has a minor impact on the number of installs.
 
 # **References**
 
