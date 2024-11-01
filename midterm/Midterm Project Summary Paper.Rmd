@@ -70,19 +70,6 @@ Further, the inclusion of data on marketing efforts, like ad spend or whether an
 #### Missing records in our Data
 
 
-# SMART Question
-“What is the impact of content rating, required Android version, app category, size, and pricing on predicting app success in terms of positive ratings and high user reviews, as well as the number of installs, using data from Google Play Store apps from 2010 to 2018?”
-
-### SMART Analysis
-The proposed research question investigates how various factors—such as content rating, required Android version, app category, size, and pricing—affect the success of applications on the Google Play Store, specifically in terms of positive ratings, high user reviews, and download numbers. By analyzing data from 2010 to 2018, this study aims to identify patterns and correlations that could provide insights into what drives user engagement and satisfaction. Understanding these relationships will be critical for developers seeking to enhance app performance and appeal in a competitive market.
-
-Our research aims to answer the following the ques:
-1) Does price significantly impact the popularity of an app in terms of installs?
-2) Does Reviews  and Installs have significantly impact the popularity of an app in terms of installs?
-3) Does Update have significant impact on Rating?
-4) Does Content Rating and Last Updated  significantly impact the popularity of an app in terms of installs?
-5) Does app size have significant impact on the number of Installs ?
-
 
 
 ---
@@ -158,13 +145,65 @@ These visualizations are designed to provide insights into the factors influenci
 
 ![Fig 7. Installs vs Review Category ](installs_vs_review.png)
 
-![Fig 7.](C:/Users/Venkat/Pictures/top_5_cat.png)
+![Fig 8.](C:/Users/Venkat/Pictures/top_5_cat.png)
 
+![Fig 8.](correlation.png)
 
 
 ### Notable Observations
 
 
+1. Fig 1 reveals that the majority of app installs are concentrated in free apps, with a notable decline as app prices increase. This illustrates a strong inverse relationship between price and installs, emphasizing consumer preference for free options over paid ones in the app market.
 
+2. In Fig 2, it can be observed that as the number of days since the last update increase, app ratings tend to decline. This trend showcases the critical role of regular updates in maintaining user satisfaction and app quality.
+
+3. Fig 3 reveals a notable difference in installs between apps with recent and old updates. Apps with recent updates tend to have higher install rates compared to those with older updates. Additionally, apps rated for "Everyone 10+" have the highest number of installs among the different content ratings.
+
+4. In Fig 4, there is no strong, linear relationship between app size and install count. The data points are scattered across the plot, indicating that app size does not necessarily determine the number of installs.
+
+5. Fig 5 suggests a slight positive correlation between app rating and install count. Apps with higher ratings tend to have higher install numbers, especially in the higher rating ranges. However, the relationship is not perfectly linear, and other factors likely influence install counts.
+
+6. Fig 6 indicates a positive correlation between review count and rating. This suggests that apps with a higher number of reviews tend to have higher ratings. This trend implies that a larger number of reviews can positively influence an app's overall rating.
+
+7. Fig 7 reveals a positive correlation between review category and install count. Apps with higher review categories, likely indicating a larger number of positive reviews, tend to have higher install numbers. This finding reinforces the trend observed in Figure 6, where higher ratings are associated with higher installs.
+
+8. In Fig 8, it is evident that the top five categories with the highest number of installs are Entertainment, Photography, Video, Communication, and Social. This suggests that applications like WhatsApp and Messenger rank among the most installed, aligning with their daily use by many users. The popularity of these categories reflects a trend where apps enhancing social interaction and visual expression dominate user preferences, contributing to high engagement rates.
+
+
+9. In Fig 9, several key correlations can be observed:
+
+Strong Correlation
+(i). **Installs and Reviews**: 
+   - A very strong positive correlation of **0.95** indicates that apps with more installs tend to receive more reviews. This suggests that popular apps attract significant user feedback.
+
+Moderate Correlation
+(ii). **Price and Installs**: 
+   - A negative correlation of **-0.23** suggests that higher-priced apps generally have fewer installs compared to free apps.
+(iii). **Size and Installs**: 
+   - A positive correlation of **0.31** indicates that larger apps tend to have higher installs, although this may also reflect specific categories that have larger app sizes.
+(iv). **Days Since Last Update and Installs**: 
+   - A negative correlation of **-0.33** implies that older updates are associated with fewer installs, highlighting the importance of regular updates in attracting users.
+
+Slight Correlation
+(v). **Reviews and Ratings**: 
+   - There is a slight correlation suggesting that higher ratings are associated with more reviews, indicating that positive feedback may lead to increased user engagement.
+(vi). **Android Version and Installs**: 
+   - Compatibility with more Android versions is positively correlated with higher installs, suggesting that broader compatibility may enhance an app’s reach.
+  
+These observations underscore significant relationships between app characteristics and user engagement metrics, offering valuable insights for developers and marketers.While the relationships between installs, reviews, and ratings provide valuable insights, it suggests that focusing solely on install counts could suffice for assessing an app's popularity. This perspective emphasizes the significance of installs as a primary metric, potentially simplifying the evaluation process for developers and marketers.
+
+
+# SMART Question
+“What is the impact of content rating, required Android version, app category, size, and pricing on predicting app success in terms of positive ratings and high user reviews, as well as the number of installs, using data from Google Play Store apps from 2010 to 2018?”
+
+### SMART Analysis
+The proposed research question investigates how various factors—such as content rating, required Android version, app category, size, and pricing—affect the success of applications on the Google Play Store, specifically in terms of positive ratings, high user reviews, and download numbers. By analyzing data from 2010 to 2018, this study aims to identify patterns and correlations that could provide insights into what drives user engagement and satisfaction. Understanding these relationships will be critical for developers seeking to enhance app performance and appeal in a competitive market.
+
+Our research aims to answer the following questions:
+1) Does price significantly impact the popularity of an app in terms of installs?
+2) Does Reviews  and Ratings have significantly impact the popularity of an app in terms of installs?
+3) Does Update have significant impact on Rating?
+4) Does Content Rating and Last Updated  significantly impact the popularity of an app in terms of installs?
+5) Does app size have significant impact on the number of Installs ?
 
 
