@@ -143,6 +143,8 @@ into the analysis. Additionally, the absence of demographic information
 about users, such as age, location, or device type restricts our ability
 to segment user groups or understand how various demographics interact
 with different app categories (Fischer, & Kleen 2021).
+
+
 ------------------------------------------------------------------------
 
 # **Exploratory Data Analysis (EDA)**
@@ -436,6 +438,8 @@ popularity. This perspective emphasizes the significance of installs as
 a primary metric, potentially simplifying the evaluation process for
 developers and marketers.
 
+------------------------------------------------------------------------
+
 # **SMART Question**
 
 “What is the impact of content rating, required Android version, app
@@ -551,6 +555,8 @@ The p-value is very small (less than 0.05), indicating strong evidence against t
 - **Conclusion:**
 Since the p-value is very small, we reject the null hypothesis, concluding that there is a statistically significant but weak positive correlation between app size and the number of installs. This suggests that app size has a minor impact on the number of installs.
 
+------------------------------------------------------------------------
+
 # **Conclusion**
 Expanding on the insights drawn from the analysis of Google Play Store applications, this study dives deep into the intricate factors that influence an app's success, particularly concerning the number of installations and user ratings. The Google Play Store, as a massive platform hosting millions of applications across various categories, provides a unique landscape to explore how specific attributes correlate with app popularity and user engagement. This comprehensive conclusion will not only reflect the observed patterns and associations among variables such as content rating, app size, update frequency, and pricing but also emphasize the broader implications of these findings on app development, user engagement, and market strategy.
 
@@ -587,6 +593,8 @@ This study provides developers and marketers with actionable insights into optim
 While this analysis offers valuable insights, it is essential to acknowledge its limitations and suggest areas for future research. The study primarily focused on a subset of variables and did not account for other potential factors, regional trends, or cultural preferences, which could influence user behavior. Future studies could expand on these findings by examining additional data sources or utilizing a larger dataset. Additionally, it would be beneficial to explore the causal relationships among variables, such as whether frequent updates directly cause higher ratings or if highly-rated apps are more likely to receive updates. Exploring these nuances could yield even more targeted insights for developers.
 
 In conclusion, this study of Google Play Store applications underscores the importance of key factors like content rating, update frequency, app size, and pricing in determining app success. By aligning their strategies with these findings, developers can enhance their app's appeal, foster positive user engagement, and maintain competitive standing. As the app market continues to grow, staying informed of these trends will be crucial for developers seeking long-term success in an increasingly dynamic and competitive environment.
+
+------------------------------------------------------------------------
 
 # **References**
 
