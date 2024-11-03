@@ -125,13 +125,6 @@ engage with the app after installation or if he deletes the app later,
 sessionlength etc would let us understand deeper and help differentiate
 between one-time installs and regular users.
 
-The dataset has several missing values, particularly in the Rating
-column, which necessitates careful handling to avoid introducing bias
-into the analysis. Additionally, the absence of demographic information
-about users, such as age, location, or device type restricts our ability
-to segment user groups or understand how various demographics interact
-with different app categories (Fischer, & Kleen 2021).
-
 An additional aspect of the data that could have been included is the
 reviews, which would have been valuable for assessing whether the
 feedback is positive or negative. This information would provide further
@@ -144,6 +137,12 @@ of promotion on installs and ratings.
 
 #### Missing records in our Data
 
+The dataset has several missing values, particularly in the Rating
+column, which necessitates careful handling to avoid introducing bias
+into the analysis. Additionally, the absence of demographic information
+about users, such as age, location, or device type restricts our ability
+to segment user groups or understand how various demographics interact
+with different app categories (Fischer, & Kleen 2021).
 ------------------------------------------------------------------------
 
 # **Exploratory Data Analysis (EDA)**
@@ -395,7 +394,7 @@ preferences, contributing to high engagement rates.
 **Figure 9**. Heatmap for Correlations Between the Variables
 :::
 
-![](correlation.png){style="display: block; margin: 0 auto;"}
+![](Correlation.png){style="display: block; margin: 0 auto;"}
 
 In Figure 9, several key correlations can be observed:
 
@@ -449,7 +448,7 @@ what drives user engagement and satisfaction. Understanding these
 relationships will be critical for developers seeking to enhance app
 performance and appeal in a competitive market.
 
-### Probing Smart Question: Hypothesis Testing Approach
+### Probing Smart Questions: Hypothesis Testing Approach
 Our research aims to answer the following questions: 
 
 ***Question 1: Does price significantly impact the popularity of an
