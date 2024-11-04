@@ -22,7 +22,7 @@ knitr::opts_chunk$set(warning = F, results = "markdown", message = F)
 ```
 
 # **Introduction**
-
+<div style="text-align: justify;">
 In the rapidly evolving smartphone landscape, Android has emerged as the
 dominant mobile operating system, now powering over 2.5 billion active
 devices worldwide (Brandom, 2019). This extensive user base encompasses
@@ -55,9 +55,10 @@ needed to craft better apps tailored to user expectations and
 preferences. This research aims to deepen our understanding of user
 dynamics in an ever-evolving app ecosystem, which is critical for
 fostering user engagement and satisfaction.
+</div>
 
 # **Literature Review**
-
+<div style="text-align: justify;">
 During the investigation of user interactions with mobile applications,
 a range of methodologies was explored to gain an expert perspective. It
 was discovered that numerous studies have been conducted to provide
@@ -78,11 +79,11 @@ satisfaction. Overall, the conducted research underscores the nuanced
 relationships between user interactions and app design, suggesting that
 a deeper understanding of these dynamics can lead to the development of
 more effective and engaging applications.
-
+</div>
 ------------------------------------------------------------------------
 
 # **Data Description**
-
+<div style="text-align: justify;">
 The dataset used in this study is a popular collection of Google Play
 Store apps, sourced from Kaggle (faisaljanjua0555, 2023). It contains
 detailed information about 10,841 apps, organized across 13 variables,
@@ -110,12 +111,12 @@ apps dataset:
 | Last Updated | The date when the app was last updated, stored as text and can be converted to a date format. |
 | Current Ver | The current version of the app, stored as text and might have different formats. |
 | Android Ver | The minimum Android version required to run the app, given as text (e.g., “4.0.3 and up”). |
-
+</div>
 Here's a visualization of our dataset structure: ![Initial Data
-structure](data_structure.png) ---
+structure](data_structure.png) 
 
 # **Data Limitations**
-
+<div style="text-align: justify;">
 The Google Play Store dataset we choose provides valuable insights into
 app performance and user reviews, but including few features might help
 us analyse the depth and accuracy of our analysis.
@@ -134,32 +135,32 @@ positive reception.
 Further, the inclusion of data on marketing efforts, like ad spend or
 whether an app was featured on the Play Store, could clarify the impact
 of promotion on installs and ratings.
-
+</div>
 #### Missing records in our Data
-
+<div style="text-align: justify;">
 The dataset has several missing values, particularly in the Rating
 column, which necessitates careful handling to avoid introducing bias
 into the analysis. Additionally, the absence of demographic information
 about users, such as age, location, or device type restricts our ability
 to segment user groups or understand how various demographics interact
 with different app categories (Fischer, & Kleen 2021).
-
+</div>
 
 ------------------------------------------------------------------------
 
 # **Exploratory Data Analysis (EDA)**
 
 ### Data Exploring
-
+<div style="text-align: justify;">
 The dataset has several missing values, particularly in the Rating
 column, which necessitates careful handling to avoid introducing bias
 into the analysis. Additionally, there is no demographic information
 about users, such as age, location, or device type, which restricts our
 ability to segment user groups or understand how various demographics
 interact with different app categories.
-
+</div>
 ### Data Cleaning
-
+<div style="text-align: justify;">
 The Google Play Store dataset, as analyzed, contains missing values and
 inconsistent formats across various columns. To clean and prepare this
 dataset for analysis, several steps were taken to address these data
@@ -268,9 +269,9 @@ Additional Transformations done for effective analysis:
     classifying apps into these two groups, we can investigate the
     potential impact of frequent updates on installs and overall app
     ratings.
-
+</div>
 ### Data Visualization
-
+<div style="text-align: justify;">
 To illustrate the relationships between the variables, we employed
 various visualization methods, including bar plots, scatter plots, heat
 maps, and other techniques. The selection of these visualization methods
@@ -437,18 +438,18 @@ focusing solely on install counts could suffice for assessing an app's
 popularity. This perspective emphasizes the significance of installs as
 a primary metric, potentially simplifying the evaluation process for
 developers and marketers.
-
+</div>
 ------------------------------------------------------------------------
 
 # **SMART Question**
-
+<div style="text-align: justify;">
 “What is the impact of content rating, required Android version, app
 category, size, and pricing on predicting app success in terms of
 positive ratings and high user reviews, as well as the number of
 installs, using data from Google Play Store apps from 2010 to 2018?”
-
+</div>
 ### SMART Analysis
-
+<div style="text-align: justify;">
 The proposed research question investigates how various factors—such as
 content rating, required Android version, app category, size, and
 pricing—affect the success of applications on the Google Play Store,
@@ -458,8 +459,9 @@ to identify patterns and correlations that could provide insights into
 what drives user engagement and satisfaction. Understanding these
 relationships will be critical for developers seeking to enhance app
 performance and appeal in a competitive market.
-
+</div>
 ### Probing Smart Questions: Hypothesis Testing Approach
+<div style="text-align: justify;">
 Our research aims to answer the following questions: 
 
 ***Question 1: Does price significantly impact the popularity of an
@@ -554,10 +556,11 @@ The p-value is very small (less than 0.05), indicating strong evidence against t
 
 - **Conclusion:**
 Since the p-value is very small, we reject the null hypothesis, concluding that there is a statistically significant but weak positive correlation between app size and the number of installs. This suggests that app size has a minor impact on the number of installs.
-
+</div>
 ------------------------------------------------------------------------
 
 # **Conclusion**
+<div style="text-align: justify;">
 Expanding on the insights drawn from the analysis of Google Play Store applications, this study dives deep into the intricate factors that influence an app's success, particularly concerning the number of installations and user ratings. The Google Play Store, as a massive platform hosting millions of applications across various categories, provides a unique landscape to explore how specific attributes correlate with app popularity and user engagement. This comprehensive conclusion will not only reflect the observed patterns and associations among variables such as content rating, app size, update frequency, and pricing but also emphasize the broader implications of these findings on app development, user engagement, and market strategy.
 
 **1. Content Rating as a Key Indicator of User Trust and Accessibility**
@@ -593,24 +596,24 @@ This study provides developers and marketers with actionable insights into optim
 While this analysis offers valuable insights, it is essential to acknowledge its limitations and suggest areas for future research. The study primarily focused on a subset of variables and did not account for other potential factors, regional trends, or cultural preferences, which could influence user behavior. Future studies could expand on these findings by examining additional data sources or utilizing a larger dataset. Additionally, it would be beneficial to explore the causal relationships among variables, such as whether frequent updates directly cause higher ratings or if highly-rated apps are more likely to receive updates. Exploring these nuances could yield even more targeted insights for developers.
 
 In conclusion, this study of Google Play Store applications underscores the importance of key factors like content rating, update frequency, app size, and pricing in determining app success. By aligning their strategies with these findings, developers can enhance their app's appeal, foster positive user engagement, and maintain competitive standing. As the app market continues to grow, staying informed of these trends will be crucial for developers seeking long-term success in an increasingly dynamic and competitive environment.
-
+</div>
 ------------------------------------------------------------------------
 
 # **References**
 
-Brandom, R. (2019, May 7). There are now 2.5 billion active Android
+1. Brandom, R. (2019, May 7). There are now 2.5 billion active Android
 devices. The Verge.
 <https://www.theverge.com/2019/5/7/18528297/google-io-2019-android-devices-play-store-total-number-statistic-keynote>
 
-faisaljanjua0555. (2023a, May 20). eda - google play store apps. Kaggle.
+2. faisaljanjua0555. (2023a, May 20). eda - google play store apps. Kaggle.
 <https://www.kaggle.com/code/faisaljanjua0555/eda-google-play-store-apps/input>
 
-Fischer, F., & Kleen, S. (2021). Possibilities, Problems, and
+3. Fischer, F., & Kleen, S. (2021). Possibilities, Problems, and
 Perspectives of Data Collection by Mobile Apps in Longitudinal
 Epidemiological Studies: Scoping Review. Journal of medical Internet
 research, 23(1), e17691. <https://doi.org/10.2196/17691>
 
-Paula, D. F. O. de, Menezes, B. H. X. M., & Araújo, C. C. (1970, January
+4. Paula, D. F. O. de, Menezes, B. H. X. M., & Araújo, C. C. (1970, January
 1). Building a quality mobile application: A user-centered study
 focusing on design thinking, user experience and usability.
 SpringerLink.
