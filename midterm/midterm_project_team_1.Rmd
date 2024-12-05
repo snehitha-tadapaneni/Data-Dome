@@ -24,25 +24,20 @@ updated, app sizes, version, and other factors.
 
 # Smart Question
 
-“What is the impact of content rating, required Android version, app
-category, size, and pricing on predicting app success in terms of
-positive ratings and high user reviews, as well as the number of
-installs, using data from Google Play Store apps from 2010 to 2018?”
+“Our research focuses on performing Modelling on Google Play Store apps to uncover patterns, trends, and insights regarding app characteristics, user behavior, and installation patterns. We are trying to see how app popularity, defined as the number of installs, is impacted by the top five categories, last updated, app sizes, version, and other factors.”
 
-> *Specific*: The question clearly defines the variables (content
-> rating, required Android version, app category, size, pricing) and the
-> outcomes (positive ratings, high user reviews, number of installs).
+> *Specific*: The question focuses on identifying how app popularity (defined by the number of installs) is influenced by well-defined variables, including the top five app categories, last update date, app size, version, and additional characteristics such as content rating, pricing model, and user reviews. It also aims to uncover specific patterns and trends in user behavior and installation patterns.
 >
-> *Measurable*: The outcomes (positive ratings, high user reviews,
-> number of installs) are quantifiable.
+> *Measurable*: The impact of each variable (categories, last update, size, version) on app popularity is quantifiable using metrics such as the number of installs, user reviews, ratings, app size in MB, frequency of updates, and category-specific rankings. This ensures that results can be expressed numerically or statistically.
 >
-> *Achievable*: Given the availability of Google Play Store data from
-> 2010 to 2018, the analysis is feasible.
+> *Achievable*: Given the availability of historical data from the Google Play Store (e.g., datasets spanning years and including app attributes), the analysis is feasible using data analysis techniques, statistical modeling, and machine learning. Open-source libraries and tools can efficiently handle the data preprocessing and modeling.
 >
-> *Relevant*: The question addresses a significant issue in the app
-> development and marketing industry: predicting app success.
+> *Relevant*: The research is pertinent to app developers, marketers, and stakeholders in the mobile app ecosystem. Understanding the factors driving app installs directly addresses key industry challenges, such as improving app visibility, optimizing user engagement, and tailoring marketing strategies for success.
 >
-> *Time-specific*: The timeframe (2010-2018) is clearly defined.
+> *Time-specific*: The research will use data from a specific timeframe (e.g., 2010-2018), ensuring that insights are grounded in a defined historical context. The results could also include temporal trends to observe how factors influencing popularity have evolved over time.
+
+# Overview
+This research aims to analyze Google Play Store apps to uncover patterns, trends, and insights into how app characteristics influence popularity, defined by the number of installs. The study will involve systematic steps, including data cleaning, exploratory data analysis (EDA), modeling, and evaluation, to address the SMART research questions.
 
 ```{r required libraries, include=F}
 # The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
@@ -2043,5 +2038,39 @@ ANOVA analysis :
 Revealed significant differences in install counts based on content rating (F(5, 9638) = 41.95, p < 2e-16). This indicates that various content ratings have a substantial impact on the number of installs, highlighting the importance of content quality and type in attracting users.
 
 
+# Data Preprocessing for Modelling
+```{r}
 
+```
+
+# Data Modelling
+
+## Logistic Regression
+```{r}
+
+```
+
+
+## KNN
+```{r}
+
+```
+
+
+## XG Boost
+```{r}
+
+```
+
+
+## Random Forest
+```{r}
+
+```
+
+
+## SVM
+```{r}
+
+```
 
