@@ -1,5 +1,5 @@
 ---
-title: "DATS 6101 - Midterm"
+title: "DATS 6101 - Final Project"
 output: html_document
 date: "`r Sys.Date()`"
 author: "Name: Snehitha Tadapaneni, Sai Rachana Kandikattu, Amrutha Jayachandradhara, Wilona Nguyen, Pramod Krishnachari
@@ -15,12 +15,10 @@ knitr::opts_chunk$set(warning = F, results = "markdown", message = F)
 
 # Introduction
 
-Our research focuses on performing Exploratory Data Analysis (EDA) on
-Google Play Store apps to uncover patterns, trends, and insights
-regarding app characteristics, user behavior, and installation patterns.
-We are trying to see how app popularity, defined as the number of
-installs with high reviews and ratings, is impacted by categories, last
-updated, app sizes, version, and other factors.
+Our research focuses on performing Modelling on Google Play Store apps to uncover patterns, 
+trends, and insights regarding app characteristics, user behavior, and installation patterns. We 
+are trying to see how app popularity, defined as the number of installs, is impacted by the top 
+five categories, last updated, app sizes, version, and other factors. 
 
 # Smart Question
 
@@ -53,6 +51,10 @@ library(scales)
 library(cluster)
 library(knitr)
 library(kableExtra)
+library(reshape2)
+library(e1071)
+library(caret)
+
 ```
 
 # Data Preparation and Cleaning
@@ -409,8 +411,6 @@ print(summary(data_clean$Last.Updated))
 ```{r}
 str(data_final)
 ```
-
-
 
 
 # Data Exploring and Visualization
@@ -963,7 +963,6 @@ ggplot(data_final, aes(x = log(data_clean$Installs), y = Rating)) +
 
 ```
 
-
 #### Visualization for Category Distribution
 
 ```{r}
@@ -988,7 +987,6 @@ ggplot(category_counts_df, aes(x = reorder(Category, Frequency), y = Frequency))
 
 AS it can be seen from the graph above, most of the apps in the dataset belong to the Family category, and Beauty has the least number of apps. 
 
-
 #### Visualization for Category vs. Installs
 
 Below is a boxplot show the distribution of number of installs for each
@@ -1012,29 +1010,6 @@ ggplot(data_clean, aes(x = reorder(Category, log(data_final$Installs),  FUN = me
 It can be seen from the graph that, on average, Entertainment apps receive the highest number of installations, followed by Education, Game, Photography, and Weather apps. In contrast, Art & Design apps have the fewest installations.
 
 #### Visualization for Category vs. App Size
-
-
-```{r}
-#convert_size <- function(size) {
-#    size <- gsub(",", "", size)  # Remove commas
-#    size <- tolower(size)  # Make lowercase for consistency
-      
-      # Handle "varies with device" by assigning NA
-#    if (size == "varies with device") return(NA)
-      
-      # Convert "k" to MB (1 MB = 1000 KB)
- #   if (grepl("k", size)) return(as.numeric(gsub("k", "", size)) / 1000)
-      
-      # Convert "M" to numeric MB
-  #  if (grepl("m", size)) return(as.numeric(gsub("m", "", size)))
-      
-      # Handle numeric values directly (e.g., "1000+")
-   # if (grepl("\\d+\\+", size)) return(as.numeric(gsub("\\+", "", size)) / 1000)
-      
-      # Default case: return as numeric if possible
-    #return(as.numeric(size))
-    #}
-```
 
 Below is the figure showing the distribution of app sizes in each category. 
 
@@ -1063,7 +1038,6 @@ str(data_clean)
 ```
 
 
-
 ```{r}
 ggplot(data_clean, aes(x = reorder(Category, Size, FUN = median), y = Size)) + 
   geom_boxplot(outlier.color = "#f05555", outlier.shape = 1) + 
@@ -1084,7 +1058,6 @@ ggplot(data_clean, aes(x = reorder(Category, Size, FUN = median), y = Size)) +
 As it can be seen from the two figures above, most categories exhibit right-skewed app sizes, with the majority being under 50MB. However, the Game category stands out with a significantly larger median app size compared to other categories.
 
 #### Visualization for Category vs. Reviews
-
 
 Below is the graph displaying the distribution of reviews left by users for each category.
 
@@ -1407,14 +1380,8 @@ print("Summary of Reviews by Content Rating:")
 print(reviews_by_content)
 
 ```
-```{r}
-# Required libraries
-library(dplyr)
-library(tidyr)
-library(lubridate)
-library(ggplot2)
-library(reshape2)
 
+```{r}
 # Create days_since_update and data preparation
 data_updated <- data_final %>%
   mutate(
@@ -1523,7 +1490,8 @@ summary_stats <- data_updated %>%
 print("\nOverall Summary Statistics for Days Since Update:")
 print(summary_stats)
 ```
-###Observation for Update Frequency Velocity Analysis:
+
+##### Observation for Update Frequency Velocity Analysis:
 This column represents the average number of updates per app for each content rating category. It reflects how frequently apps in each category receive updates.
 
 ```{r}
@@ -1744,6 +1712,7 @@ The boxplot shows the distribution of app installs across different content rati
 
 
 #### Visualization for Last Updated vs Content Rating vs Installs 
+
 ```{r}
 # 3. Timeline analysis: Average installs over time by content rating
 installs_timeline <- data_updated %>%
@@ -1925,8 +1894,6 @@ print(selected_correlations)
 Implications
 These findings suggest that regular updates are important for sustaining app installs, and that different content ratings can influence user engagement. Strategies aimed at timely updates and optimizing content ratings could enhance app performance and user acquisition.
 
-
-
 # Statistical Tests
 
 #### Statistical test for Installs and Price 
@@ -2017,6 +1984,7 @@ For easier Ratings and Reviews vs Installs we can group Installs into
 categories given
 
 #### ANOVA test for Content Rating vs Installs 
+
 ```{r}
 # 1. Encode content rating (e.g., as factor levels or one-hot encoding)
 data_updated$Content.Rating <- as.factor(data_updated$Content.Rating)
@@ -2039,6 +2007,7 @@ Revealed significant differences in install counts based on content rating (F(5,
 
 
 # Data Preprocessing for Modelling
+
 ```{r}
 # Convert the 'last_updated' column to Date type
 data_updated$last_updated <- as.Date(data_updated$last_updated, format = "%B %d, %Y")
@@ -2069,7 +2038,8 @@ str(data_updated)
 
 
 ```
-###Category
+
+#### Category
 
 ```{r}
 category_dummies <- model.matrix(~ Category - 1, data = data_updated)
@@ -2086,7 +2056,8 @@ colnames(data_updated) <- gsub(" ", "_", colnames(data_updated))
 head(data_updated)
 
 ```  
-### Installs
+
+#### Installs
 
 ```{r}
 
@@ -2201,9 +2172,6 @@ confusionMatrix(rf_predictions, testData$Installs_Category)
 ## SVM
 
 ```{r}
-library(e1071)
-library(caret)
-
 # Convert target variable to a factor
 y <- as.factor(data_updated$Installs_Category)
 
