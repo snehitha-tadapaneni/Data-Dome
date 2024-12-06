@@ -1,10 +1,10 @@
 # Data-Dome : Analysis of Google Play Store Apps
 # Authors
-Snehitha Tadapaneni
-Sai Rachana Kandikattu
-Amrutha Jayachandradhara
-Wilona Nguyen
-Pramod Krishnachari
+Snehitha Tadapaneni |
+ Sai Rachana Kandikattu |
+ Amrutha Jayachandradhara |
+ Wilona Nguyen | 
+ Pramod Krishnachari
 # Introduction
 In the rapidly evolving smartphone landscape, Android has emerged as the dominant mobile operating system, powering over 2.5 billion active devices worldwide. This extensive user base encompasses nearly 90% of smartphone users engaged with Android devices. A key aspect of this experience is the Google Play Store, which offers a diverse range of applications that simplify various aspects of daily life, from productivity to entertainment.
 
