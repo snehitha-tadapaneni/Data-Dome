@@ -52,9 +52,9 @@ library(cluster)
 library(knitr)
 library(kableExtra)
 library(reshape2)
+library(randomForest)
 library(e1071)
 library(caret)
-
 ```
 
 # Data Preparation and Cleaning
@@ -2093,6 +2093,10 @@ ggplot(data_updated, aes(x = Installs_Category)) +
 
 ```
 
+```{r}
+str(data_updated)
+```
+
 So, now our final dataset after preprocessing is named as 'data_updated'. We have selected five modelling techniques that would be best suitable for answering our SMART Question.
 
 # Data Modelling
@@ -2115,6 +2119,82 @@ So, now our final dataset after preprocessing is named as 'data_updated'. We hav
 ```
 
 
+## Decision Tree
+
+```{r}
+# Convert target variable to a factor
+y <- as.factor(data_updated$Installs_Category)
+
+# Remove unused columns
+X <- data_updated[, !names(data_updated) %in% c('Installs', 'Installs_Category', 'Installs_Num')]
+
+# Split data into training and testing sets
+set.seed(42)
+trainIndex <- createDataPartition(y, p = 0.8, list = FALSE)
+X_train <- X[trainIndex, ]
+X_test <- X[-trainIndex, ]
+y_train <- y[trainIndex]
+y_test <- y[-trainIndex]
+```
+
+```{r}
+# Load necessary libraries
+library(rpart)
+library(rpart.plot)
+
+# Fit the decision tree model
+set.seed(42)
+tree_model <- rpart(
+  Installs_Category ~ . ,
+  data = X_train,
+  method = "class"
+)
+
+# Plot the decision tree
+rpart.plot(tree_model, main = "Decision Tree for Predicting Installs Category")
+
+```
+
+```{r}
+# Predict on training and test datasets
+train_predictions <- predict(tree_model, train_data, type = "class")
+test_predictions <- predict(tree_model, test_data, type = "class")
+
+# Calculate accuracy
+train_accuracy <- sum(train_predictions == train_data$Installs_Category) / nrow(train_data)
+test_accuracy <- sum(test_predictions == test_data$Installs_Category) / nrow(test_data)
+
+# Print accuracy results
+cat("Training Accuracy: ", train_accuracy, "\n")
+cat("Test Accuracy: ", test_accuracy, "\n")
+
+
+```
+
+```{r}
+# Check feature importance
+importance <- tree_model$variable.importance
+
+# Print feature importance
+cat("Feature Importance:\n")
+print(importance)
+
+# Visualize feature importance (optional)
+barplot(
+  importance,
+  main = "Feature Importance",
+  xlab = "Features",
+  ylab = "Importance",
+  col = "steelblue",
+  las = 2
+)
+```
+
+Why shift to Random FOrest?
+High Dimensionality: With 41 variables, random forest handles many features better and can identify the most important ones.
+Feature Importance: Random forest provides a ranking of feature importance, helping us understand which variables influence the Installs_Category.
+Accuracy: Random forest generally has better predictive accuracy for larger and more complex datasets.
+
 ## Random Forest
 
 In this analysis, we employ a Random Forest model to predict the number of installs based on the top 5 app categories. The Random Forest algorithm is a robust ensemble learning method that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting. 
@@ -2126,9 +2206,7 @@ Model Objective: Accurately predict the number of installs by capturing the comp
 Evaluation Metrics: Assess the model's performance using metrics such as Mean Squared Error (MSE), R-squared, and visualization of feature importance to ensure the model’s predictions are interpretable and actionable.
 
 ```{r}
-# Load libraries
-library(randomForest)
-library(caret)
+
 ```
 
 #### Splitting the data into train and test split
@@ -2164,8 +2242,6 @@ rf_predictions <- predict(rf_model, newdata = testData)
 
 # Evaluate the performance
 confusionMatrix(rf_predictions, testData$Installs_Category)
-
-
 ```
 
 
