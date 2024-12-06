@@ -2040,8 +2040,88 @@ Revealed significant differences in install counts based on content rating (F(5,
 
 # Data Preprocessing for Modelling
 ```{r}
+# Convert the 'last_updated' column to Date type
+data_updated$last_updated <- as.Date(data_updated$last_updated, format = "%B %d, %Y")
+
+# Calculate the difference in days between the maximum date and each date in 'last_updated'
+data_updated$lastupdate <- as.numeric(difftime(max(data_updated$last_updated, na.rm = TRUE), 
+                                       data_updated$last_updated, 
+                                       units = "days"))
+
+
+data_updated$last_updated <- NULL
 
 ```
+
+#### Last updated
+
+```{r}
+data_updated <- data_updated[, !(names(data_updated) %in% c(
+  "Last.Updated", "Android.Ver", "last_updated", "current_date", 
+  "days_since_update", "update_month", "season", 
+  "Days.Since.Last.Update", "Content.Rating.Encoded","App"))]
+
+# Rename a column
+names(data_updated)[names(data_updated) == "Content.Rating"] <- "content_rating"
+data_updated$content_rating <- as.numeric(data_updated$content_rating)
+
+str(data_updated)
+
+
+```
+###Category
+
+```{r}
+category_dummies <- model.matrix(~ Category - 1, data = data_updated)
+colnames(category_dummies) <- gsub("Category", "cat", colnames(category_dummies))
+
+# 3. Add dummy variables to the dataset and remove the original 'Category' column
+data_updated <- cbind(data_updated, category_dummies)
+data_updated$Category <- NULL
+
+# 4. Replace spaces in column names with underscores
+colnames(data_updated) <- gsub(" ", "_", colnames(data_updated))
+
+# View the processed data
+head(data_updated)
+
+```  
+### Installs
+
+```{r}
+
+# Load necessary libraries
+library(ggplot2)
+
+# Create two categories: Low Installs and High Installs
+# Calculate the median of Installs to split into two categories
+median_installs <- median(data_updated$Installs, na.rm = TRUE)
+
+
+# Reclassify into two categories
+data_updated$Installs_Category <- ifelse(data_updated$Installs <= median_installs, "Low Installs", "High Installs")
+
+
+# Convert 'Installs_Category' to factor with levels "Low Installs" and "High Installs"
+data_updated$Installs_Category <- factor(data_updated$Installs_Category, 
+                                         levels = c("Low Installs", "High Installs"), 
+                                         labels = c(0, 1))
+
+# Check the conversion
+table(data_updated$Installs_Category)
+
+# Create a histogram for the new categories
+ggplot(data_updated, aes(x = Installs_Category)) +
+  geom_bar(stat = "count", fill = "skyblue", color = "black") +
+  labs(title = "Histogram of Installs Category (Low vs High)",
+       x = "Installs Category",
+       y = "Count") +
+  theme_minimal()
+
+
+
+```
+
 
 # Data Modelling
 
@@ -2079,7 +2159,183 @@ Evaluation Metrics: Assess the model's performance using metrics such as Mean Sq
 
 
 ## SVM
+
+
+
 ```{r}
+
+
+library(e1071)
+library(caret)
+
+# Convert target variable to a factor
+y <- as.factor(data_updated$Installs_Category)
+
+# Remove unused columns
+X <- data_updated[, !names(data_updated) %in% c('Installs', 'Installs_Category', 'Installs_Num')]
+
+# Split data into training and testing sets
+set.seed(42)
+trainIndex <- createDataPartition(y, p = 0.75, list = FALSE)
+X_train <- X[trainIndex, ]
+X_test <- X[-trainIndex, ]
+y_train <- y[trainIndex]
+y_test <- y[-trainIndex]
+
+
+```
+
+
+
+## Checking if the boundary is non-linear or linear
+```{r}
+library(ggplot2)
+pca <- prcomp(X_train, center = TRUE, scale. = TRUE)
+pca_data <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2], Class = y_train)
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Class)) + 
+  geom_point(size = 3) + 
+  labs(title = "PCA: Decision Boundary Visualization")
+
+```
+
+
+As we can see the boundary is not linear 
+
+## Fit SVM model with gamma = 1 and cost = 1
+
+```{r}
+# Fit the SVM model
+svmfit <- svm(y_train ~ ., data = as.data.frame(cbind(X_train, y_train)), 
+              kernel = "radial", gamma = 1, cost = 1)
+
+# Summary of the model
+summary(svmfit)
+
+# Visualize the SVM decision boundary
+#plot(svmfit, data = as.data.frame(cbind(X_train, y_train)))
+
+# Perform PCA on X_train
+pca <- prcomp(X_train, scale. = TRUE)
+pca_train_data <- as.data.frame(pca$x[, 1:2])  # Use first two principal components
+pca_train_data$Target <- y_train
+
+# Fit the SVM model on the PCA-transformed data
+svmfit <- svm(Target ~ ., data = pca_train_data, kernel = "radial", gamma = 1, cost = 1)
+
+# Plot the decision boundary
+plot(svmfit, pca_train_data)
+
+
+```
+
+
+## Tuning to find the best parameter values for C and Gamma
+
+```{r}
+
+
+# Load necessary libraries
+library(e1071)
+library(caret)
+
+# Assuming you have already defined X_train, y_train, X_test, y_test
+
+# Combine the training data into a data frame
+train_data <- as.data.frame(cbind(X_train, y_train))
+
+# Set up k-fold cross-validation
+set.seed(42)
+train_control <- trainControl(method = "cv", number = 5)
+
+# Define the tuning grid for 'C' and 'sigma' (gamma)
+tune_grid <- expand.grid(C = c(0.001, 0.01, 0.1, 1, 5, 10, 100),
+                          sigma = c(0.5, 1))
+
+# Train the SVM model using radial kernel with the tuning grid
+svm_model <- train(y_train ~ ., data = train_data,
+                   method = "svmRadial",
+                   tuneGrid = tune_grid,
+                   trControl = train_control)
+
+# Print the results of the tuning
+print(svm_model)
+
+# Best model parameters
+best_params <- svm_model$bestTune
+cat("Best Parameters:\n")
+print(best_params)
+
+# Evaluate performance on the test set
+predictions <- predict(svm_model, newdata = as.data.frame(X_test))
+confusion_matrix <- table(Predicted = predictions, Actual = y_test)
+cat("Confusion Matrix for Best Model:\n")
+print(confusion_matrix)
+
+# Calculate and print training and test error rates
+train_error_rate <- mean(predict(svm_model, newdata = train_data) != y_train)
+test_error_rate <- mean(predictions != y_test)
+cat("Training Error Rate:", train_error_rate, "\n")
+cat("Test Error Rate:", test_error_rate, "\n")
+
+# Print mean accuracy for different values of 'C' and 'sigma'
+accuracy_by_C_sigma <- svm_model$results[, c("C", "sigma", "Accuracy")]
+cat("Accuracy for different C and sigma values:\n")
+print(accuracy_by_C_sigma)
+
+
+```
+
+## Plot MSE , bias and variance for various parameter values
+
+```{r}
+
+# Prepare to collect results
+gamma_values <- c(0.5, 1, 2)
+cost_values <- c(0.1, 1, 10, 100)
+results <- expand.grid(gamma = gamma_values, cost = cost_values)
+results$MSE <- NA
+results$Bias <- NA
+results$Variance <- NA
+
+# Loop over combinations of gamma and cost
+for (i in seq_len(nrow(results))) {
+  model <- svm(as.numeric(y_train) ~ ., data = as.data.frame(cbind(X_train, y_train)),
+               kernel = "radial",
+               gamma = results$gamma[i], cost = results$cost[i])
+  predictions <- predict(model, newdata = as.data.frame(X_test))
+
+  # Ensure predictions are numeric
+  predictions <- as.numeric(predictions)
+  
+  # Calculate MSE
+  results$MSE[i] <- mean((predictions - as.numeric(y_test))^2)
+  
+  # Calculate Bias
+  bias <- mean(predictions) - mean(as.numeric(y_test))
+  results$Bias[i] <- bias
+  
+  # Calculate Variance
+  variance <- var(predictions)
+  results$Variance[i] <- variance
+}
+
+# Reshape data for plotting
+results_long <- tidyr::pivot_longer(results, 
+                                     cols = c(MSE, Bias, Variance), 
+                                     names_to = "Metric", 
+                                     values_to = "Value")
+
+# Plot MSE, Bias, and Variance vs parameters
+library(ggplot2)
+ggplot(results_long, aes(x = gamma, y = Value, color = factor(cost))) +
+  geom_line() + 
+  geom_point(size = 3) +
+  facet_wrap(~ Metric, scales = "free_y") + 
+  labs(title = "MSE, Bias, and Variance vs Gamma for Different Cost Values",
+       x = "Gamma", y = "Value", color = "Cost") +
+  theme_minimal()
+
+
 
 ```
 
