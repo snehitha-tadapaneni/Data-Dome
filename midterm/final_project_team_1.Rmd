@@ -2122,6 +2122,7 @@ ggplot(data_updated, aes(x = Installs_Category)) +
 
 ```
 
+So, now our final dataset after preprocessing is named as 'data_updated'. We have selected five modelling techniques that would be best suitable for answering our SMART Question.
 
 # Data Modelling
 
@@ -2154,6 +2155,33 @@ Model Objective: Accurately predict the number of installs by capturing the comp
 Evaluation Metrics: Assess the model's performance using metrics such as Mean Squared Error (MSE), R-squared, and visualization of feature importance to ensure the model’s predictions are interpretable and actionable.
 
 ```{r}
+# Load libraries
+library(randomForest)
+library(caret)
+```
+
+
+```{r}
+# Split the data into training and testing sets
+trainIndex <- createDataPartition(data_updated$Installs_Category, p = 0.8, list = FALSE)
+trainData <- data_updated[trainIndex, ]  # Use 'data_updated' here
+testData <- data_updated[-trainIndex, ]
+```
+
+```{r}
+# Train Random Forest Classifier
+rf_model <- randomForest(
+  Installs_Category ~ Rating + Reviews + Size + Price + content_rating + lastupdate +
+             catART_AND_DESIGN + catGAME + catPRODUCTIVITY +
+             catBUSINESS + catEDUCATION,
+  data = trainData,
+  ntree = 500,           # Number of trees
+  mtry = 3,              # Number of variables randomly selected at each split
+  importance = TRUE      # To compute variable importance
+)
+
+# Print model summary
+print(rf_model)
 
 ```
 
