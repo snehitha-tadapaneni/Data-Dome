@@ -2276,37 +2276,12 @@ ggplot(pca_data, aes(x = PC1, y = PC2, color = Class)) +
 ```
 
 
-As we can see the boundary is not linear 
-
-### Fit SVM model with gamma = 1 and cost = 1
-
-```{r}
-# Fit the SVM model
-svmfit <- svm(y_train ~ ., data = as.data.frame(cbind(X_train, y_train)), 
-              kernel = "radial", gamma = 1, cost = 1)
-
-# Summary of the model
-summary(svmfit)
-
-# Visualize the SVM decision boundary
-#plot(svmfit, data = as.data.frame(cbind(X_train, y_train)))
-
-# Perform PCA on X_train
-pca <- prcomp(X_train, scale. = TRUE)
-pca_train_data <- as.data.frame(pca$x[, 1:2])  # Use first two principal components
-pca_train_data$Target <- y_train
-
-# Fit the SVM model on the PCA-transformed data
-svmfit <- svm(Target ~ ., data = pca_train_data, kernel = "radial", gamma = 1, cost = 1)
-
-# Plot the decision boundary
-plot(svmfit, pca_train_data)
+As we can see we cannot decide if the boundary is linear or non-linear hence, lets make two models linear and non-linear SVM to check which one is a better fit.
 
 
-```
 
 
-### Tuning to find the best parameter values for C and Gamma
+### Tuning to find the best parameter values for C and Gamma for SVM non-linear
 
 ```{r}
 
@@ -2341,6 +2316,11 @@ print(svm_model)
 best_params <- svm_model$bestTune
 cat("Best Parameters:\n")
 print(best_params)
+```
+
+As seen for the training set the best accuracy is achieved when C = 100 and gamma is 0.05
+
+```{r}
 
 # Evaluate performance on the test set
 predictions <- predict(svm_model, newdata = as.data.frame(X_test))
@@ -2348,16 +2328,7 @@ confusion_matrix <- table(Predicted = predictions, Actual = y_test)
 cat("Confusion Matrix for Best Model:\n")
 print(confusion_matrix)
 
-# Calculate and print training and test error rates
-train_error_rate <- mean(predict(svm_model, newdata = train_data) != y_train)
-test_error_rate <- mean(predictions != y_test)
-cat("Training Error Rate:", train_error_rate, "\n")
-cat("Test Error Rate:", test_error_rate, "\n")
 
-# Print mean accuracy for different values of 'C' and 'sigma'
-accuracy_by_C_sigma <- svm_model$results[, c("C", "sigma", "Accuracy")]
-cat("Accuracy for different C and sigma values:\n")
-print(accuracy_by_C_sigma)
 
 
 ```
