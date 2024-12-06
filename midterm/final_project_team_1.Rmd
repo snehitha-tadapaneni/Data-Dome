@@ -2160,20 +2160,21 @@ library(randomForest)
 library(caret)
 ```
 
+#### Splitting the data into train and test split
 
 ```{r}
 # Split the data into training and testing sets
 trainIndex <- createDataPartition(data_updated$Installs_Category, p = 0.8, list = FALSE)
-trainData <- data_updated[trainIndex, ]  # Use 'data_updated' here
+trainData <- data_updated[trainIndex, ]  
 testData <- data_updated[-trainIndex, ]
 ```
+
+#### Building Random FOrest Classifier
 
 ```{r}
 # Train Random Forest Classifier
 rf_model <- randomForest(
-  Installs_Category ~ Rating + Reviews + Size + Price + content_rating + lastupdate +
-             catART_AND_DESIGN + catGAME + catPRODUCTIVITY +
-             catBUSINESS + catEDUCATION,
+  Installs_Category ~ Rating + Reviews + Size + Price + content_rating + lastupdate + catART_AND_DESIGN + catGAME + catPRODUCTIVITY + catBUSINESS + catEDUCATION,
   data = trainData,
   ntree = 500,           # Number of trees
   mtry = 3,              # Number of variables randomly selected at each split
@@ -2182,17 +2183,24 @@ rf_model <- randomForest(
 
 # Print model summary
 print(rf_model)
+```
+
+#### Testing the accuracy 
+
+```{r}
+# Predict on test data
+rf_predictions <- predict(rf_model, newdata = testData)
+
+# Evaluate the performance
+confusionMatrix(rf_predictions, testData$Installs_Category)
+
 
 ```
 
 
 ## SVM
 
-
-
 ```{r}
-
-
 library(e1071)
 library(caret)
 
@@ -2209,13 +2217,11 @@ X_train <- X[trainIndex, ]
 X_test <- X[-trainIndex, ]
 y_train <- y[trainIndex]
 y_test <- y[-trainIndex]
-
-
 ```
 
 
 
-## Checking if the boundary is non-linear or linear
+### Checking if the boundary is non-linear or linear
 ```{r}
 library(ggplot2)
 pca <- prcomp(X_train, center = TRUE, scale. = TRUE)
@@ -2223,13 +2229,12 @@ pca_data <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2], Class = y_train)
 ggplot(pca_data, aes(x = PC1, y = PC2, color = Class)) + 
   geom_point(size = 3) + 
   labs(title = "PCA: Decision Boundary Visualization")
-
 ```
 
 
 As we can see the boundary is not linear 
 
-## Fit SVM model with gamma = 1 and cost = 1
+### Fit SVM model with gamma = 1 and cost = 1
 
 ```{r}
 # Fit the SVM model
@@ -2257,7 +2262,7 @@ plot(svmfit, pca_train_data)
 ```
 
 
-## Tuning to find the best parameter values for C and Gamma
+### Tuning to find the best parameter values for C and Gamma
 
 ```{r}
 
@@ -2313,7 +2318,7 @@ print(accuracy_by_C_sigma)
 
 ```
 
-## Plot MSE , bias and variance for various parameter values
+### Plot MSE , bias and variance for various parameter values
 
 ```{r}
 
@@ -2362,8 +2367,5 @@ ggplot(results_long, aes(x = gamma, y = Value, color = factor(cost))) +
   labs(title = "MSE, Bias, and Variance vs Gamma for Different Cost Values",
        x = "Gamma", y = "Value", color = "Cost") +
   theme_minimal()
-
-
-
 ```
 
