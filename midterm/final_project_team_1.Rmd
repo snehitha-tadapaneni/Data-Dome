@@ -2485,18 +2485,49 @@ X_train <- X[trainIndex, ]
 X_test <- X[-trainIndex, ]
 y_train <- y[trainIndex]
 y_test <- y[-trainIndex]
+
 ```
 
 
 
 ### Checking if the boundary is non-linear or linear
 ```{r}
-library(ggplot2)
-pca <- prcomp(X_train, center = TRUE, scale. = TRUE)
-pca_data <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2], Class = y_train)
-ggplot(pca_data, aes(x = PC1, y = PC2, color = Class)) + 
-  geom_point(size = 3) + 
-  labs(title = "PCA: Decision Boundary Visualization")
+library(plotly)
+
+# Prepare the plot data
+plot_data <- data.frame(X_train, Class = as.factor(y_train))
+
+# Create 3D scatter plot for features 1, 2, and 3
+plot_1_2_3 <- plot_ly(data = plot_data, 
+                      x = ~X_train[, 1], 
+                      y = ~X_train[, 2], 
+                      z = ~X_train[, 3], 
+                      color = ~Class,
+                      colors = c("red", "blue"),  # Set colors for classes (0 and 1)
+                      type = 'scatter3d', 
+                      mode = 'markers') %>%
+  layout(title = "3D Scatter Plot: Feature 1 vs Feature 2 vs Feature 3",
+         scene = list(xaxis = list(title = colnames(X_train)[1]),
+                      yaxis = list(title = colnames(X_train)[2]),
+                      zaxis = list(title = colnames(X_train)[3])))
+
+# Create 3D scatter plot for features 4, 5, and 6
+plot_4_5_6 <- plot_ly(data = plot_data, 
+                      x = ~X_train[, 4], 
+                      y = ~X_train[, 5], 
+                      z = ~X_train[, 6], 
+                      color = ~Class,
+                      colors = c("red", "blue"),  # Set colors for classes (0 and 1)
+                      type = 'scatter3d', 
+                      mode = 'markers') %>%
+  layout(title = "3D Scatter Plot: Feature 4 vs Feature 5 vs Feature 6",
+         scene = list(xaxis = list(title = colnames(X_train)[4]),
+                      yaxis = list(title = colnames(X_train)[5]),
+                      zaxis = list(title = colnames(X_train)[6])))
+
+# Show plots
+plot_1_2_3
+plot_4_5_6
 ```
 
 
@@ -2531,7 +2562,7 @@ tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100),
 svm_model <- train(y_train ~ ., data = train_data,
                    method = "svmRadial",
                    tuneGrid = tune_grid,
-                   trControl = train_control)
+                   trControl = train_control,scaled = TRUE)
 
 # Print the results of the tuning
 print(svm_model)
@@ -2569,7 +2600,7 @@ tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100))
 svm_model <- train(y_train ~ ., data = train_data,
                    method = "svmLinear",
                    tuneGrid = tune_grid,
-                   trControl = train_control)
+                   trControl = train_control,scaled = TRUE)
 
 # Print the results of the tuning
 print(svm_model)
@@ -2582,11 +2613,91 @@ print(best_params)
 
 For linear model it could be seen that at C = 100, we attain an accuracy of 92 percent which suggets that the model is linearly seperable. Hence, now lets find the accuracy, ROC, AUC score of the test data.
 
+#### Bias variance MSE caluclation
+
 ```{r}
-y_test
+# Load necessary libraries
+library(e1071)
+library(ggplot2)
+library(reshape2)
+
+# Assuming you have already defined X_train, y_train, X_test, y_test
+
+# Combine training and test sets into data frames
+train_data <- as.data.frame(cbind(X_train, y_train))
+test_data <- as.data.frame(X_test)
+
+# Initialize vectors to store metrics
+C_values <- c(0.1, 1, 10, 100, 1000, 100000, 500000)
+bias_values <- c()
+variance_values <- c()
+mse_values <- c()
+
+# Loop through different values of C
+for (C in C_values) {
+  # Train the SVM model
+  svm_model <- svm(y_train ~ ., data = train_data, kernel = "linear", cost = C, scale = TRUE)
+  
+  # Predict on the test set
+  predictions <- predict(svm_model, newdata = test_data)
+  
+  # Convert predictions and actual test values to numeric for calculations
+  predictions_numeric <- as.numeric(as.character(predictions))
+  y_test_numeric <- as.numeric(as.character(y_test))
+  
+  # Calculate Bias: Mean squared difference between the true mean and the predicted mean
+  mean_true <- mean(y_test_numeric)
+  mean_pred <- mean(predictions_numeric)
+  bias <- (mean_true - mean_pred)^2
+  bias_values <- c(bias_values, bias)
+  
+  # Calculate Variance: Variability of the predictions
+  variance <- var(predictions_numeric)
+  variance_values <- c(variance_values, variance)
+  
+  # Calculate Mean Squared Error (MSE): Average squared error
+  mse <- mean((y_test_numeric - predictions_numeric)^2)
+  mse_values <- c(mse_values, mse)
+}
+
+# Combine results into a data frame for plotting
+results <- data.frame(
+  C = C_values,
+  Bias = bias_values,
+  Variance = variance_values,
+  MSE = mse_values
+)
+
+# Reshape data for ggplot
+results_melted <- melt(results, id.vars = "C", variable.name = "Metric", value.name = "Value")
+
+# Plotting
+ggplot(results_melted, aes(x = factor(C), y = Value, color = Metric, group = Metric)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +
+  labs(title = "Bias-Variance Tradeoff and MSE for Different C Values",
+       x = "C Values",
+       y = "Value",
+       color = "Metric") +
+  theme_minimal(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "top"
+  ) +
+  scale_color_manual(values = c("Bias" = "blue", "Variance" = "red", "MSE" = "green")) +
+  scale_x_discrete(labels = function(x) paste0("C = ", x)) +
+  geom_text(aes(label = round(Value, 2)), vjust = -0.5)  # Add value labels above points
+
+
 ```
+The analysis of bias, variance, and mean squared error (MSE) across different values of C shows:
+MSE Stability: From C = 100 to C = 1000, the MSE remains nearly constant.
+Low Bias and Variance: Both metrics are minimized in this range, indicating good generalization without overfitting.
+ 
+Hence, better to select C = 100 for the SVM model to achieve an optimal balance between bias, variance, and MSE.
 
 
+#### Model Evalution for Test Data
 
 ```{r}
 # Load necessary libraries
@@ -2599,7 +2710,7 @@ library(pROC)  # For ROC and AUC
 train_data <- as.data.frame(cbind(X_train, y_train))
 
 # Fit the SVM model with linear kernel
-svm_model <- svm(y_train ~ ., data = train_data, kernel = "linear", cost = 100, decision.values = TRUE)
+svm_model <- svm(y_train ~ ., data = train_data, kernel = "linear", cost = 100, decision.values = TRUE,scaled = TRUE)
 
 # Step 1: Make predictions on the test set
 predictions <- predict(svm_model, newdata = as.data.frame(X_test))
@@ -2609,7 +2720,17 @@ confusion_matrix <- table(Predicted = predictions, Actual = y_test)
 cat("Confusion Matrix:\n")
 print(confusion_matrix)
 
-# Step 3: Calculate accuracy
+confusion_matrix_caret <- confusionMatrix(confusion_matrix)
+
+# Step 2: Extract Precision, Recall, and F1 Score
+precision <- confusion_matrix_caret$byClass['Precision']
+recall <- confusion_matrix_caret$byClass['Recall']
+f1_score <- confusion_matrix_caret$byClass['F1']
+
+# Display the metrics
+cat("Precision:", precision, "\n")
+cat("Recall:", recall, "\n")
+cat("F1 Score:", f1_score, "\n")
 accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
 cat("Accuracy:", accuracy, "\n")
 
@@ -2629,6 +2750,9 @@ legend("bottomright", legend = paste("AUC =", round(auc_value, 2)), bty = "n")
 
 
 ```
+
+The model achieved an impressive accuracy of 94% and a high AUC of 0.99, indicating excellent performance in classification. Additionally, the high precision, recall, and F1-score values reflect the model's capability to accurately classify both class 0 and class 1. These results suggest that the model is highly effective in distinguishing between the two classes, making it reliable for practical applications.
+
 
 
 #### Feature importance for the model
@@ -2669,19 +2793,21 @@ sorted_coefficients <- sort(abs(named_coefficients), decreasing = TRUE)
 # Print sorted feature importance
 cat("Sorted Feature Importance:\n")
 print(sorted_coefficients)
-
+top_coef = head(sorted_coefficients,15)
 # Optional: Visualize feature importance
 barplot(
-  sorted_coefficients,
+  top_coef,
   main = "Feature Importance from SVM Coefficients",
   xlab = "Features",
-  ylab = "Absolute Coefficient Value",
   col = "steelblue",
   las = 2,
-  cex.names = 0.7  # Adjust name size if necessary
+  cex.names = 0.3,# Adjust name size if necessary
+  horiz = TRUE
 )
 
 
 ```
+
+The analysis shows that Reviews, Price, and Size are the top features influencing the model's performance. Additionally, the leading app categories—Photography, Medical, Family, Personalization, and Health and Fitness—suggest that focusing on these areas can enhance the chances of app success.
 
 
