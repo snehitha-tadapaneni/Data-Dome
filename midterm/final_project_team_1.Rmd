@@ -2300,7 +2300,7 @@ set.seed(42)
 train_control <- trainControl(method = "cv", number = 5)
 
 # Define the tuning grid for 'C' and 'sigma' (gamma)
-tune_grid <- expand.grid(C = c(0.001, 0.01, 0.1, 1, 5, 10, 100),
+tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100),
                           sigma = c(0.5, 1))
 
 # Train the SVM model using radial kernel with the tuning grid
@@ -2320,67 +2320,144 @@ print(best_params)
 
 As seen for the training set the best accuracy is achieved when C = 100 and gamma is 0.05
 
+### Tuning to find the best parameter values for C  for SVM linear
+
 ```{r}
 
-# Evaluate performance on the test set
+
+# Load necessary libraries
+library(e1071)
+library(caret)
+
+# Assuming you have already defined X_train, y_train, X_test, y_test
+
+# Combine the training data into a data frame
+train_data <- as.data.frame(cbind(X_train, y_train))
+
+# Set up k-fold cross-validation
+set.seed(42)
+train_control <- trainControl(method = "cv", number = 5)
+
+# Define the tuning grid for 'C' and 'sigma' (gamma)
+tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100))
+
+# Train the SVM model using radial kernel with the tuning grid
+svm_model <- train(y_train ~ ., data = train_data,
+                   method = "svmLinear",
+                   tuneGrid = tune_grid,
+                   trControl = train_control)
+
+# Print the results of the tuning
+print(svm_model)
+
+# Best model parameters
+best_params <- svm_model$bestTune
+cat("Best Parameters:\n")
+print(best_params)
+```
+
+For linear model it could be seen that at C = 100, we attain an accuracy of 92 percent which suggets that the model is linearly seperable. Hence, now lets find the accuracy, ROC, AUC score of the test data.
+
+```{r}
+y_test
+```
+
+
+
+```{r}
+# Load necessary libraries
+library(e1071)
+library(pROC)  # For ROC and AUC
+
+# Assuming you have already defined X_train, y_train, X_test, y_test
+
+# Combine the training data into a data frame
+train_data <- as.data.frame(cbind(X_train, y_train))
+
+# Fit the SVM model with linear kernel
+svm_model <- svm(y_train ~ ., data = train_data, kernel = "linear", cost = 100, decision.values = TRUE)
+
+# Step 1: Make predictions on the test set
 predictions <- predict(svm_model, newdata = as.data.frame(X_test))
+
+# Step 2: Create confusion matrix
 confusion_matrix <- table(Predicted = predictions, Actual = y_test)
-cat("Confusion Matrix for Best Model:\n")
+cat("Confusion Matrix:\n")
 print(confusion_matrix)
 
+# Step 3: Calculate accuracy
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+cat("Accuracy:", accuracy, "\n")
+
+# Step 4: Get decision values for ROC curve
+fitted <- attributes(predict(svm_model, newdata = as.data.frame(X_test), decision.values = TRUE))$decision.values
+
+# Step 5: Generate ROC plot for the test set
+roc_curve <- roc(y_test, -fitted)  # Note: Use negative for class labeling
+
+# Plot the ROC curve
+plot(roc_curve, main = "ROC Curve for Test Data")
+# Add AUC to the plot
+auc_value <- auc(roc_curve)
+legend("bottomright", legend = paste("AUC =", round(auc_value, 2)), bty = "n")
+
 
 
 
 ```
 
-### Plot MSE , bias and variance for various parameter values
+
+#### Feature importance for the model
 
 ```{r}
+# Assuming you have already trained your SVM model (svm_model) using e1071
 
-# Prepare to collect results
-gamma_values <- c(0.5, 1, 2)
-cost_values <- c(0.1, 1, 10, 100)
-results <- expand.grid(gamma = gamma_values, cost = cost_values)
-results$MSE <- NA
-results$Bias <- NA
-results$Variance <- NA
+# Get coefficients from the SVM model
+coefficients <- as.vector(svm_model$coefs) %*% svm_model$SV
 
-# Loop over combinations of gamma and cost
-for (i in seq_len(nrow(results))) {
-  model <- svm(as.numeric(y_train) ~ ., data = as.data.frame(cbind(X_train, y_train)),
-               kernel = "radial",
-               gamma = results$gamma[i], cost = results$cost[i])
-  predictions <- predict(model, newdata = as.data.frame(X_test))
+# Get the intercept term
+intercept <- svm_model$rho
 
-  # Ensure predictions are numeric
-  predictions <- as.numeric(predictions)
-  
-  # Calculate MSE
-  results$MSE[i] <- mean((predictions - as.numeric(y_test))^2)
-  
-  # Calculate Bias
-  bias <- mean(predictions) - mean(as.numeric(y_test))
-  results$Bias[i] <- bias
-  
-  # Calculate Variance
-  variance <- var(predictions)
-  results$Variance[i] <- variance
-}
+# Combine coefficients and intercept into a single vector
+all_coefficients <- c(intercept, coefficients)
 
-# Reshape data for plotting
-results_long <- tidyr::pivot_longer(results, 
-                                     cols = c(MSE, Bias, Variance), 
-                                     names_to = "Metric", 
-                                     values_to = "Value")
+# Print coefficients
+cat("Coefficients (including intercept):\n")
+print(all_coefficients)
 
-# Plot MSE, Bias, and Variance vs parameters
-library(ggplot2)
-ggplot(results_long, aes(x = gamma, y = Value, color = factor(cost))) +
-  geom_line() + 
-  geom_point(size = 3) +
-  facet_wrap(~ Metric, scales = "free_y") + 
-  labs(title = "MSE, Bias, and Variance vs Gamma for Different Cost Values",
-       x = "Gamma", y = "Value", color = "Cost") +
-  theme_minimal()
+# Check the number of coefficients
+num_coefficients <- length(all_coefficients)
+cat("Number of Coefficients (including intercept):", num_coefficients, "\n")
+
+# Get feature names
+feature_names <- colnames(X_train)
+
+# Create a named vector for coefficients with feature names
+named_coefficients <- setNames(coefficients, feature_names)
+
+# Print named coefficients
+cat("Feature Coefficients:\n")
+print(named_coefficients)
+
+# Sort coefficients by absolute value for feature importance
+sorted_coefficients <- sort(abs(named_coefficients), decreasing = TRUE)
+
+# Print sorted feature importance
+cat("Sorted Feature Importance:\n")
+print(sorted_coefficients)
+
+# Optional: Visualize feature importance
+barplot(
+  sorted_coefficients,
+  main = "Feature Importance from SVM Coefficients",
+  xlab = "Features",
+  ylab = "Absolute Coefficient Value",
+  col = "steelblue",
+  las = 2,
+  cex.names = 0.7  # Adjust name size if necessary
+)
+
+
 ```
+
 
