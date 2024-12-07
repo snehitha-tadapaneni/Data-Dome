@@ -55,6 +55,8 @@ library(reshape2)
 library(randomForest)
 library(e1071)
 library(caret)
+library(xgboost)
+library(pROC)
 ```
 
 # Data Preparation and Cleaning
@@ -2111,13 +2113,147 @@ So, now our final dataset after preprocessing is named as 'data_updated'. We hav
 ```{r}
 
 ```
+#------------------------------------------------------------------------- 
 
-
-## XG Boost
+## Gradient Boosting
 ```{r}
+
+# 2. Feature Engineering ------------------------------------------------
+
+# Create binary target variable: High success (Installs >= median) vs. Low success
+median_installs <- median(data_updated$Installs, na.rm = TRUE)
+data_updated$Success <- ifelse(data_updated$Installs >= median_installs, 1, 0)
+
+# Convert 'Category' to dummy variables (one-hot encoding)
+# data_updated <- data_updated %>%
+#   mutate(Category = as.factor(Category)) %>%
+#   cbind(model.matrix(~ Category - 1, data_updated))
+
+
+# Drop unused columns
+#data_updated <- data_updated %>% select(-Android.Ver, -Content.Rating, -Last.Updated)
 
 ```
 
+
+```{r}
+# 3. Data Splitting -----------------------------------------------------
+
+# Separate features (X) and target (y)
+#X <- data_final %>% select(-Installs, -Success)
+X <- data_updated %>% select(-Installs, -Success)  # Exclude the target variable
+y <- data_updated$Success             # Extract the target variable
+
+table(y) 
+#Split into training and testing sets
+set.seed(123)
+train_index <- createDataPartition(y, p = 0.7, list = FALSE)
+
+# Define X_train, X_test, y_train, y_test
+X_train <- X[train_index, ] %>% mutate(across(everything(), as.numeric))
+X_test <- X[-train_index, ] %>% mutate(across(everything(), as.numeric))
+y_train <- y[train_index]
+y_test <- y[-train_index]
+
+# Check the structure
+
+
+
+```
+
+```{r}
+
+# Convert data to matrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = y_train)
+dtest <- xgb.DMatrix(data = as.matrix(X_test), label = y_test)
+
+```
+
+
+```{r}
+# 4. Train Gradient Boosting Model --------------------------------------
+
+params <- list(
+  objective = "binary:logistic",  # Binary classification
+  eval_metric = "logloss",
+  max_depth = 6,
+  eta = 0.1,
+  subsample = 0.8,
+  colsample_bytree = 0.8
+)
+
+# Train the model
+set.seed(42)
+xgb_model <- xgb.train(
+  params = params,
+  data = dtrain,
+  nrounds = 100,
+  watchlist = list(train = dtrain, test = dtest),
+  early_stopping_rounds = 10,
+  verbose = 1
+)
+
+
+```
+
+
+```{r}
+# 5. Model Evaluation ---------------------------------------------------
+
+# Make predictions
+y_pred <- predict(xgb_model, dtest)
+y_pred_class <- ifelse(y_pred > 0.5, 1, 0)
+
+# Confusion Matrix
+y_pred_class <- factor(y_pred_class, levels = c(0, 1))
+y_test <- factor(y_test, levels = c(0, 1))
+conf_matrix <- confusionMatrix(y_pred_class, y_test)
+print(conf_matrix)
+
+```
+
+
+```{r confusion-matrix-heatmap, echo=FALSE}
+#Visulization of confusion matrix
+# Code to generate and display the confusion matrix heatmap
+cm_table <- as.data.frame(conf_matrix$table)
+ggplot(cm_table, aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), color = "white", size = 5) +
+  scale_fill_gradient(low = "blue", high = "red") +
+  labs(title = "Confusion Matrix", x = "Actual", y = "Predicted") +
+  theme_minimal()
+```
+
+
+
+```{r}
+# AUC and ROC Curve
+roc_obj <- roc(as.numeric(as.character(y_test)), y_pred)
+auc_value <- auc(roc_obj)
+cat("AUC:", auc_value, "\n")
+
+# Plot ROC Curve
+plot(roc_obj, main = "ROC Curve", col = "blue", lwd = 2)
+abline(a = 0, b = 1, lty = 2, col = "red")
+
+```
+
+
+```{r}
+# 6. Feature Importance -------------------------------------------------
+
+importance_matrix <- xgb.importance(feature_names = colnames(X_train), model = xgb_model)
+xgb.plot.importance(importance_matrix, top_n = 10, main = "Feature Importance")
+
+# 7. Save Model ---------------------------------------------------------
+
+xgb.save(xgb_model, "xgb_app_success.model")
+
+# Summary
+cat("Gradient Boosting achieved an accuracy of", conf_matrix$overall["Accuracy"], 
+    "and AUC of", auc_value, "\n")
+```
 
 ## Decision Tree
 
@@ -2152,12 +2288,12 @@ rpart.plot(tree_model, main = "Decision Tree for Predicting Installs Category")
 
 ```{r}
 # Predict on training and test datasets
-train_predictions <- predict(tree_model, train_data, type = "class")
-test_predictions <- predict(tree_model, test_data, type = "class")
+train_predictions <- predict(tree_model, trainData, type = "class")
+test_predictions <- predict(tree_model, testData, type = "class")
 
 # Calculate accuracy
-train_accuracy <- sum(train_predictions == train_data$Installs_Category) / nrow(train_data)
-test_accuracy <- sum(test_predictions == test_data$Installs_Category) / nrow(test_data)
+train_accuracy <- sum(train_predictions == trainData$Installs_Category) / nrow(trainData)
+test_accuracy <- sum(test_predictions == testData$Installs_Category) / nrow(testData)
 
 # Print accuracy results
 cat("Training Accuracy: ", train_accuracy, "\n")
@@ -2185,7 +2321,8 @@ barplot(
 )
 ```
 
-Why shift to Random FOrest?
+
+Why shift to Random Forest?
 High Dimensionality: With 41 variables, random forest handles many features better and can identify the most important ones.
 Feature Importance: Random forest provides a ranking of feature importance, helping us understand which variables influence the Installs_Category.
 Accuracy: Random forest generally has better predictive accuracy for larger and more complex datasets.
