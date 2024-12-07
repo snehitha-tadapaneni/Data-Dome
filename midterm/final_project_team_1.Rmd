@@ -2122,19 +2122,14 @@ So, now our final dataset after preprocessing is named as 'data_updated'. We hav
 ## Decision Tree
 
 ```{r}
-# Convert target variable to a factor
-y <- as.factor(data_updated$Installs_Category)
+# Remove the Installs and Installs numerical columns
+data <- data_updated[, !colnames(data_updated) %in% c("Installs")]
 
-# Remove unused columns
-X <- data_updated[, !names(data_updated) %in% c('Installs', 'Installs_Category', 'Installs_Num')]
-
-# Split data into training and testing sets
-set.seed(42)
-trainIndex <- createDataPartition(y, p = 0.8, list = FALSE)
-X_train <- X[trainIndex, ]
-X_test <- X[-trainIndex, ]
-y_train <- y[trainIndex]
-y_test <- y[-trainIndex]
+# Split the data into training and testing sets
+set.seed(123)  # Ensure reproducibility
+trainIndex <- createDataPartition(data$Installs_Category, p = 0.8, list = FALSE)
+trainData <- data[trainIndex, ]
+testData <- data[-trainIndex, ]
 ```
 
 ```{r}
@@ -2146,7 +2141,7 @@ library(rpart.plot)
 set.seed(42)
 tree_model <- rpart(
   Installs_Category ~ . ,
-  data = X_train,
+  data = trainData,
   method = "class"
 )
 
@@ -2205,45 +2200,137 @@ Feature Selection: Using the top 5 categories as predictors, which are highly co
 Model Objective: Accurately predict the number of installs by capturing the complex and nonlinear relationships between features using a Random Forest model.
 Evaluation Metrics: Assess the model's performance using metrics such as Mean Squared Error (MSE), R-squared, and visualization of feature importance to ensure the model’s predictions are interpretable and actionable.
 
-```{r}
-
-```
-
 #### Splitting the data into train and test split
-
-```{r}
-# Split the data into training and testing sets
-trainIndex <- createDataPartition(data_updated$Installs_Category, p = 0.8, list = FALSE)
-trainData <- data_updated[trainIndex, ]  
-testData <- data_updated[-trainIndex, ]
-```
 
 #### Building Random FOrest Classifier
 
 ```{r}
-# Train Random Forest Classifier
-rf_model <- randomForest(
-  Installs_Category ~ Rating + Reviews + Size + Price + content_rating + lastupdate + catART_AND_DESIGN + catGAME + catPRODUCTIVITY + catBUSINESS + catEDUCATION,
-  data = trainData,
-  ntree = 500,           # Number of trees
-  mtry = 3,              # Number of variables randomly selected at each split
-  importance = TRUE      # To compute variable importance
-)
+library(randomForest)
+library(caret)
 
-# Print model summary
+# Train the random forest model
+set.seed(123)
+rf_model <- randomForest(Installs_Category ~ ., 
+                         data = trainData, 
+                         ntree = 500,       # Number of trees
+                         mtry = 10,  # Number of predictors sampled at each split
+                         importance = TRUE) # Enable importance calculation
+
+# Print the model summary
 print(rf_model)
+```
+#### Plotting the Random Forest Result
+
+```{r}
+plot(rf_model)
 ```
 
 #### Testing the accuracy 
 
 ```{r}
-# Predict on test data
-rf_predictions <- predict(rf_model, newdata = testData)
+# Predictions on the training set
+train_predictions <- predict(rf_model, trainData)
 
-# Evaluate the performance
-confusionMatrix(rf_predictions, testData$Installs_Category)
+# Predictions on the testing set
+test_predictions <- predict(rf_model, testData)
+
+# Confusion Matrix for Training Data
+train_cm <- confusionMatrix(train_predictions, trainData$Installs_Category)
+print(train_cm)
+
+# Confusion Matrix for Testing Data
+test_cm <- confusionMatrix(test_predictions, testData$Installs_Category)
+print(test_cm)
+
+```
+#### PLotting the Training, Testing and error Rate
+
+```{r}
+# Calculate training and testing accuracy
+train_accuracy <- sum(train_predictions == trainData$Installs_Category) / nrow(trainData)
+test_accuracy <- sum(test_predictions == testData$Install_Category) / nrow(testData)
+
+# Prepare data for plotting
+errors <- data.frame(
+  Trees = 1:500,
+  OOB = rf_model$err.rate[, 1],
+  TrainAccuracy = rep(train_accuracy, 500),
+  TestAccuracy = rep(test_accuracy, 500)
+)
+
+# Plot the errors
+plot(errors$Trees, errors$OOB, type = "l", col = "blue", lwd = 2, 
+     ylim = c(0, 1), xlab = "Number of Trees", ylab = "Error/Accuracy", 
+     main = "Training, Testing, and OOB Error Rates")
+lines(errors$Trees, 1 - errors$TrainAccuracy, col = "green", lwd = 2, lty = 2)  # Training error
+lines(errors$Trees, 1 - errors$TestAccuracy, col = "red", lwd = 2, lty = 2)  # Testing error
+legend("topright", legend = c("OOB Error", "Training Error", "Testing Error"), 
+       col = c("blue", "green", "red"), lwd = 2, lty = c(1, 2, 2))
+
 ```
 
+#### Feature Importance Values
+
+```{r}
+# Variable importance
+importance(rf_model)
+
+# Plot variable importance
+varImpPlot(rf_model)
+```
+#### Visualization for Feature Importance
+
+
+```{r}
+# Extract importance values
+importance_values <- importance(rf_model)
+importance_df <- data.frame(
+  Feature = rownames(importance_values),
+  MeanDecreaseAccuracy = importance_values[, "MeanDecreaseAccuracy"],
+  MeanDecreaseGini = importance_values[, "MeanDecreaseGini"]
+)
+
+```
+
+```{r}
+# Plot Mean Decrease in Accuracy
+accuracy_plot <- ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseAccuracy), y = MeanDecreaseAccuracy)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Feature Importance (Mean Decrease in Accuracy)",
+    x = "Features",
+    y = "Importance"
+  ) +
+  theme_minimal() +
+  theme(text = element_text(size = 12), axis.text.y = element_text(size = 10))
+
+# Plot the accuracy plot
+print(accuracy_plot)
+
+# Save the plot with larger dimensions
+#ggsave("feature_importance_accuracy_large.png", plot = accuracy_plot, width = 12, height = 10, dpi = 300)
+
+# Plot Mean Decrease in Gini
+gini_plot <- ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseGini), y = MeanDecreaseGini)) +
+  geom_bar(stat = "identity", fill = "lightgreen") +
+  coord_flip() +
+  labs(
+    title = "Feature Importance (Mean Decrease in Gini)",
+    x = "Features",
+    y = "Importance"
+  ) +
+  theme_minimal() +
+  theme(text = element_text(size = 12), axis.text.y = element_text(size = 10))
+
+# Plot the gini index plot
+print(gini_plot)
+
+# Save the plot with larger dimensions
+#ggsave("feature_importance_gini_large.png", plot = gini_plot, width = 12, height = 10, dpi = 300)
+
+
+```
 
 ## SVM
 
