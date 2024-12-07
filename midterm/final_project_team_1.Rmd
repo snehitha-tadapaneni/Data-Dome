@@ -2257,6 +2257,8 @@ cat("Gradient Boosting achieved an accuracy of", conf_matrix$overall["Accuracy"]
 
 ## Decision Tree
 
+#### Splitting the data into train and test split
+
 ```{r}
 # Remove the Installs and Installs numerical columns
 data <- data_updated[, !colnames(data_updated) %in% c("Installs")]
@@ -2302,44 +2304,16 @@ cat("Test Accuracy: ", test_accuracy, "\n")
 
 ```
 
-```{r}
-# Check feature importance
-importance <- tree_model$variable.importance
-
-# Print feature importance
-cat("Feature Importance:\n")
-print(importance)
-
-# Visualize feature importance (optional)
-barplot(
-  importance,
-  main = "Feature Importance",
-  xlab = "Features",
-  ylab = "Importance",
-  col = "steelblue",
-  las = 2
-)
-```
-
-
-Why shift to Random Forest?
-High Dimensionality: With 41 variables, random forest handles many features better and can identify the most important ones.
-Feature Importance: Random forest provides a ranking of feature importance, helping us understand which variables influence the Installs_Category.
-Accuracy: Random forest generally has better predictive accuracy for larger and more complex datasets.
+**Why shift to Random Forest?**
+High Dimensionality: With 41 variables, random forest handles many features better and can identify the most important ones.<br>
+Feature Importance: Random forest provides a ranking of feature importance, helping us understand which variables influence the Installs_Category.<br>
+Accuracy: Random forest generally has better predictive accuracy for larger and more complex datasets.<br>
 
 ## Random Forest
 
 In this analysis, we employ a Random Forest model to predict the number of installs based on the top 5 app categories. The Random Forest algorithm is a robust ensemble learning method that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting. 
 
-The analysis will focus on:
-
-Feature Selection: Using the top 5 categories as predictors, which are highly correlated with app performance metrics such as installs, ratings, and reviews.
-Model Objective: Accurately predict the number of installs by capturing the complex and nonlinear relationships between features using a Random Forest model.
-Evaluation Metrics: Assess the model's performance using metrics such as Mean Squared Error (MSE), R-squared, and visualization of feature importance to ensure the model’s predictions are interpretable and actionable.
-
-#### Splitting the data into train and test split
-
-#### Building Random FOrest Classifier
+#### Building Random Forest Classifier
 
 ```{r}
 library(randomForest)
@@ -2359,8 +2333,21 @@ print(rf_model)
 #### Plotting the Random Forest Result
 
 ```{r}
-plot(rf_model)
+# Plot the Random Forest model
+plot(rf_model, main = "Random Forest Model Performance")
+
+# Add a legend to explain the colors
+legend("topright",                              
+       legend = c("OOB Error", "Class 1 Error", "Class 2 Error"), 
+       col = c("black", "red", "green"),       
+       lty = 1,                                
+       cex = 0.8)                             
+
 ```
+* This plot depicts the Out-of-Bag (OOB) error and class-specific errors for a Random Forest model as the number of trees increases.<br>
+* Model Stability: The OOB error stabilizing at a low value suggests that the Random Forest model is well-trained and not overfitting.<br>
+* Class Imbalance or Complexity: The higher error for Class 2 compared to Class 1 could imply class imbalance or that Class 2 is inherently harder to classify (e.g., due to overlapping features with Class 1).
+
 
 #### Testing the accuracy 
 
