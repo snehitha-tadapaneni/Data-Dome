@@ -47,9 +47,7 @@ library(randomForest)
 
 # Introduction
 
-Our research focuses on exploring the features of Size, installs, reviews,rating, Category, content rating, and Price on apps on Google Play Store and using different algorithms to identify the most influential attributes of highly installed apps on Google Play Store.
-
-# Smart Question
+Our research focuses on exploring the featk
 
 “Which are the top 5 app categories, as identified by classification models (logistic regression,SVM, XGBoost, KNN, and random forest), that significantly influenced app success (measured by installs) based on app data from 2010 to 2018, and how accurately can these models predict success trends within this time period??”
 
@@ -227,9 +225,270 @@ summary(data_apps) %>%
 ```
 
 
-## KNN
+# KNN Model Analysis
 ```{r}
+# Split the data into features and target
+features <- c("Rating", "Reviews", "Size", "Price", "Content.Rating", "Last.Updated",
+              grep("^cat", names(data_apps), value = TRUE))
+X <- data_apps[, features]
+y <- data_apps$Installs_Category
 
+# Split the data into training and testing sets
+set.seed(123)
+train_index <- createDataPartition(y, p = 0.7, list = FALSE)
+X_train <- X[train_index, ]
+X_test <- X[-train_index, ]
+y_train <- y[train_index]
+y_test <- y[-train_index]
+
+# Scale the features
+preprocess_params <- preProcess(X_train, method = c("center", "scale"))
+X_train_scaled <- predict(preprocess_params, X_train)
+X_test_scaled <- predict(preprocess_params, X_test)
+
+# Train KNN model with cross-validation to find optimal k
+k_values <- seq(1, 20, by = 2)
+cv_results <- lapply(k_values, function(k) {
+  train_control <- trainControl(method = "cv", number = 5)
+  knn_model <- train(x = X_train_scaled, 
+                    y = y_train,
+                    method = "knn",
+                    tuneGrid = data.frame(k = k),
+                    trControl = train_control)
+  return(knn_model$results$Accuracy)
+})
+
+# Plot k values vs accuracy
+k_accuracy_df <- data.frame(k = k_values, accuracy = unlist(cv_results))
+ggplot(k_accuracy_df, aes(x = k, y = accuracy)) +
+  geom_line(color = "blue") +
+  geom_point(color = "red") +
+  labs(title = "K Values vs Cross-Validation Accuracy",
+       x = "Number of Neighbors (k)",
+       y = "Accuracy") +
+  theme_minimal()
+
+# Train final KNN model with optimal k
+optimal_k <- k_values[which.max(cv_results)]
+final_knn <- knn3(X_train_scaled, y_train, k = optimal_k)
+
+# Make predictions
+y_pred_prob <- predict(final_knn, X_test_scaled, type = "prob")
+y_pred <- factor(ifelse(y_pred_prob[,2] > 0.5, 1, 0), levels = c(0, 1))
+
+# Calculate performance metrics
+conf_matrix <- confusionMatrix(y_pred, y_test)
+roc_curve <- roc(as.numeric(y_test), y_pred_prob[,2])
+auc_score <- auc(roc_curve)
+
+# Plot ROC curve
+plot(roc_curve, main = "ROC Curve for KNN Model",
+     col = "blue", lwd = 2)
+abline(a = 0, b = 1, lty = 2, col = "gray")
+legend("bottomright", legend = sprintf("AUC = %.3f", auc_score))
+
+# Feature importance using permutation importance
+calc_importance <- function(feature) {
+  X_test_permuted <- X_test_scaled
+  X_test_permuted[,feature] <- sample(X_test_scaled[,feature])
+  pred_permuted <- predict(final_knn, X_test_permuted, type = "prob")
+  roc_permuted <- roc(as.numeric(y_test), pred_permuted[,2])
+  return(auc_score - auc(roc_permuted))
+}
+
+importance_scores <- sapply(features, calc_importance)
+importance_df <- data.frame(
+  Feature = features,
+  Importance = importance_scores
+)
+importance_df <- importance_df[order(-importance_df$Importance),]
+
+# Plot feature importance
+ggplot(importance_df[1:10,], aes(x = reorder(Feature, Importance), y = Importance)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 10 Feature Importance (KNN Model)",
+       x = "Feature",
+       y = "Importance Score") +
+  theme_minimal()
+
+# Create performance summary table
+performance_summary <- data.frame(
+  Metric = c("Accuracy", "Precision", "Recall", "F1 Score", "AUC"),
+  Value = c(
+    conf_matrix$overall["Accuracy"],
+    conf_matrix$byClass["Precision"],
+    conf_matrix$byClass["Recall"],
+    conf_matrix$byClass["F1"],
+    auc_score
+  )
+)
+
+# Display performance summary using kable
+kable(performance_summary, caption = "KNN Model Performance Summary") %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
+
+# Create prediction distribution visualization
+pred_df <- data.frame(
+  Actual = as.numeric(as.character(y_test)),
+  Predicted_Prob = y_pred_prob[,2]
+)
+
+ggplot(pred_df, aes(x = Predicted_Prob, fill = factor(Actual))) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribution of Predicted Probabilities by Actual Class",
+       x = "Predicted Probability of High Installs",
+       y = "Density",
+       fill = "Actual Class") +
+  scale_fill_manual(values = c("red", "blue"),
+                   labels = c("Low Installs", "High Installs")) +
+  theme_minimal()
+```
+
+```{r}
+# After running the existing model code, add these visualizations:
+
+# 1. Density Plot of Probability Distributions
+ggplot(data.frame(
+  probability = y_pred_prob[,2],
+  actual = y_test
+), aes(x = probability, fill = actual)) +
+  geom_density(alpha = 0.7) +
+  scale_fill_manual(values = c("low" = "#FF9999", "high" = "#66B2FF")) +
+  labs(title = "Distribution of Predicted Probabilities by Class",
+       x = "Predicted Probability of High Installs",
+       y = "Density",
+       fill = "Actual Class") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "top"
+  )
+
+# 2. Enhanced Confusion Matrix Visualization
+conf_matrix_df <- as.data.frame(conf_matrix$table)
+conf_matrix_df$Percentage <- conf_matrix_df$Freq / sum(conf_matrix_df$Freq) * 100
+
+ggplot(conf_matrix_df, aes(x = Prediction, y = Reference)) +
+  geom_tile(aes(fill = Percentage), color = "white") +
+  geom_text(aes(label = sprintf("%.1f%%\n(n=%d)", Percentage, Freq)), 
+            size = 4, color = "black") +
+  scale_fill_gradient2(low = "white", high = "#4A90E2", 
+                      midpoint = min(conf_matrix_df$Percentage)) +
+  labs(title = "Confusion Matrix Heatmap",
+       subtitle = sprintf("Overall Accuracy: %.1f%%", conf_matrix$overall["Accuracy"] * 100)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.text = element_text(size = 10),
+    legend.title = element_text(size = 10)
+  )
+
+# 3. Enhanced ROC Curve
+roc_df <- data.frame(
+  FPR = roc_curve$specificities,
+  TPR = roc_curve$sensitivities
+)
+
+ggplot(roc_df, aes(x = 1 - FPR, y = TPR)) +
+  geom_line(color = "#4A90E2", size = 1.5) +
+  geom_abline(linetype = "dashed", alpha = 0.5) +
+  annotate("text", x = 0.7, y = 0.3,
+           label = sprintf("AUC = %.3f", auc_score),
+           size = 5, color = "#2C3E50") +
+  labs(title = "ROC Curve Analysis",
+       x = "False Positive Rate",
+       y = "True Positive Rate") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    panel.grid.minor = element_blank()
+  )
+
+# 4. Feature Importance Visualization with Categories
+importance_df$Category <- factor(
+  ifelse(abs(importance_df$Importance) >= quantile(abs(importance_df$Importance), 0.75), "High",
+         ifelse(abs(importance_df$Importance) >= quantile(abs(importance_df$Importance), 0.25), "Medium", "Low"))
+)
+
+ggplot(head(importance_df, 15), 
+       aes(x = reorder(Feature, abs(Importance)), 
+           y = abs(Importance),
+           fill = Category)) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("High" = "#4A90E2", 
+                              "Medium" = "#79B6F2", 
+                              "Low" = "#A8D1F2")) +
+  coord_flip() +
+  labs(title = "Top 15 Feature Importance Analysis",
+       subtitle = "Based on Absolute Correlation with Target",
+       x = "Feature",
+       y = "Importance Score") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    legend.position = "top"
+  )
+#################################################
+# 5. Model Performance Metrics Radar Chart
+library(fmsb)
+
+# Prepare data for radar chart
+metrics <- c("Accuracy", "Precision", "Recall", "F1", "AUC")
+values <- c(
+  conf_matrix$overall["Accuracy"],
+  conf_matrix$byClass["Precision"],
+  conf_matrix$byClass["Recall"],
+  conf_matrix$byClass["F1"],
+  auc_score
+)
+
+radar_data <- data.frame(
+  matrix(c(rep(1,5), rep(0,5), values),
+         nrow = 3, byrow = TRUE)
+)
+colnames(radar_data) <- metrics
+
+# Create radar chart
+par(mar = c(1, 1, 4, 1))
+radarchart(
+  radar_data,
+  pcol = "#4A90E2",
+  pfcol = alpha("#4A90E2", 0.5),
+  plwd = 2,
+  cglcol = "grey",
+  cglty = 1,
+  axislabcol = "grey50",
+  title = "Model Performance Metrics Overview"
+)
+legend(
+  "topright",
+  legend = c("Performance"),
+  col = "#4A90E2",
+  lwd = 2,
+  bty = "n"
+)
+
+# 6. Prediction Confidence Distribution
+confidence_scores <- apply(y_pred_prob, 1, max)
+ggplot(data.frame(confidence = confidence_scores), aes(x = confidence)) +
+  geom_histogram(aes(y = ..density..), 
+                bins = 30, 
+                fill = "#4A90E2", 
+                color = "white", 
+                alpha = 0.7) +
+  geom_density(color = "#2C3E50", size = 1) +
+  labs(title = "Distribution of Prediction Confidence",
+       subtitle = "Higher values indicate more confident predictions",
+       x = "Confidence Score",
+       y = "Density") +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )
 ```
 #------------------------------------------------------------------------- 
 
