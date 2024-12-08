@@ -439,6 +439,7 @@ ggplot(data_final, aes(y=Price)) +
   theme_minimal()
 ```
 
+
 #### Checking outliers for Price
 
 ```{r}
@@ -2098,6 +2099,39 @@ ggplot(data_updated, aes(x = Installs_Category)) +
 ```{r}
 str(data_updated)
 ```
+
+```{r}
+# Boxplot for the same
+ggplot(data_updated, aes(y=Installs)) +
+  geom_boxplot(outlier.colour = "red", outlier.shape = 16, outlier.size = 1, fill="pink", color="black") +
+  labs(title="Installs Boxplot", y="Installs") +
+  theme_minimal()
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 So, now our final dataset after preprocessing is named as 'data_updated'. We have selected five modelling techniques that would be best suitable for answering our SMART Question.
 
