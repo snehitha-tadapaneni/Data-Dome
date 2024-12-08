@@ -2119,373 +2119,11 @@ So, now our final dataset after preprocessing is named as 'data_updated'. We hav
 
 ## KNN
 ```{r}
-# Load necessary libraries
-library(class)        # For KNN
-library(dplyr)        # Data manipulation
-library(caret)        # Data splitting, pre-processing, and evaluation
-library(ggplot2)      # Data visualization
-library(pROC)         # For ROC and AUC
-library(e1071)        # For tuning the KNN hyperparameters
 
-# Load the dataset (assume 'data_updated' is available)
-# Clean and prepare the data
-data_updated <- data_updated %>%
-  mutate_if(is.character, as.factor) %>%  # Convert character columns to factors
-  mutate_if(is.factor, as.numeric) %>%    # Convert factor columns to numeric for PCA
-  drop_na()  # Drop rows with NA values
-
-# Select numeric variables for PCA
-pca_data <- data_updated[, sapply(data_updated, is.numeric)]
-
-# Scale the data
-pca_scaled <- scale(pca_data)
-
-# Perform PCA
-pca_result <- prcomp(pca_scaled, center = TRUE, scale. = TRUE)
-
-# View the PCA results
-summary(pca_result)
-
-# Scree Plot
-plot(pca_result, type = "l", main = "Scree Plot", col = "blue")
-
-# Extract cumulative variance and choose optimal number of PCs (90% variance)
-explained_variance <- cumsum(pca_result$sdev^2 / sum(pca_result$sdev^2))
-optimal_pcs <- min(which(explained_variance >= 0.9))  # Choose number of PCs to explain 90% of variance
-print(paste("Optimal number of principal components (90% variance):", optimal_pcs))
-
-# PCA-transformed data
-pca_scores <- as.data.frame(pca_result$x[, 1:optimal_pcs])  # Use the top 'optimal_pcs' principal components
-pca_scores$Installs_Category <- data_updated$Installs_Category
-
-# Split PCA-transformed data into train/test sets (75% train, 25% test)
-set.seed(42)
-trainIndex <- createDataPartition(pca_scores$Installs_Category, p = 0.75, list = FALSE)
-X_train <- pca_scores[trainIndex, 1:optimal_pcs]
-X_test <- pca_scores[-trainIndex, 1:optimal_pcs]
-y_train <- pca_scores$Installs_Category[trainIndex]
-y_test <- pca_scores$Installs_Category[-trainIndex]
-
-# Train the KNN model with cross-validation
-set.seed(42)
-knn_tuned <- train(
-  X_train, 
-  y_train, 
-  method = "knn",
-  trControl = trainControl(method = "cv", number = 10),  # 10-fold cross-validation
-  tuneGrid = data.frame(k = seq(1, 20, by = 1))  # Tune for k = 1 to 20
-)
-
-# Best k
-best_k <- knn_tuned$bestTune$k
-print(paste("Optimal k for KNN:", best_k))
-
-# Train KNN with optimal k
-knn_model <- knn(train = X_train, test = X_test, cl = y_train, k = best_k)
-
-# Evaluate the KNN model
-confusion_matrix <- confusionMatrix(as.factor(knn_model), as.factor(y_test))
-print(confusion_matrix)
-
-# Plot Accuracy vs k
-accuracy_results <- data.frame(k = knn_tuned$results$k, Accuracy = knn_tuned$results$Accuracy)
-ggplot(accuracy_results, aes(x = k, y = Accuracy)) +
-  geom_point(color = "blue") +
-  geom_line(color = "blue") +
-  ggtitle("Accuracy vs Number of Neighbors (k)") +
-  xlab("Number of Neighbors (k)") +
-  ylab("Accuracy") +
-  theme_minimal()
-
-# Calculate Precision, Recall, F1-Score
-predicted <- as.factor(knn_model)
-actual <- as.factor(y_test)
-
-precision <- posPredValue(predicted, actual, positive = "High")
-recall <- sensitivity(predicted, actual, positive = "High")
-f1_score <- 2 * ((precision * recall) / (precision + recall))
-print(paste("Precision:", round(precision, 3)))
-print(paste("Recall:", round(recall, 3)))
-print(paste("F1-Score:", round(f1_score, 3)))
-
-# Plot ROC and calculate AUC
-roc_curve <- roc(as.numeric(actual), as.numeric(predicted))
-auc_value <- auc(roc_curve)
-print(paste("AUC:", round(auc_value, 3)))
-
-plot(roc_curve, col = "blue", main = "ROC Curve for KNN Model")
 ```
 #------------------------------------------------------------------------- 
 
-
-## Decision Tree
-
-#### Splitting the data into train and test split
-
-```{r}
-# Remove the Installs and Installs numerical columns
-data <- data_updated[, !colnames(data_updated) %in% c("Installs")]
-
-# Split the data into training and testing sets
-set.seed(123)  # Ensure reproducibility
-trainIndex <- createDataPartition(data$Installs_Category, p = 0.8, list = FALSE)
-trainData <- data[trainIndex, ]
-testData <- data[-trainIndex, ]
-```
-
-```{r}
-# Load necessary libraries
-library(rpart)
-library(rpart.plot)
-
-# Fit the decision tree model
-set.seed(42)
-tree_model <- rpart(
-  Installs_Category ~ . ,
-  data = trainData,
-  method = "class"
-)
-
-# Plot the decision tree
-rpart.plot(tree_model, main = "Decision Tree for Predicting Installs Category")
-
-```
-
-```{r}
-# Predict on training and test datasets
-train_predictions <- predict(tree_model, trainData, type = "class")
-test_predictions <- predict(tree_model, testData, type = "class")
-
-# Calculate accuracy
-train_accuracy <- sum(train_predictions == trainData$Installs_Category) / nrow(trainData)
-test_accuracy <- sum(test_predictions == testData$Installs_Category) / nrow(testData)
-
-# Print accuracy results
-cat("Training Accuracy: ", train_accuracy, "\n")
-cat("Test Accuracy: ", test_accuracy, "\n")
-
-
-```
-
-**Why shift to Random Forest?**
-High Dimensionality: With 41 variables, random forest handles many features better and can identify the most important ones.<br>
-Feature Importance: Random forest provides a ranking of feature importance, helping us understand which variables influence the Installs_Category.<br>
-Accuracy: Random forest generally has better predictive accuracy for larger and more complex datasets.<br>
-
-## Random Forest
-
-In this analysis, we employ a Random Forest model to predict the number of installs based on the top 5 app categories. The Random Forest algorithm is a robust ensemble learning method that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting. 
-
-#### Building Random Forest Classifier
-
-```{r}
-library(randomForest)
-library(caret)
-
-# Train the random forest model
-set.seed(123)
-rf_model <- randomForest(Installs_Category ~ ., 
-                         data = trainData, 
-                         ntree = 500,       # Number of trees
-                         mtry = 4,  # Number of predictors sampled at each split
-                         importance = TRUE) # Enable importance calculation
-
-# Print the model summary
-print(rf_model)
-```
-
-#### Plotting the Random Forest Result
-
-```{r}
-# Plot the Random Forest model
-plot(rf_model, main = "Random Forest Model Performance")
-
-# Add a legend to explain the colors
-legend("topright",                              
-       legend = c("OOB Error", "Class 1 Error", "Class 2 Error"), 
-       col = c("black", "red", "green"),       
-       lty = 1,                                
-       cex = 0.8)                             
-
-```
-* This plot depicts the Out-of-Bag (OOB) error and class-specific errors for a Random Forest model as the number of trees increases.<br>
-* Model Stability: The OOB error stabilizing at a low value suggests that the Random Forest model is well-trained and not overfitting.<br>
-* Class Imbalance or Complexity: The higher error for Class 2 compared to Class 1 could imply class imbalance or that Class 2 is inherently harder to classify (e.g., due to overlapping features with Class 1).
-
-
-#### Testing the accuracy 
-
-```{r}
-# Predictions on the training set
-train_predictions <- predict(rf_model, trainData)
-
-# Predictions on the testing set
-test_predictions <- predict(rf_model, testData)
-
-# Confusion Matrix for Training Data
-train_cm <- confusionMatrix(train_predictions, trainData$Installs_Category)
-print(train_cm)
-
-# Confusion Matrix for Testing Data
-test_cm <- confusionMatrix(test_predictions, testData$Installs_Category)
-print(test_cm)
-
-```
-
-#### PLotting the Training, Testing and error Rate
-
-```{r}
-# Initialize vectors to store results
-training_accuracy <- numeric(500)
-testing_accuracy <- numeric(500)
-oob_error <- rf_model$err.rate[, 1] # OOB error directly from the model
-
-# Calculate accuracies for training and testing sets at each tree
-for (i in 1:500) {
-  # Subset Random Forest model up to 'i' trees
-  partial_model <- randomForest(Installs_Category ~ ., 
-                                data = trainData, 
-                                ntree = i, 
-                                mtry = 10, 
-                                importance = FALSE)
-
-  # Training accuracy
-  train_preds <- predict(partial_model, trainData)
-  training_accuracy[i] <- mean(train_preds == trainData$Installs_Category)
-
-  # Testing accuracy
-  test_preds <- predict(partial_model, testData)
-  testing_accuracy[i] <- mean(test_preds == testData$Installs_Category)
-}
-
-# Plotting the results
-plot(1:500, oob_error, type = "l", col = "black", lwd = 2,
-     ylim = c(0, 1), xlab = "Number of Trees", ylab = "Error / Accuracy",
-     main = "Random Forest Model Performance")
-lines(1:500, training_accuracy, col = "blue", lwd = 2)
-lines(1:500, testing_accuracy, col = "red", lwd = 2)
-legend("topright", legend = c("OOB Error", "Training Accuracy", "Testing Accuracy"),
-       col = c("black", "blue", "red"), lty = 1, lwd = 2)
-
-```
-
-```{r}
-# Performance on Training Data
-train_predictions <- predict(rf_model, newdata = trainData)
-train_conf_matrix <- table(train_predictions, trainData$Installs_Category)
-train_accuracy <- sum(diag(train_conf_matrix)) / sum(train_conf_matrix)
-cat("Training Accuracy: ", train_accuracy, "\n")
-
-# Performance on Testing Data
-test_predictions <- predict(rf_model, newdata = testData)
-test_conf_matrix <- table(test_predictions, testData$Installs_Category)
-test_accuracy <- sum(diag(test_conf_matrix)) / sum(test_conf_matrix)
-cat("Testing Accuracy: ", test_accuracy, "\n")
-
-# OOB Error from the model
-oob_error <- rf_model$err.rate[500, "OOB"]
-oob_accuracy <- 1 - oob_error
-cat("OOB Accuracy: ", oob_accuracy, "\n")
-
-# Compare Results
-comparison <- data.frame(
-  Dataset = c("Training", "Testing", "OOB"),
-  Accuracy = c(train_accuracy, test_accuracy, oob_accuracy)
-)
-print(comparison)
-
-```
-
-```{r}
-# Install and load pROC package if not already installed
-if (!require("pROC")) install.packages("pROC", dependencies = TRUE)
-library(pROC)
-
-# Get predicted probabilities for the positive class (class '1')
-rf_prob <- predict(rf_model, testData, type = "prob")[, 2] # Probabilities for class '1'
-
-# Compute ROC curve and AUC
-roc_curve <- roc(testData$Installs_Category, rf_prob)
-
-# Plot the ROC curve
-plot(roc_curve, col = "blue", lwd = 2, main = "ROC Curve for Random Forest")
-abline(a = 0, b = 1, lty = 2, col = "gray") # Diagonal reference line
-
-# Display the AUC value
-auc_value <- auc(roc_curve)
-cat("AUC:", auc_value, "\n")
-
-```
-
-#### Feature Importance Values
-
-```{r}
-# Variable importance
-importance(rf_model)
-
-# Plot variable importance
-varImpPlot(rf_model)
-```
-
-#### Visualization for Feature Importance
-
-
-```{r}
-# Extract importance values
-importance_values <- importance(rf_model)
-importance_df <- data.frame(
-  Feature = rownames(importance_values),
-  MeanDecreaseAccuracy = importance_values[, "MeanDecreaseAccuracy"],
-  MeanDecreaseGini = importance_values[, "MeanDecreaseGini"]
-)
-
-```
-
-```{r}
-# Plot Mean Decrease in Accuracy
-accuracy_plot <- ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseAccuracy), y = MeanDecreaseAccuracy)) +
-  geom_bar(stat = "identity", fill = "skyblue") +
-  coord_flip() +
-  labs(
-    title = "Feature Importance (Mean Decrease in Accuracy)",
-    x = "Features",
-    y = "Importance"
-  ) +
-  theme_minimal() +
-  theme(text = element_text(size = 12), axis.text.y = element_text(size = 10))
-
-# Plot the accuracy plot
-print(accuracy_plot)
-
-# Save the plot with larger dimensions
-#ggsave("feature_importance_accuracy_large.png", plot = accuracy_plot, width = 12, height = 10, dpi = 300)
-
-# Plot Mean Decrease in Gini
-gini_plot <- ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseGini), y = MeanDecreaseGini)) +
-  geom_bar(stat = "identity", fill = "lightgreen") +
-  coord_flip() +
-  labs(
-    title = "Feature Importance (Mean Decrease in Gini)",
-    x = "Features",
-    y = "Importance"
-  ) +
-  theme_minimal() +
-  theme(text = element_text(size = 12), axis.text.y = element_text(size = 10))
-
-# Plot the gini index plot
-print(gini_plot)
-
-# Save the plot with larger dimensions
-#ggsave("feature_importance_gini_large.png", plot = gini_plot, width = 12, height = 10, dpi = 300)
-
-
-```
-
-
-
 ## Gradient Boosting
-
-
 ```{r}
 
 # 2. Feature Engineering ------------------------------------------------
@@ -2625,6 +2263,265 @@ cat("Gradient Boosting achieved an accuracy of", conf_matrix$overall["Accuracy"]
     "and AUC of", auc_value, "\n")
 ```
 
+## Decision Tree
+
+#### Splitting the data into train and test split
+
+```{r}
+# Remove the Installs and Installs numerical columns
+data <- data_updated[, !colnames(data_updated) %in% c("Installs")]
+
+# Split the data into training and testing sets
+set.seed(123)  # Ensure reproducibility
+trainIndex <- createDataPartition(data$Installs_Category, p = 0.8, list = FALSE)
+trainData <- data[trainIndex, ]
+testData <- data[-trainIndex, ]
+```
+
+```{r}
+# Load necessary libraries
+library(rpart)
+library(rpart.plot)
+
+# Fit the decision tree model
+set.seed(42)
+tree_model <- rpart(
+  Installs_Category ~ . ,
+  data = trainData,
+  method = "class"
+)
+
+# Plot the decision tree
+rpart.plot(tree_model, main = "Decision Tree for Predicting Installs Category")
+
+```
+
+```{r}
+# Predict on training and test datasets
+train_predictions <- predict(tree_model, trainData, type = "class")
+test_predictions <- predict(tree_model, testData, type = "class")
+
+# Calculate accuracy
+train_accuracy <- sum(train_predictions == trainData$Installs_Category) / nrow(trainData)
+test_accuracy <- sum(test_predictions == testData$Installs_Category) / nrow(testData)
+
+# Print accuracy results
+cat("Training Accuracy: ", train_accuracy, "\n")
+cat("Test Accuracy: ", test_accuracy, "\n")
+
+
+```
+
+**Why shift to Random Forest?**
+High Dimensionality: With 41 variables, random forest handles many features better and can identify the most important ones.<br>
+Feature Importance: Random forest provides a ranking of feature importance, helping us understand which variables influence the Installs_Category.<br>
+Accuracy: Random forest generally has better predictive accuracy for larger and more complex datasets.<br>
+
+## Random Forest
+
+In this analysis, we employ a Random Forest model to predict the number of installs based on the top 5 app categories. The Random Forest algorithm is a robust ensemble learning method that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting. 
+
+#### Building Random Forest Classifier
+
+```{r}
+library(randomForest)
+library(caret)
+
+# Train the random forest model
+set.seed(123)
+rf_model <- randomForest(Installs_Category ~ ., 
+                         data = trainData, 
+                         ntree = 500,       # Number of trees
+                         mtry = 4,  # Number of predictors sampled at each split
+                         importance = TRUE) # Enable importance calculation
+
+# Print the model summary
+print(rf_model)
+```
+#### Plotting the Random Forest Result
+
+```{r}
+# Plot the Random Forest model
+plot(rf_model, main = "Random Forest Model Performance")
+
+# Add a legend to explain the colors
+legend("topright",                              
+       legend = c("OOB Error", "Class 1 Error", "Class 2 Error"), 
+       col = c("black", "red", "green"),       
+       lty = 1,                                
+       cex = 0.8)                             
+
+```
+* This plot depicts the Out-of-Bag (OOB) error and class-specific errors for a Random Forest model as the number of trees increases.<br>
+* Model Stability: The OOB error stabilizing at a low value suggests that the Random Forest model is well-trained and not overfitting.<br>
+* Class Imbalance or Complexity: The higher error for Class 2 compared to Class 1 could imply class imbalance or that Class 2 is inherently harder to classify (e.g., due to overlapping features with Class 1).
+
+
+#### Testing the accuracy 
+
+```{r}
+# Predictions on the training set
+train_predictions <- predict(rf_model, trainData)
+
+# Predictions on the testing set
+test_predictions <- predict(rf_model, testData)
+
+# Confusion Matrix for Training Data
+train_cm <- confusionMatrix(train_predictions, trainData$Installs_Category)
+print(train_cm)
+
+# Confusion Matrix for Testing Data
+test_cm <- confusionMatrix(test_predictions, testData$Installs_Category)
+print(test_cm)
+
+```
+#### PLotting the Training, Testing and error Rate
+
+```{r}
+# Initialize vectors to store results
+training_accuracy <- numeric(500)
+testing_accuracy <- numeric(500)
+oob_error <- rf_model$err.rate[, 1] # OOB error directly from the model
+
+# Calculate accuracies for training and testing sets at each tree
+for (i in 1:500) {
+  # Subset Random Forest model up to 'i' trees
+  partial_model <- randomForest(Installs_Category ~ ., 
+                                data = trainData, 
+                                ntree = i, 
+                                mtry = 10, 
+                                importance = FALSE)
+
+  # Training accuracy
+  train_preds <- predict(partial_model, trainData)
+  training_accuracy[i] <- mean(train_preds == trainData$Installs_Category)
+
+  # Testing accuracy
+  test_preds <- predict(partial_model, testData)
+  testing_accuracy[i] <- mean(test_preds == testData$Installs_Category)
+}
+
+# Plotting the results
+plot(1:500, oob_error, type = "l", col = "black", lwd = 2,
+     ylim = c(0, 1), xlab = "Number of Trees", ylab = "Error / Accuracy",
+     main = "Random Forest Model Performance")
+lines(1:500, training_accuracy, col = "blue", lwd = 2)
+lines(1:500, testing_accuracy, col = "red", lwd = 2)
+legend("topright", legend = c("OOB Error", "Training Accuracy", "Testing Accuracy"),
+       col = c("black", "blue", "red"), lty = 1, lwd = 2)
+
+```
+
+```{r}
+# Performance on Training Data
+train_predictions <- predict(rf_model, newdata = trainData)
+train_conf_matrix <- table(train_predictions, trainData$Installs_Category)
+train_accuracy <- sum(diag(train_conf_matrix)) / sum(train_conf_matrix)
+cat("Training Accuracy: ", train_accuracy, "\n")
+
+# Performance on Testing Data
+test_predictions <- predict(rf_model, newdata = testData)
+test_conf_matrix <- table(test_predictions, testData$Installs_Category)
+test_accuracy <- sum(diag(test_conf_matrix)) / sum(test_conf_matrix)
+cat("Testing Accuracy: ", test_accuracy, "\n")
+
+# OOB Error from the model
+oob_error <- rf_model$err.rate[500, "OOB"]
+oob_accuracy <- 1 - oob_error
+cat("OOB Accuracy: ", oob_accuracy, "\n")
+
+# Compare Results
+comparison <- data.frame(
+  Dataset = c("Training", "Testing", "OOB"),
+  Accuracy = c(train_accuracy, test_accuracy, oob_accuracy)
+)
+print(comparison)
+
+```
+
+```{r}
+# Install and load pROC package if not already installed
+if (!require("pROC")) install.packages("pROC", dependencies = TRUE)
+library(pROC)
+
+# Get predicted probabilities for the positive class (class '1')
+rf_prob <- predict(rf_model, testData, type = "prob")[, 2] # Probabilities for class '1'
+
+# Compute ROC curve and AUC
+roc_curve <- roc(testData$Installs_Category, rf_prob)
+
+# Plot the ROC curve
+plot(roc_curve, col = "blue", lwd = 2, main = "ROC Curve for Random Forest")
+abline(a = 0, b = 1, lty = 2, col = "gray") # Diagonal reference line
+
+# Display the AUC value
+auc_value <- auc(roc_curve)
+cat("AUC:", auc_value, "\n")
+
+```
+
+#### Feature Importance Values
+
+```{r}
+# Variable importance
+importance(rf_model)
+
+# Plot variable importance
+varImpPlot(rf_model)
+```
+#### Visualization for Feature Importance
+
+
+```{r}
+# Extract importance values
+importance_values <- importance(rf_model)
+importance_df <- data.frame(
+  Feature = rownames(importance_values),
+  MeanDecreaseAccuracy = importance_values[, "MeanDecreaseAccuracy"],
+  MeanDecreaseGini = importance_values[, "MeanDecreaseGini"]
+)
+
+```
+
+```{r}
+# Plot Mean Decrease in Accuracy
+accuracy_plot <- ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseAccuracy), y = MeanDecreaseAccuracy)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Feature Importance (Mean Decrease in Accuracy)",
+    x = "Features",
+    y = "Importance"
+  ) +
+  theme_minimal() +
+  theme(text = element_text(size = 12), axis.text.y = element_text(size = 10))
+
+# Plot the accuracy plot
+print(accuracy_plot)
+
+# Save the plot with larger dimensions
+#ggsave("feature_importance_accuracy_large.png", plot = accuracy_plot, width = 12, height = 10, dpi = 300)
+
+# Plot Mean Decrease in Gini
+gini_plot <- ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseGini), y = MeanDecreaseGini)) +
+  geom_bar(stat = "identity", fill = "lightgreen") +
+  coord_flip() +
+  labs(
+    title = "Feature Importance (Mean Decrease in Gini)",
+    x = "Features",
+    y = "Importance"
+  ) +
+  theme_minimal() +
+  theme(text = element_text(size = 12), axis.text.y = element_text(size = 10))
+
+# Plot the gini index plot
+print(gini_plot)
+
+# Save the plot with larger dimensions
+#ggsave("feature_importance_gini_large.png", plot = gini_plot, width = 12, height = 10, dpi = 300)
+
+
+```
 
 ## SVM
 
