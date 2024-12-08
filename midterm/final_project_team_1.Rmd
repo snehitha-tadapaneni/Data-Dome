@@ -2370,26 +2370,58 @@ print(test_cm)
 #### PLotting the Training, Testing and error Rate
 
 ```{r}
-# Calculate training and testing accuracy
-train_accuracy <- sum(train_predictions == trainData$Installs_Category) / nrow(trainData)
-test_accuracy <- sum(test_predictions == testData$Install_Category) / nrow(testData)
+# Initialize vectors to store results
+training_accuracy <- numeric(500)
+testing_accuracy <- numeric(500)
+oob_error <- rf_model$err.rate[, 1] # OOB error directly from the model
 
-# Prepare data for plotting
-errors <- data.frame(
-  Trees = 1:500,
-  OOB = rf_model$err.rate[, 1],
-  TrainAccuracy = rep(train_accuracy, 500),
-  TestAccuracy = rep(test_accuracy, 500)
-)
+# Calculate accuracies for training and testing sets at each tree
+for (i in 1:500) {
+  # Subset Random Forest model up to 'i' trees
+  partial_model <- randomForest(Installs_Category ~ ., 
+                                data = trainData, 
+                                ntree = i, 
+                                mtry = 10, 
+                                importance = FALSE)
 
-# Plot the errors
-plot(errors$Trees, errors$OOB, type = "l", col = "blue", lwd = 2, 
-     ylim = c(0, 1), xlab = "Number of Trees", ylab = "Error/Accuracy", 
-     main = "Training, Testing, and OOB Error Rates")
-lines(errors$Trees, 1 - errors$TrainAccuracy, col = "green", lwd = 2, lty = 2)  # Training error
-lines(errors$Trees, 1 - errors$TestAccuracy, col = "red", lwd = 2, lty = 2)  # Testing error
-legend("topright", legend = c("OOB Error", "Training Error", "Testing Error"), 
-       col = c("blue", "green", "red"), lwd = 2, lty = c(1, 2, 2))
+  # Training accuracy
+  train_preds <- predict(partial_model, trainData)
+  training_accuracy[i] <- mean(train_preds == trainData$Installs_Category)
+
+  # Testing accuracy
+  test_preds <- predict(partial_model, testData)
+  testing_accuracy[i] <- mean(test_preds == testData$Installs_Category)
+}
+
+# Plotting the results
+plot(1:500, oob_error, type = "l", col = "black", lwd = 2,
+     ylim = c(0, 1), xlab = "Number of Trees", ylab = "Error / Accuracy",
+     main = "Random Forest Model Performance")
+lines(1:500, training_accuracy, col = "blue", lwd = 2)
+lines(1:500, testing_accuracy, col = "red", lwd = 2)
+legend("topright", legend = c("OOB Error", "Training Accuracy", "Testing Accuracy"),
+       col = c("black", "blue", "red"), lty = 1, lwd = 2)
+
+```
+
+```{r}
+# Install and load pROC package if not already installed
+if (!require("pROC")) install.packages("pROC", dependencies = TRUE)
+library(pROC)
+
+# Get predicted probabilities for the positive class (class '1')
+rf_prob <- predict(rf_model, testData, type = "prob")[, 2] # Probabilities for class '1'
+
+# Compute ROC curve and AUC
+roc_curve <- roc(testData$Installs_Category, rf_prob)
+
+# Plot the ROC curve
+plot(roc_curve, col = "blue", lwd = 2, main = "ROC Curve for Random Forest")
+abline(a = 0, b = 1, lty = 2, col = "gray") # Diagonal reference line
+
+# Display the AUC value
+auc_value <- auc(roc_curve)
+cat("AUC:", auc_value, "\n")
 
 ```
 
