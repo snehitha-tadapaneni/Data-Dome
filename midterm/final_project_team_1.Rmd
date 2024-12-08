@@ -2324,7 +2324,7 @@ set.seed(123)
 rf_model <- randomForest(Installs_Category ~ ., 
                          data = trainData, 
                          ntree = 500,       # Number of trees
-                         mtry = 10,  # Number of predictors sampled at each split
+                         mtry = 4,  # Number of predictors sampled at each split
                          importance = TRUE) # Enable importance calculation
 
 # Print the model summary
@@ -2401,6 +2401,33 @@ lines(1:500, training_accuracy, col = "blue", lwd = 2)
 lines(1:500, testing_accuracy, col = "red", lwd = 2)
 legend("topright", legend = c("OOB Error", "Training Accuracy", "Testing Accuracy"),
        col = c("black", "blue", "red"), lty = 1, lwd = 2)
+
+```
+
+```{r}
+# Performance on Training Data
+train_predictions <- predict(rf_model, newdata = trainData)
+train_conf_matrix <- table(train_predictions, trainData$Installs_Category)
+train_accuracy <- sum(diag(train_conf_matrix)) / sum(train_conf_matrix)
+cat("Training Accuracy: ", train_accuracy, "\n")
+
+# Performance on Testing Data
+test_predictions <- predict(rf_model, newdata = testData)
+test_conf_matrix <- table(test_predictions, testData$Installs_Category)
+test_accuracy <- sum(diag(test_conf_matrix)) / sum(test_conf_matrix)
+cat("Testing Accuracy: ", test_accuracy, "\n")
+
+# OOB Error from the model
+oob_error <- rf_model$err.rate[500, "OOB"]
+oob_accuracy <- 1 - oob_error
+cat("OOB Accuracy: ", oob_accuracy, "\n")
+
+# Compare Results
+comparison <- data.frame(
+  Dataset = c("Training", "Testing", "OOB"),
+  Accuracy = c(train_accuracy, test_accuracy, oob_accuracy)
+)
+print(comparison)
 
 ```
 
