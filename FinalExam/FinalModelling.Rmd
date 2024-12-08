@@ -1,0 +1,788 @@
+---
+title: "DATS 6101 - Google playstore apps "
+date: "`r Sys.Date()`"
+author: "Name: Snehitha Tadapaneni, Sai Rachana Kandikattu, Amrutha Jayachandradhara, Wilona Nguyen, Pramod Krishnachari
+"
+editor_options: 
+  markdown: 
+    wrap: 72
+output:
+  html_document:
+    code_folding: hide
+    number_sections: false
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning = F, results = "markdown", message = F)
+```
+
+```{r chunk-label, options}
+# The package "ezids" (EZ Intro to Data Science) includes a lot of the helper functions we developed for the course. 
+# Importing the necessary libraries
+library(ezids)
+library(dplyr)
+library(ggplot2)
+library(DT)
+library(corrplot)
+library(lubridate)
+library(tidyr)
+library(scales)
+library(cluster)
+library(knitr)
+library(kableExtra)
+library(caret)
+library(xgboost)
+library(pROC)
+```
+
+# Introduction
+
+Our research focuses on exploring the features of Size, installs, reviews,rating, Category, content rating, and Price on apps on Google Play Store and using different algorithms to identify the most influential attributes of highly installed apps on Google Play Store.
+
+# Smart Question
+
+“Which are the top 5 app categories, as identified by classification models (logistic regression,SVM, XGBoost, KNN, and random forest), that significantly influenced app success (measured by installs) based on app data from 2010 to 2018, and how accurately can these models predict success trends within this time period??”
+
+
+# Loading the Dataset
+
+Here, we have loaded the dataset 'Google Play Store Apps' stored in csv file using ()
+
+```{r}
+#Loading the Dataset
+data_apps <- data.frame(read.csv("googleplaystore.csv"))
+
+```
+
+#### Description of the App Dataset Columns
+1) App: The name of the application, represented as a character string.
+2) Category: The main category of the app, such as "ART_AND_DESIGN," represented as a character string.
+3) Rating: The average user rating of the app, recorded as a numeric value.
+4) Reviews: The total number of user reviews for the app, shown as a character string.
+5) Size: The size of the application, represented as a character string.
+6) Installs: The approximate number of installations for the app, stored as a character string.
+7) Type: Indicates whether the app is free or paid, represented as a character string.
+8) Price: The price of the app, stored as a character string. Free apps are listed as "0," while paid apps have a dollar amount.
+9) Content.Rating: The target age group for the app, represented as a character string.
+10) Genres: The genre(s) of the app.
+11) Last.Updated: The date of the app's last update, stored as a character string.
+12) Current.Ver: The current version of the app, represented as a character string.
+13) Android.Ver: The minimum Android version required to run the app, stored as a character string.
+
+
+# Summary of dataset after Data Cleaning
+```{r}
+#Dropping columns 
+data_apps <- data_apps[, !(colnames(data_apps) %in% c("Android.Ver", "Current.Ver", "Type", "App", "Genres"))]
+
+##Price----
+
+### Convertion of Price to numerical 
+data_apps$Price <- as.numeric(gsub("\\$", "", data_apps$Price)) #--Remove dollar symbols 
+missing_na <- is.na(data_apps$Price)    
+missing_blank <- data_apps$Price == "" 
+data_apps <- data_apps[!is.na(data_apps$Price) & data_apps$Price != "", ] #-- Remove price is NA or blank
+
+## Size---
+
+#### Replacing Missing values with the mean (Size)
+# Replace "Varies with Device" in the Size column with NA
+data_apps$Size[data_apps$Size == "Varies with device"] <- NA #"Varies with Device" to NA
+data_apps <- data_apps[!grepl("\\+", data_apps$Size), ]
+data_apps$Size <- ifelse(grepl("k", data_apps$Size),
+                          as.numeric(gsub("k", "", data_apps$Size)) *
+0.001,  # Convert "K" to MB
+                          as.numeric(gsub("M", "", data_apps$Size))) # Remove "M" for megabytes
+
+# Calculate and display the mean size for each category in the 'Type' column
+mean_size_by_type <- tapply(data_apps$Size, data_apps$Category,
+mean, na.rm = TRUE)
+
+# Loop through each row and replace NA values in the Size column with the mean size of the corresponding category
+data_apps$Size <- ifelse(is.na(data_apps$Size),  # Check if Size is NA
+  round(mean_size_by_type[data_apps$Category], 1), # Replace with the mean size based on the Category
+  data_apps$Size)  # Keep the original size if it's not NA
+
+
+##Installs---
+
+####Remove the '+' sign, Remove the commas, Convert to numeric
+#clean installations
+clean_installs <- function(Installs) {
+  Installs <- gsub("\\+", "", Installs)  
+  Installs <- gsub(",", "", Installs)    
+  return(as.numeric(Installs))           
+}
+
+data_apps$Installs <- sapply(data_apps$Installs, clean_installs)
+
+nan_rows <- sapply(data_apps[, c("Size", "Installs")], function(x) any(is.nan(x)))
+
+## Rating ---
+data_apps <- data_apps %>%
+  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
+
+# Identify the unique values in the 'Installs' column
+unique_values <- unique(data_apps$Installs)
+
+# Function to convert the installs to numeric
+convert_to_numeric <- function(x) {
+  # Remove non-numeric characters and convert to numeric
+  as.numeric(gsub("[^0-9]", "", x)) * 10^(length(gregexpr(",", x)[[1]]) - 1)
+}
+# Sort unique values based on the custom numeric conversion
+sorted_values <- unique_values[order(sapply(unique_values, convert_to_numeric))]
+
+#Reviews---
+data_apps$Reviews <- as.numeric(data_apps$Reviews)#Replace NA in Ratings with Overall Mean
+data_apps <- data_apps %>%
+  mutate(Rating = ifelse(is.na(Rating), mean(Rating, na.rm = TRUE), Rating))
+
+#Content rating---
+data_apps <- data_apps %>%
+  mutate(
+    Content.Rating = as.factor(Content.Rating)
+  )
+data_apps$Content.Rating <- as.numeric(data_apps$Content.Rating)
+
+```
+
+```{r}
+#### Preprocessing for a model
+#categories----
+category_dummies <- model.matrix(~ Category - 1, data = data_apps)
+colnames(category_dummies) <- gsub("Category", "cat", colnames(category_dummies))
+
+# 3. Add dummy variables to the dataset and remove the original 'Category' column
+data_apps <- cbind(data_apps, category_dummies)
+data_apps$Category <- NULL
+
+# 4. Replace spaces in column names with underscores
+colnames(data_apps) <- gsub(" ", "_", colnames(data_apps))
+
+
+#### Installs----
+# Load necessary libraries
+library(ggplot2)
+
+# Create two categories: Low Installs and High Installs
+# Calculate the median of Installs to split into two categories
+median_installs <- median(data_apps$Installs, na.rm = TRUE)
+
+
+#Reclassify into two categories
+data_apps$Installs_Category <- ifelse(data_apps$Installs <= median_installs, "Low Installs", "High Installs")
+
+
+# Convert 'Installs_Category' to factor with levels "Low Installs" and "High Installs"
+data_apps$Installs_Category <- factor(data_apps$Installs_Category,
+                                         levels = c("Low Installs", "High Installs"),
+                                         labels = c(0, 1))
+
+
+# Check the conversion
+table(data_apps$Installs_Category)
+
+# Create a histogram for the new categories
+ggplot(data_apps, aes(x = Installs_Category)) +
+  geom_bar(stat = "count", fill = "skyblue", color = "black") +
+  labs(title = "Histogram of Installs Category (Low vs High)",
+       x = "Installs Category",
+       y = "Count") +
+  theme_minimal()
+
+
+## Last updated----
+# Convert the 'last_updated' column to Date type
+data_apps$Last.Updated <- as.Date(data_apps$Last.Updated, format = "%B %d, %Y")
+
+# Calculate the difference in days between the maximum date and each date in 'last_updated'
+data_apps$Last.Updated <- as.numeric(difftime(max(data_apps$Last.Updated, na.rm = TRUE), 
+                                       data_apps$Last.Updated, 
+                                       units = "days"))
+```
+
+```{r}
+# Display summary using kable
+summary(data_apps) %>%
+  kable(caption = "Summary of Google Play Store Apps") %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE) %>%
+  scroll_box(width = "100%", height = "400px")
+
+
+```
+
+## Logistic Regression
+```{r}
+
+```
+
+
+## KNN
+```{r}
+
+```
+#------------------------------------------------------------------------- 
+
+## Gradient Boosting
+
+```{r}
+#  Data Splitting -----------------------------------------------------
+
+# Separate features (X) and target (y)
+#X <- data_final %>% select(-Installs, -Success)
+X <- data_apps %>% select(-Installs, -Installs_Category)  # Exclude the target variable
+y <- data_apps$Installs_Category             # Extract the target variable
+
+
+table(y)
+#Split into training and testing sets
+set.seed(123)
+train_index <- createDataPartition(y, p = 0.7, list = FALSE)
+
+# Define X_train, X_test, y_train, y_test
+X_train <- X[train_index, ] %>% mutate(across(everything(), as.numeric))
+X_test <- X[-train_index, ] %>% mutate(across(everything(), as.numeric))
+y_train <- as.numeric(as.character(y[train_index]))  # Convert to numeric
+y_test <- as.numeric(as.character(y[-train_index]))  # Convert to numeric
+```
+
+```{r}
+
+# Convert data to matrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = y_train)
+dtest <- xgb.DMatrix(data = as.matrix(X_test), label = y_test)
+
+data_apps$Installs_Category <- factor(data_apps$Installs_Category, levels = c(0, 1))
+
+```
+
+```{r}
+# 4. Train Gradient Boosting Model --------------------------------------
+
+params <- list(
+  objective = "binary:logistic",  # Binary classification
+  eval_metric = "logloss",
+  max_depth = 6,
+  eta = 0.1,
+  subsample = 0.8,
+  colsample_bytree = 0.8
+)
+
+# Train the model
+set.seed(42)
+xgb_model <- xgb.train(
+  params = params,
+  data = dtrain,
+  nrounds = 100,
+  watchlist = list(train = dtrain, test = dtest),
+  early_stopping_rounds = 10,
+  verbose = 1
+)
+
+
+```
+
+
+```{r}
+# 5. Model Evaluation ---------------------------------------------------
+
+# Make predictions
+y_pred <- predict(xgb_model, dtest)
+y_pred_class <- ifelse(y_pred > 0.5, 1, 0)
+
+# Confusion Matrix
+y_pred_class <- factor(y_pred_class, levels = c(0, 1))
+y_test <- factor(y_test, levels = c(0, 1))
+conf_matrix <- confusionMatrix(y_pred_class, y_test)
+print(conf_matrix)
+
+```
+Confusion Matrix:
+
+```{r confusion-matrix-heatmap, echo=FALSE}
+#Visulization of confusion matrix
+# Code to generate and display the confusion matrix heatmap
+cm_table <- as.data.frame(conf_matrix$table)
+ggplot(cm_table, aes(x = Reference, y = Prediction, fill = Freq)) +
+  geom_tile() +
+  geom_text(aes(label = Freq), color = "white", size = 5) +
+  scale_fill_gradient(low = "blue", high = "red") +
+  labs(title = "Confusion Matrix", x = "Actual", y = "Predicted") +
+  theme_minimal()
+```
+
+
+
+```{r}
+# AUC and ROC Curve
+roc_obj <- roc(as.numeric(as.character(y_test)), y_pred)
+auc_value <- auc(roc_obj)
+cat("AUC:", auc_value, "\n")
+
+# Plot ROC Curve
+plot(roc_obj, main = "ROC Curve", col = "blue", lwd = 2)
+abline(a = 0, b = 1, lty = 2, col = "red")
+
+```
+
+
+```{r}
+# 6. Feature Importance -------------------------------------------------
+
+importance_matrix <- xgb.importance(feature_names = colnames(X_train), model = xgb_model)
+xgb.plot.importance(importance_matrix, top_n = 10, main = "Feature Importance")
+
+# 7. Save Model ---------------------------------------------------------
+
+xgb.save(xgb_model, "xgb_app_success.model")
+
+# Summary
+cat("Gradient Boosting achieved an accuracy of", conf_matrix$overall["Accuracy"],
+    "and AUC of", auc_value, "\n")
+```
+
+## Decision Tree
+
+```{r}
+# Remove the Installs and Installs numerical columns
+data <- data_apps[, !colnames(data_apps) %in% c("Installs")]
+
+# Split the data into training and testing sets
+set.seed(123)  # Ensure reproducibility
+trainIndex <- createDataPartition(data$Installs_Category, p = 0.8, list = FALSE)
+trainData <- data[trainIndex, ]
+testData <- data[-trainIndex, ]
+```
+
+```{r}
+# Load necessary libraries
+library(rpart)
+library(rpart.plot)
+
+# Fit the decision tree model
+set.seed(42)
+tree_model <- rpart(
+  Installs_Category ~ . ,
+  data = trainData,
+  method = "class"
+)
+
+# Plot the decision tree
+rpart.plot(tree_model, main = "Decision Tree for Predicting Installs Category")
+
+```
+
+```{r}
+# Predict on training and test datasets
+train_predictions <- predict(tree_model, trainData, type = "class")
+test_predictions <- predict(tree_model, testData, type = "class")
+
+
+
+# Calculate accuracy
+train_accuracy <- sum(train_predictions == trainData$Installs_Category) / nrow(trainData)
+test_accuracy <- sum(test_predictions == testData$Installs_Category) / nrow(testData)
+
+# Print accuracy results
+cat("Training Accuracy: ", train_accuracy, "\n")
+cat("Test Accuracy: ", test_accuracy, "\n")
+
+
+
+```
+
+
+
+```{r}
+# Check feature importance
+importance <- tree_model$variable.importance
+
+# Print feature importance
+cat("Feature Importance:\n")
+print(importance)
+
+# Visualize feature importance (optional)
+barplot(
+  importance,
+  main = "Feature Importance",
+  xlab = "Features",
+  ylab = "Importance",
+  col = "steelblue",
+  las = 2
+)
+```
+
+
+Why shift to Random Forest?
+High Dimensionality: With 41 variables, random forest handles many features better and can identify the most important ones.
+Feature Importance: Random forest provides a ranking of feature importance, helping us understand which variables influence the Installs_Category.
+Accuracy: Random forest generally has better predictive accuracy for larger and more complex datasets.
+
+## Random Forest
+
+In this analysis, we employ a Random Forest model to predict the number of installs based on the top 5 app categories. The Random Forest algorithm is a robust ensemble learning method that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting.
+
+The analysis will focus on:
+
+Feature Selection: Using the top 5 categories as predictors, which are highly correlated with app performance metrics such as installs, ratings, and reviews.
+Model Objective: Accurately predict the number of installs by capturing the complex and nonlinear relationships between features using a Random Forest model.
+Evaluation Metrics: Assess the model's performance using metrics such as Mean Squared Error (MSE), R-squared, and visualization of feature importance to ensure the model’s predictions are interpretable and actionable.
+
+#### Splitting the data into train and test split
+
+#### Building Random FOrest Classifier
+
+```{r}
+library(randomForest)
+library(caret)
+
+# Train the random forest model
+set.seed(123)
+rf_model <- randomForest(Installs_Category ~ .,
+                         data = trainData,
+                         ntree = 500,       # Number of trees
+                         mtry = 10,  # Number of predictors sampled at each split
+                         importance = TRUE) # Enable importance calculation
+
+# Print the model summary
+print(rf_model)
+```
+#### Plotting the Random Forest Result
+
+```{r}
+plot(rf_model)
+```
+
+#### Testing the accuracy
+
+```{r}
+
+# Predictions on the training set
+train_predictions <- predict(rf_model, trainData)
+
+# Predictions on the testing set
+test_predictions <- predict(rf_model, testData)
+
+
+# Confusion Matrix for Training Data
+ train_cm <- confusionMatrix(train_predictions, trainData$Installs_Category)
+ print(train_cm)
+
+# Confusion Matrix for Testing Data
+test_cm <- confusionMatrix(test_predictions, testData$Installs_Category)
+print(test_cm)
+
+```
+#### PLotting the Training, Testing and error Rate
+
+```{r}
+# Calculate training and testing accuracy
+train_accuracy <- sum(train_predictions == trainData$Installs_Category) / nrow(trainData)
+test_accuracy <- sum(test_predictions == testData$Install_Category) / nrow(testData)
+
+# Prepare data for plotting
+errors <- data.frame(
+  Trees = 1:500,
+  OOB = rf_model$err.rate[, 1],
+  TrainAccuracy = rep(train_accuracy, 500),
+  TestAccuracy = rep(test_accuracy, 500)
+)
+
+# Plot the errors
+plot(errors$Trees, errors$OOB, type = "l", col = "blue", lwd = 2,
+     ylim = c(0, 1), xlab = "Number of Trees", ylab = "Error/Accuracy",
+     main = "Training, Testing, and OOB Error Rates")
+lines(errors$Trees, 1 - errors$TrainAccuracy, col = "green", lwd = 2, lty = 2)  # Training error
+lines(errors$Trees, 1 - errors$TestAccuracy, col = "red", lwd = 2, lty = 2)  # Testing error
+legend("topright", legend = c("OOB Error", "Training Error", "Testing Error"),
+       col = c("blue", "green", "red"), lwd = 2, lty = c(1, 2, 2))
+
+```
+
+#### Feature Importance Values
+
+```{r}
+# Variable importance
+importance(rf_model)
+
+# Plot variable importance
+varImpPlot(rf_model)
+```
+#### Visualization for Feature Importance
+
+
+```{r}
+# Extract importance values
+importance_values <- importance(rf_model)
+importance_df <- data.frame(
+  Feature = rownames(importance_values),
+  MeanDecreaseAccuracy = importance_values[, "MeanDecreaseAccuracy"],
+  MeanDecreaseGini = importance_values[, "MeanDecreaseGini"]
+)
+
+```
+
+```{r}
+# Plot Mean Decrease in Accuracy
+accuracy_plot <- ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseAccuracy), y = MeanDecreaseAccuracy)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Feature Importance (Mean Decrease in Accuracy)",
+    x = "Features",
+    y = "Importance"
+  ) +
+  theme_minimal() +
+  theme(text = element_text(size = 12), axis.text.y = element_text(size = 10))
+
+# Plot the accuracy plot
+print(accuracy_plot)
+
+# Save the plot with larger dimensions
+#ggsave("feature_importance_accuracy_large.png", plot = accuracy_plot, width = 12, height = 10, dpi = 300)
+
+# Plot Mean Decrease in Gini
+gini_plot <- ggplot(importance_df, aes(x = reorder(Feature, MeanDecreaseGini), y = MeanDecreaseGini)) +
+  geom_bar(stat = "identity", fill = "lightgreen") +
+  coord_flip() +
+  labs(
+    title = "Feature Importance (Mean Decrease in Gini)",
+    x = "Features",
+    y = "Importance"
+  ) +
+  theme_minimal() +
+  theme(text = element_text(size = 12), axis.text.y = element_text(size = 10))
+
+# Plot the gini index plot
+print(gini_plot)
+
+# Save the plot with larger dimensions
+#ggsave("feature_importance_gini_large.png", plot = gini_plot, width = 12, height = 10, dpi = 300)
+
+
+```
+
+## SVM
+
+```{r}
+# Convert target variable to a factor
+y <- as.factor(data_apps$Installs_Category)
+
+# Remove unused columns
+X <- data_apps[, !names(data_apps) %in% c('Installs', 'Installs_Category', 'Installs_Num')]
+
+# Split data into training and testing sets
+set.seed(42)
+trainIndex <- createDataPartition(y, p = 0.75, list = FALSE)
+X_train <- X[trainIndex, ]
+X_test <- X[-trainIndex, ]
+y_train <- y[trainIndex]
+y_test <- y[-trainIndex]
+str(X_train)
+```
+
+
+
+### Checking if the boundary is non-linear or linear
+```{r}
+library(ggplot2)
+pca <- prcomp(X_train, center = TRUE, scale. = TRUE)
+pca_data <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2], Class = y_train)
+ggplot(pca_data, aes(x = PC1, y = PC2, color = Class)) +
+  geom_point(size = 3) +
+  labs(title = "PCA: Decision Boundary Visualization")
+```
+
+
+As we can see we cannot decide if the boundary is linear or non-linear hence, lets make two models linear and non-linear SVM to check which one is a better fit.
+
+
+
+
+### Tuning to find the best parameter values for C and Gamma for SVM non-linear
+
+```{r}
+
+
+# Load necessary libraries
+library(e1071)
+library(caret)
+
+# Assuming you have already defined X_train, y_train, X_test, y_test
+
+# Combine the training data into a data frame
+train_data <- as.data.frame(cbind(X_train, y_train))
+
+# Set up k-fold cross-validation
+set.seed(42)
+train_control <- trainControl(method = "cv", number = 5)
+
+# Define the tuning grid for 'C' and 'sigma' (gamma)
+tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100),
+                          sigma = c(0.5, 1))
+
+# Train the SVM model using radial kernel with the tuning grid
+svm_model <- train(y_train ~ ., data = train_data,
+                   method = "svmRadial",
+                   tuneGrid = tune_grid,
+                   trControl = train_control)
+
+# Print the results of the tuning
+print(svm_model)
+
+# Best model parameters
+best_params <- svm_model$bestTune
+cat("Best Parameters:\n")
+print(best_params)
+```
+
+As seen for the training set the best accuracy is achieved when C = 100 and gamma is 0.05
+
+### Tuning to find the best parameter values for C  for SVM linear
+
+```{r}
+
+
+# Load necessary libraries
+library(e1071)
+library(caret)
+
+# Assuming you have already defined X_train, y_train, X_test, y_test
+
+# Combine the training data into a data frame
+train_data <- as.data.frame(cbind(X_train, y_train))
+
+# Set up k-fold cross-validation
+set.seed(42)
+train_control <- trainControl(method = "cv", number = 5)
+
+# Define the tuning grid for 'C' and 'sigma' (gamma)
+tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100))
+
+# Train the SVM model using radial kernel with the tuning grid
+svm_model <- train(y_train ~ ., data = train_data,
+                   method = "svmLinear",
+                   tuneGrid = tune_grid,
+                   trControl = train_control)
+
+# Print the results of the tuning
+print(svm_model)
+
+# Best model parameters
+best_params <- svm_model$bestTune
+cat("Best Parameters:\n")
+print(best_params)
+```
+
+For linear model it could be seen that at C = 100, we attain an accuracy of 92 percent which suggets that the model is linearly seperable. Hence, now lets find the accuracy, ROC, AUC score of the test data.
+
+```{r}
+y_test
+```
+
+
+
+```{r}
+# Load necessary libraries
+library(e1071)
+library(pROC)  # For ROC and AUC
+
+# Assuming you have already defined X_train, y_train, X_test, y_test
+
+# Combine the training data into a data frame
+train_data <- as.data.frame(cbind(X_train, y_train))
+
+# Fit the SVM model with linear kernel
+svm_model <- svm(y_train ~ ., data = train_data, kernel = "linear", cost = 100, decision.values = TRUE)
+
+# Step 1: Make predictions on the test set
+predictions <- predict(svm_model, newdata = as.data.frame(X_test))
+
+# Step 2: Create confusion matrix
+confusion_matrix <- table(Predicted = predictions, Actual = y_test)
+cat("Confusion Matrix:\n")
+print(confusion_matrix)
+
+# Step 3: Calculate accuracy
+accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
+cat("Accuracy:", accuracy, "\n")
+
+# Step 4: Get decision values for ROC curve
+fitted <- attributes(predict(svm_model, newdata = as.data.frame(X_test), decision.values = TRUE))$decision.values
+
+# Step 5: Generate ROC plot for the test set
+roc_curve <- roc(y_test, -fitted)  # Note: Use negative for class labeling
+
+# Plot the ROC curve
+plot(roc_curve, main = "ROC Curve for Test Data")
+# Add AUC to the plot
+auc_value <- auc(roc_curve)
+legend("bottomright", legend = paste("AUC =", round(auc_value, 2)), bty = "n")
+
+
+
+
+```
+
+
+#### Feature importance for the model
+
+```{r}
+# Assuming you have already trained your SVM model (svm_model) using e1071
+
+# Get coefficients from the SVM model
+coefficients <- as.vector(svm_model$coefs) %*% svm_model$SV
+
+# Get the intercept term
+intercept <- svm_model$rho
+
+# Combine coefficients and intercept into a single vector
+all_coefficients <- c(intercept, coefficients)
+
+# Print coefficients
+cat("Coefficients (including intercept):\n")
+print(all_coefficients)
+
+# Check the number of coefficients
+num_coefficients <- length(all_coefficients)
+cat("Number of Coefficients (including intercept):", num_coefficients, "\n")
+
+# Get feature names
+feature_names <- colnames(X_train)
+
+# Create a named vector for coefficients with feature names
+named_coefficients <- setNames(coefficients, feature_names)
+
+# Print named coefficients
+cat("Feature Coefficients:\n")
+print(named_coefficients)
+
+# Sort coefficients by absolute value for feature importance
+sorted_coefficients <- sort(abs(named_coefficients), decreasing = TRUE)
+
+# Print sorted feature importance
+cat("Sorted Feature Importance:\n")
+print(sorted_coefficients)
+
+# Optional: Visualize feature importance
+barplot(
+  sorted_coefficients,
+  main = "Feature Importance from SVM Coefficients",
+  xlab = "Features",
+  ylab = "Absolute Coefficient Value",
+  col = "steelblue",
+  las = 2,
+  cex.names = 0.7  # Adjust name size if necessary
+)
+
+
+```
+
+
