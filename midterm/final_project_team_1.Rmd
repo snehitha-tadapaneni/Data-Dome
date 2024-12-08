@@ -2119,7 +2119,101 @@ So, now our final dataset after preprocessing is named as 'data_updated'. We hav
 
 ## KNN
 ```{r}
+# Load necessary libraries
+library(class)        # For KNN
+library(dplyr)        # Data manipulation
+library(caret)        # Data splitting, pre-processing, and evaluation
+library(ggplot2)      # Data visualization
+library(pROC)         # For ROC and AUC
+library(e1071)        # For tuning the KNN hyperparameters
 
+# Load the dataset (assume 'data_updated' is available)
+# Clean and prepare the data
+data_updated <- data_updated %>%
+  mutate_if(is.character, as.factor) %>%  # Convert character columns to factors
+  mutate_if(is.factor, as.numeric) %>%    # Convert factor columns to numeric for PCA
+  drop_na()  # Drop rows with NA values
+
+# Select numeric variables for PCA
+pca_data <- data_updated[, sapply(data_updated, is.numeric)]
+
+# Scale the data
+pca_scaled <- scale(pca_data)
+
+# Perform PCA
+pca_result <- prcomp(pca_scaled, center = TRUE, scale. = TRUE)
+
+# View the PCA results
+summary(pca_result)
+
+# Scree Plot
+plot(pca_result, type = "l", main = "Scree Plot", col = "blue")
+
+# Extract cumulative variance and choose optimal number of PCs (90% variance)
+explained_variance <- cumsum(pca_result$sdev^2 / sum(pca_result$sdev^2))
+optimal_pcs <- min(which(explained_variance >= 0.9))  # Choose number of PCs to explain 90% of variance
+print(paste("Optimal number of principal components (90% variance):", optimal_pcs))
+
+# PCA-transformed data
+pca_scores <- as.data.frame(pca_result$x[, 1:optimal_pcs])  # Use the top 'optimal_pcs' principal components
+pca_scores$Installs_Category <- data_updated$Installs_Category
+
+# Split PCA-transformed data into train/test sets (75% train, 25% test)
+set.seed(42)
+trainIndex <- createDataPartition(pca_scores$Installs_Category, p = 0.75, list = FALSE)
+X_train <- pca_scores[trainIndex, 1:optimal_pcs]
+X_test <- pca_scores[-trainIndex, 1:optimal_pcs]
+y_train <- pca_scores$Installs_Category[trainIndex]
+y_test <- pca_scores$Installs_Category[-trainIndex]
+
+# Train the KNN model with cross-validation
+set.seed(42)
+knn_tuned <- train(
+  X_train, 
+  y_train, 
+  method = "knn",
+  trControl = trainControl(method = "cv", number = 10),  # 10-fold cross-validation
+  tuneGrid = data.frame(k = seq(1, 20, by = 1))  # Tune for k = 1 to 20
+)
+
+# Best k
+best_k <- knn_tuned$bestTune$k
+print(paste("Optimal k for KNN:", best_k))
+
+# Train KNN with optimal k
+knn_model <- knn(train = X_train, test = X_test, cl = y_train, k = best_k)
+
+# Evaluate the KNN model
+confusion_matrix <- confusionMatrix(as.factor(knn_model), as.factor(y_test))
+print(confusion_matrix)
+
+# Plot Accuracy vs k
+accuracy_results <- data.frame(k = knn_tuned$results$k, Accuracy = knn_tuned$results$Accuracy)
+ggplot(accuracy_results, aes(x = k, y = Accuracy)) +
+  geom_point(color = "blue") +
+  geom_line(color = "blue") +
+  ggtitle("Accuracy vs Number of Neighbors (k)") +
+  xlab("Number of Neighbors (k)") +
+  ylab("Accuracy") +
+  theme_minimal()
+
+# Calculate Precision, Recall, F1-Score
+predicted <- as.factor(knn_model)
+actual <- as.factor(y_test)
+
+precision <- posPredValue(predicted, actual, positive = "High")
+recall <- sensitivity(predicted, actual, positive = "High")
+f1_score <- 2 * ((precision * recall) / (precision + recall))
+print(paste("Precision:", round(precision, 3)))
+print(paste("Recall:", round(recall, 3)))
+print(paste("F1-Score:", round(f1_score, 3)))
+
+# Plot ROC and calculate AUC
+roc_curve <- roc(as.numeric(actual), as.numeric(predicted))
+auc_value <- auc(roc_curve)
+print(paste("AUC:", round(auc_value, 3)))
+
+plot(roc_curve, col = "blue", main = "ROC Curve for KNN Model")
 ```
 #------------------------------------------------------------------------- 
 
