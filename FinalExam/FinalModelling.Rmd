@@ -221,25 +221,13 @@ summary(data_apps) %>%
 
 ## Logistic Regression
 ```{r}
-glm_data <- data_apps
-glm_data <- glm_data[, !colnames(glm_data) %in% c("Installs")]
-col_to_scale <- c('Rating', 'Reviews', 'Size', 'Price', 'Content.Rating', 'Last.Updated')
-glm_data[col_to_scale] <- scale(glm_data[col_to_scale])
-```
-
-
-```{r}
-
-# Split the data into training and testing sets
-set.seed(123)  # Ensure reproducibility
-trainIndex <- createDataPartition(glm_data$Installs_Category, p = 0.8, list = FALSE)
-trainData <- glm_data[trainIndex, ]
-testData <- glm_data[-trainIndex, ]
+data_apps$Installs_Category <- as.factor(data_apps$Installs_Category)
+X <- data_apps[, !names(data_apps) %in% c('Installs')]
 ```
 
 We first start with the basic Logistic model.
 ```{r}
-glm_model <- glm(Installs_Category ~ ., data = trainData, family = binomial)
+glm_model <- glm(Installs_Category ~ ., data = data_apps, family = binomial)
 summary(glm_model)
 ```
 
@@ -294,6 +282,8 @@ test_cm <- confusionMatrix(factor(glm_pred), factor(testData$Installs_Category))
 print(test_cm)
 
 ```
+
+
 ```{r}
 
 
