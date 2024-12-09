@@ -733,15 +733,6 @@ X_test <- X[-trainIndex, ]
 y_train <- y[trainIndex]
 y_test <- y[-trainIndex]
 
-# Normalize data to [0, 1] range using min-max scaling
-preprocess_params <- preProcess(X_train, method = "range")  # Min-Max Normalization
-X_train <- predict(preprocess_params, X_train)
-X_test <- predict(preprocess_params, X_test)
-
-# Check the normalized data
-summary(X_train)
-summary(X_test)
-
 ```
 
 
@@ -1065,6 +1056,6 @@ barplot(
 
 ```
 
-The analysis shows that Reviews, Price, and Rating are the top features influencing the model's performance. Additionally, the leading app categories—Entertainment, Medical, Sports Education, and Finance —suggest that focusing on these areas can enhance the chances of app success.
+The analysis shows that Reviews, Price, and Lastupdated are the top features influencing the model's performance. Additionally, the leading app categories—Finance, Medical, Tools, Events, and News and Mangazines —suggest that focusing on these areas can enhance the chances of app success.
 
 
