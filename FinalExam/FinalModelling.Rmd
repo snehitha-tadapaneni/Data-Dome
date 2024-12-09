@@ -43,11 +43,6 @@ library(e1071)
 library(rpart)
 library(rpart.plot)
 library(randomForest)
-library(viridis)
-library(tidyverse)
-library(recipes)
-library(PRROC)
-library(fmsb)
 ```
 
 # Introduction
@@ -229,350 +224,158 @@ summary(data_apps) %>%
 
 ```
 
+
 ## KNN 
 
-### Model Training, Optimal k and Model Performance Evaluation
+### Splitting the Data into Train and Test
 ```{r}
-
-# 1. Data Preparation for KNN
-#---------------------------
-# Select features
+# Split the data into features and target
 features <- c("Rating", "Reviews", "Size", "Price", "Content.Rating", "Last.Updated",
               grep("^cat", names(data_apps), value = TRUE))
 X <- data_apps[, features]
+y <- data_apps$Installs_Category
 
-# Convert target to factor with valid R variable names
-y <- factor(data_apps$Installs_Category, 
-            levels = c(0, 1),
-            labels = c("low", "high"))  # Using 'low' and 'high' instead of 0/1
-
-# Convert Last.Updated to proper date format
-X$Last.Updated <- as.Date(X$Last.Updated)
-
-# Split data with stratification
+# Split the data into training and testing sets
 set.seed(123)
-train_index <- createDataPartition(y, p = 0.7, list = FALSE, times = 1)
+train_index <- createDataPartition(y, p = 0.7, list = FALSE)
 X_train <- X[train_index, ]
 X_test <- X[-train_index, ]
 y_train <- y[train_index]
 y_test <- y[-train_index]
 
-# Create preprocessing recipe
-recipe_obj <- recipe(~ ., data = X_train) %>%
-  # Extract date features after ensuring proper date format
-  step_mutate(
-    Year = year(Last.Updated),
-    Month = month(Last.Updated),
-    DayOfWeek = wday(Last.Updated)
-  ) %>%
-  # Remove original date column
-  step_rm(Last.Updated) %>%
-  # Log transform skewed features
-  step_mutate(Reviews = log1p(Reviews)) %>%
-  # Standardize numeric features
-  step_normalize(all_numeric_predictors()) %>%
-  # One-hot encode categorical variables
-  step_dummy(all_nominal_predictors()) %>%
-  # Remove highly correlated features
-  step_corr(threshold = 0.9) %>%
-  # Remove near-zero variance features
-  step_nzv(freq_cut = 95/5)
-
-# Prepare data using the recipe
-prep_obj <- prep(recipe_obj, training = X_train)
-X_train_processed <- bake(prep_obj, new_data = X_train)
-X_test_processed <- bake(prep_obj, new_data = X_test)
-
-# 2. Hyperparameter Tuning
-#------------------------
-# Define tuning grid
-tuning_grid <- expand.grid(
-  k = seq(1, 20, by = 2)
-)
-
-# Set up cross-validation
-ctrl <- trainControl(
-  method = "repeatedcv",
-  number = 10,
-  repeats = 3,
-  classProbs = TRUE,
-  summaryFunction = twoClassSummary,
-  savePredictions = TRUE
-)
-
-# Train model with tuning
-set.seed(123)
-knn_tuned <- train(
-  x = X_train_processed,
-  y = y_train,
-  method = "knn",
-  tuneGrid = tuning_grid,
-  trControl = ctrl,
-  metric = "ROC",
-  preProcess = NULL  # Already preprocessed
-)
-
-# Get optimal k
-optimal_k <- knn_tuned$bestTune$k
-
-# 3. Final Model Training
-#-----------------------
-final_model <- knn3(X_train_processed, y_train, k = optimal_k)
-
-# Get predictions
-pred_prob <- predict(final_model, X_test_processed, type = "prob")
-pred_class <- factor(ifelse(pred_prob[,"high"] > 0.5, "high", "low"), 
-                    levels = c("low", "high"))
-
-# 4. Performance Evaluation
-#------------------------
-# ROC and AUC
-roc_obj <- pROC::roc(as.numeric(y_test == "high"), pred_prob[,"high"])
-auc_score <- as.numeric(pROC::auc(roc_obj))
-
-# Confusion Matrix with optimal threshold
-optimal_threshold <- coords(roc_obj, "best", ret = "threshold")$threshold
-pred_class_optimal <- factor(ifelse(pred_prob[,"high"] > optimal_threshold, "high", "low"), 
-                           levels = c("low", "high"))
-conf_matrix <- confusionMatrix(pred_class_optimal, y_test)
-
-# 5. Enhanced Visualizations
-#-------------------------
-# ROC Curve with confidence intervals
-p1 <- ggroc(roc_obj) +
-  geom_abline(linetype = "dashed") +
-  annotate("text", x = 0.75, y = 0.25,
-           label = sprintf("AUC = %.3f", auc_score)) +
-  labs(title = "ROC Curve with Optimal Threshold",
-       subtitle = sprintf("Optimal Threshold = %.2f", optimal_threshold)) +
-  theme_minimal()
-
-# Confusion Matrix Heatmap
-conf_data <- as.data.frame(conf_matrix$table)
-conf_data$Percentage <- conf_data$Freq / sum(conf_data$Freq) * 100
-
-p2 <- ggplot(conf_data, aes(x = Reference, y = Prediction)) +
-  geom_tile(aes(fill = Percentage), color = "white") +
-  geom_text(aes(label = sprintf("%.1f%%\n(n=%d)", Percentage, Freq)), size = 4) +
-  scale_fill_viridis() +
-  labs(title = "Confusion Matrix",
-       subtitle = sprintf("Accuracy: %.1f%% | Optimal k = %d", 
-                         conf_matrix$overall["Accuracy"] * 100,
-                         optimal_k)) +
-  theme_minimal()
-
-# Model Performance vs k
-p3 <- ggplot(knn_tuned$results, aes(x = k)) +
-  geom_line(aes(y = ROC, color = "ROC")) +
-  geom_point(aes(y = ROC)) +
-  geom_vline(xintercept = optimal_k, linetype = "dashed", color = "red") +
-  labs(title = "Model Performance vs k",
-       subtitle = paste("Optimal k =", optimal_k),
-       x = "Number of Neighbors (k)",
-       y = "ROC Score") +
-  theme_minimal()
-
-# Print results
-print(p1)
-print(p2)
-print(p3)
-
-cat("\nModel Performance Metrics:\n")
-cat("------------------------\n")
-print(conf_matrix)
-cat("\nAUC Score:", round(auc_score, 3))
-cat("\nOptimal k:", optimal_k)
-cat("\nOptimal Threshold:", round(optimal_threshold, 3))
-
-
+# Scale the features
+preprocess_params <- preProcess(X_train, method = c("center", "scale"))
+X_train_scaled <- predict(preprocess_params, X_train)
+X_test_scaled <- predict(preprocess_params, X_test)
 ```
 
-The code implements a K-Nearest Neighbors (KNN) classification model to predict app installation categories (high or low) based on several features like ratings, reviews, size, and more. It preprocesses the data through standardization, log transformations, date feature extraction, and encoding categorical variables. Hyperparameter tuning was performed to find the optimal number of neighbors (k = 11) using cross-validation, maximizing the ROC-AUC metric (0.962). The final model achieves an accuracy of 89.6%, with a balanced sensitivity (91.4%) and specificity (87.4%). The confusion matrix reveals some misclassification but demonstrates overall reliable performance. Optimal decision thresholds and visualization methods (ROC curve and confusion matrix) validate the model’s effectiveness.
 
-
-### KNN Feature Importance and Visualizations for Model Metrics
+### Find optimal K using Cross validation
 ```{r}
 
-# Calculating correlation with target
-calc_correlation_importance <- function(X, y) {
-  # Converting categorical target to numeric
-  y_num <- as.numeric(y == "high")
-  
-  # Correlation for each feature
-  correlations <- sapply(X, function(x) {
-    if(is.numeric(x)) {
-      abs(cor(x, y_num, use = "complete.obs"))
-    } else {
-      0  # For non-numeric columns
-    }
-  })
-  
-  # Importance dataframe
-  importance_df <- data.frame(
-    feature = names(correlations),
-    importance = abs(correlations)
+# Train KNN model with cross-validation to find optimal k
+k_values <- seq(1, 20, by = 2)
+cv_results <- lapply(k_values, function(k) {
+  train_control <- trainControl(method = "cv", number = 5)
+  knn_model <- train(x = X_train_scaled, 
+                    y = y_train,
+                    method = "knn",
+                    tuneGrid = data.frame(k = k),
+                    trControl = train_control)
+  return(knn_model$results$Accuracy)
+})
+
+# Plot k values vs accuracy
+k_accuracy_df <- data.frame(k = k_values, accuracy = unlist(cv_results))
+ggplot(k_accuracy_df, aes(x = k, y = accuracy)) +
+  geom_line(color = "blue") +
+  geom_point(color = "red") +
+  labs(title = "K Values vs Cross-Validation Accuracy",
+       x = "Number of Neighbors (k)",
+       y = "Accuracy") +
+  theme_minimal()
+```
+
+As we can see, the most optimal k is found by using CV and accuracy as metric, highest accuracy of about 78% is achieved.
+
+
+### Evaluation metrics for test data using optimal k 
+```{r}
+
+optimal_k <- k_values[which.max(cv_results)]
+final_knn <- knn3(X_train_scaled, y_train, k = optimal_k)
+
+# Make predictions
+y_pred_prob <- predict(final_knn, X_test_scaled, type = "prob")
+y_pred <- factor(ifelse(y_pred_prob[,2] > 0.5, 1, 0), levels = c(0, 1))
+
+
+y_test_numeric <- as.numeric(as.character(y_test))
+
+# Calculate performance metrics
+conf_matrix <- confusionMatrix(y_pred, y_test)
+roc_curve <- roc(as.numeric(y_test_numeric), y_pred_prob[,2])
+auc_score <- auc(roc_curve)
+
+# Create performance summary table
+performance_summary <- data.frame(
+  Metric = c("Accuracy", "Precision", "Recall", "F1 Score", "AUC"),
+  Value = c(
+    conf_matrix$overall["Accuracy"],
+    conf_matrix$byClass["Precision"],
+    conf_matrix$byClass["Recall"],
+    conf_matrix$byClass["F1"],
+    auc_score
   )
-  
-  # Sort by importance
-  importance_df <- importance_df[order(-importance_df$importance), ]
-  
-  # Categorize importance
-  importance_df$category <- ifelse(importance_df$importance >= median(importance_df$importance),
-                                 "High", "Medium")
-  
-  return(importance_df)
+)
+# Display performance summary using kable
+kable(performance_summary, caption = "KNN Model Performance Summary") %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
+
+#Confusion matrix heat map
+conf_matrix_df <- as.data.frame(conf_matrix$table)
+conf_matrix_df$Percentage <- conf_matrix_df$Freq / sum(conf_matrix_df$Freq) * 100
+
+ggplot(conf_matrix_df, aes(x = Prediction, y = Reference)) +
+  geom_tile(aes(fill = Percentage), color = "white") +
+  geom_text(aes(label = sprintf("%.1f%%\n(n=%d)", Percentage, Freq)), 
+            size = 4, color = "black") +
+  scale_fill_gradient2(low = "white", high = "#4A90E2", 
+                      midpoint = min(conf_matrix_df$Percentage)) +
+  labs(title = "Confusion Matrix Heatmap",
+       subtitle = sprintf("Overall Accuracy: %.1f%%", conf_matrix$overall["Accuracy"] * 100)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.text = element_text(size = 10),
+    legend.title = element_text(size = 10)
+  )
+
+# Plot ROC curve
+plot(roc_curve, main = "ROC Curve for KNN Model",
+     col = "blue", lwd = 2)
+abline(a = 0, b = 1, lty = 2, col = "gray")
+legend("bottomright", legend = sprintf("AUC = %.3f", auc_score))
+```
+The AUC for the model is 0.83 which is good. But the performance metrics such as accuracy, precision are anticipated to have an above 80% score.
+
+
+# Feature importance
+```{r}
+calc_importance <- function(feature) {
+  X_test_permuted <- X_test_scaled
+  X_test_permuted[,feature] <- sample(X_test_scaled[,feature])
+  pred_permuted <- predict(final_knn, X_test_permuted, type = "prob")
+  roc_permuted <- roc(as.numeric(y_test), pred_permuted[,2])
+  return(auc_score - auc(roc_permuted))
 }
 
-# Calculate correlation-based importance
-corr_importance <- calc_correlation_importance(X_train_processed, y_train)
+importance_scores <- sapply(features, calc_importance)
+importance_df <- data.frame(
+  Feature = features,
+  Importance = importance_scores
+)
+importance_df <- importance_df[order(-importance_df$Importance),]
 
-# Create correlation-based feature importance plot
-p4 <- ggplot(head(corr_importance, 15), 
-       aes(x = reorder(feature, importance), 
-           y = importance,
-           fill = category)) +
-  geom_bar(stat = "identity") +
+# Plot feature importance
+ggplot(importance_df[1:39,], aes(x = reorder(Feature, Importance), y = Importance)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
   coord_flip() +
-  scale_fill_manual(values = c("High" = "#4682B4", "Medium" = "#87CEEB")) +
-  labs(title = "Top 15 Feature Importance Analysis",
-       subtitle = "Based on Absolute Correlation with Target",
+  labs(title = "Feature Importance (KNN Model)",
        x = "Feature",
        y = "Importance Score") +
-  theme_minimal() +
-  theme(legend.title = element_text(size = 10),
-        legend.position = "top")
-
-# Print top 15 most important features based on correlation
-cat("\nTop 15 Most Important Features (Correlation-based):\n")
-cat("-------------------------------------------\n")
-print(head(corr_importance, 15))
-
-# Calculate precision-recall curve
-pr_obj <- pr.curve(scores.class0 = pred_prob[,"high"], 
-                  weights.class0 = as.numeric(y_test == "high"),
-                  curve = TRUE)
-
-# Plot precision-recall curve using ggplot2
-pr_data <- data.frame(
-  recall = pr_obj$curve[,1],
-  precision = pr_obj$curve[,2]
-)
-
-p5 <- ggplot(pr_data, aes(x = recall, y = precision)) +
-  geom_line() +
-  geom_area(alpha = 0.2) +
-  labs(title = "Precision-Recall Curve",
-       subtitle = sprintf("Average Precision = %.3f", pr_obj$auc.integral)) +
   theme_minimal()
 
-# Probability distributions
-prob_dist_data <- data.frame(
-  probability = pred_prob[,"high"],
-  actual_class = y_test
-)
-
-p6 <- ggplot(prob_dist_data, aes(x = probability, fill = actual_class)) +
-  geom_density(alpha = 0.5) +
-  geom_vline(xintercept = optimal_threshold, linetype = "dashed", color = "red") +
-  labs(title = "Prediction Probability Distribution",
-       subtitle = "By Actual Class with Optimal Threshold",
-       x = "Predicted Probability (High Class)",
-       y = "Density") +
-  theme_minimal()
-
-# Precision and Recall metrics
-precision <- conf_matrix$byClass["Pos Pred Value"]
-recall <- conf_matrix$byClass["Sensitivity"]
-f1_score <- 2 * (precision * recall) / (precision + recall)
-
-additional_metrics <- data.frame(
-  Metric = c("F1 Score", 
-             "Balanced Accuracy",
-             "Precision",
-             "Recall",
-             "ROC AUC",
-             "Log Loss"),
-  Value = c(
-    # F1 Score
-    f1_score,
-    # Balanced Accuracy
-    conf_matrix$byClass["Balanced Accuracy"],
-    # Precision
-    precision,
-    # Recall
-    recall,
-    # ROC AUC
-    auc_score,
-    # Log Loss
-    mean(-log(ifelse(y_test == "high",
-                     pred_prob[,"high"],
-                     1 - pred_prob[,"high"])))
-  )
-)
-
-# Printing plots
-print(p4)
-print(p5)
-print(p6)
-
-cat("\nAdditional Performance Metrics:\n")
-cat("-----------------------------\n")
-print(additional_metrics, row.names = FALSE)
 
 
-# Prepare data for radar plot
-metrics_radar <- data.frame(
-  Accuracy = conf_matrix$overall["Accuracy"],
-  AUC = auc_score,
-  F1 = 2 * (precision * recall) / (precision + recall),
-  Precision = precision,
-  Recall = recall
-)
 
-# Add max and min rows required for radar plot
-metrics_radar <- rbind(rep(1, ncol(metrics_radar)),  # Max values
-                      rep(0, ncol(metrics_radar)),   # Min values
-                      metrics_radar)
 
-# Create radar plot
-par(mar = c(1, 1, 4, 1))  # Adjust margins
-radar_plot <- radarchart(metrics_radar,
-                        axistype = 1,
-                        pcol = "royalblue",
-                        pfcol = rgb(0.4, 0.6, 0.9, 0.3),
-                        plwd = 2,
-                        cglcol = "grey",
-                        cglty = 1,
-                        cglwd = 0.8,
-                        title = "Model Performance Metrics Overview")
-
-# Create prediction confidence distribution plot
-# Calculate confidence scores (max probability for each prediction)
-confidence_scores <- apply(pred_prob, 1, max)
-
-# Create confidence distribution plot using ggplot2
-confidence_plot <- ggplot() +
-  geom_density(aes(x = confidence_scores), color = "darkblue") +
-  geom_histogram(aes(x = confidence_scores, y = ..density..), 
-                bins = 30, 
-                fill = "lightblue", 
-                alpha = 0.5) +
-  labs(title = "Distribution of Prediction Confidence",
-       subtitle = "Higher values indicate more confident predictions",
-       x = "Confidence Score",
-       y = "Density") +
-  theme_minimal() +
-  xlim(0.5, 1.0) +  # Focus on the meaningful range
-  theme(plot.title = element_text(hjust = 0.5),
-        plot.subtitle = element_text(hjust = 0.5))
-
-# Display plots
-print(confidence_plot)
 
 ```
-The code performs feature importance analysis and evaluates the KNN model’s performance using additional metrics and visualizations. The top features influencing the target variable (`Installs_Category`) include `Reviews`, `Month`, `Size`, `Year`, and category indicators such as `catGAME` and `catMEDICAL`. These features demonstrate strong correlations with the target, with `Reviews` being the most impactful.
 
-Performance metrics such as an F1 Score (0.905), Precision (0.896), Recall (0.914), and AUC (0.962) indicate the model’s strong predictive capability. Visualizations like the precision-recall curve and radar chart highlight balanced performance, while the confidence distribution plot demonstrates reliable predictions with most probabilities near 1. The optimal threshold for classification further enhances decision-making accuracy.
+The top 5 features contributing to the model are Size, Rating, Last updated, Content Rating and Reviews.
+
 
 #------------------------------------------------------------------------- 
 
