@@ -221,8 +221,137 @@ summary(data_apps) %>%
 
 ## Logistic Regression
 ```{r}
+glm_data <- data_apps
+glm_data <- glm_data[, !colnames(glm_data) %in% c("Installs")]
+col_to_scale <- c('Rating', 'Reviews', 'Size', 'Price', 'Content.Rating', 'Last.Updated')
+glm_data[col_to_scale] <- scale(glm_data[col_to_scale])
+```
+
+
+```{r}
+
+# Split the data into training and testing sets
+set.seed(123)  # Ensure reproducibility
+trainIndex <- createDataPartition(glm_data$Installs_Category, p = 0.8, list = FALSE)
+trainData <- glm_data[trainIndex, ]
+testData <- glm_data[-trainIndex, ]
+```
+
+We first start with the basic Logistic model.
+```{r}
+glm_model <- glm(Installs_Category ~ ., data = trainData, family = binomial)
+summary(glm_model)
+```
+
+#### Stepwise Selection for GLM
+Next, the stepwise selection is proceeded based on the logistic model above. It can be seen that the model below has AIC value of 2258.3, indicating the below model performs better than the above (which has AIC of 2290). 
+
+```{r}
+stepwise_model <- stats::step(glm_model, direction = "both", trace = 0)
+
+summary(stepwise_model)
+```
+
+```{r}
+glm_varImp <- varImp(stepwise_model, scale = FALSE)
+print(glm_varImp)
 
 ```
+
+```{r}
+#install.packages('vip')
+library(vip)
+
+
+# Plot the top 10 important features with the custom color
+vip_plot<-vip(stepwise_model, num_features = 10, bar = TRUE) 
+
+vip_plot +
+  # Set the custom color for bars
+  geom_bar(stat = "identity", fill = "#365b6d")  +
+  # Reversing the order of features for better visual flow
+  coord_flip() +
+  # Improving labels and text size
+  theme_minimal() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold"),
+    legend.position = "none"  # Hides the legend if not needed
+  ) +
+  ggtitle("Top 10 Important Features - GLM Model")
+
+
+```
+
+```{r}
+glm_probs <- predict(stepwise_model, testData, type = "response")
+
+glm_pred <- ifelse(glm_probs > 0.5, 1, 0)
+
+# Generate confusion matrix
+test_cm <- confusionMatrix(factor(glm_pred), factor(testData$Installs_Category))
+print(test_cm)
+
+```
+```{r}
+
+
+# Extract confusion matrix table
+cm_table <- as.table(test_cm)
+
+# Convert the table to a data frame for ggplot
+cm_df <- as.data.frame(cm_table)
+
+cm_df <- as.data.frame(test_cm$table)
+cm_df$Percentage <- cm_df$Freq / sum(cm_df$Freq) * 100
+
+ggplot(cm_df, aes(x = Prediction, y = Reference)) +
+  geom_tile(aes(fill = Percentage), color = "white") +
+  geom_text(aes(label = sprintf("%.1f%%\n(n=%d)", Percentage, Freq)), 
+            size = 4, color = "black") +
+  scale_fill_gradient2(low = "white", high = "#6c9286", 
+                      midpoint = min(cm_df$Percentage)) +
+  labs(title = "Confusion Matrix Heatmap",
+       subtitle = sprintf("Overall Accuracy: %.1f%%", test_cm$overall["Accuracy"] * 100)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.text = element_text(size = 10),
+    legend.title = element_text(size = 10)
+  )
+```
+
+```{r}
+precision <- test_cm$byClass["Pos Pred Value"]  # Precision
+recall <- test_cm$byClass["Sensitivity"]        # Recall
+f1_score <- test_cm$byClass["F1"]               # F1 Score
+
+cat("Precision: ", precision, "\n")
+cat("Recall: ", recall, "\n")
+cat("F1 Score: ", f1_score, "\n")
+```
+
+```{r}
+
+
+# Predict probabilities
+glm_probs <- predict(stepwise_model, testData, type = "response")
+
+# Generate ROC curve
+roc_curve <- roc(testData$Installs_Category, glm_probs)
+
+
+# Plot ROC curve
+plot(roc_curve, main = "ROC Curve")
+
+# AUC (Area Under the Curve)
+auc_value <- auc(roc_curve)
+cat("AUC: ", auc_value, "\n")
+```
+
+
 
 
 ## KNN 
