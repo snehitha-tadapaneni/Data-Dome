@@ -600,8 +600,9 @@ print(gini_plot)
 
 ## Gradient Boosting
 
+####  Data Splitting 
 ```{r}
-#  Data Splitting -----------------------------------------------------
+
 
 # Separate features (X) and target (y)
 #X <- data_final %>% select(-Installs, -Success)
@@ -631,8 +632,9 @@ data_apps$Installs_Category <- factor(data_apps$Installs_Category, levels = c(0,
 
 ```
 
+#### Train Gradient Boosting Model
 ```{r}
-# 4. Train Gradient Boosting Model --------------------------------------
+# 4.  --------------------------------------
 
 params <- list(
   objective = "binary:logistic",  # Binary classification
@@ -657,9 +659,10 @@ xgb_model <- xgb.train(
 
 ```
 
+#### Model Evaluation 
 
 ```{r}
-# 5. Model Evaluation ---------------------------------------------------
+# 
 
 # Make predictions
 y_pred <- predict(xgb_model, dtest)
@@ -672,7 +675,7 @@ conf_matrix <- confusionMatrix(y_pred_class, y_test)
 print(conf_matrix)
 
 ```
-Confusion Matrix:
+
 
 ```{r confusion-matrix-heatmap, echo=FALSE}
 #Visulization of confusion matrix
@@ -686,6 +689,8 @@ ggplot(cm_table, aes(x = Reference, y = Prediction, fill = Freq)) +
   theme_minimal()
 ```
 
+Confusion Matrix:The model struggles significantly with distinguishing between "Low Installs" and "High Installs," especially misclassifying many "Low Installs" as "High Installs" (1414 cases).
+Precision for "High Installs" (proportion of correct "High Installs" predictions) and recall for "Low Installs" (proportion of correctly identified "Low Installs") are low.
 
 
 ```{r}
@@ -700,9 +705,11 @@ abline(a = 0, b = 1, lty = 2, col = "red")
 
 ```
 
+The ROC curve illustrates the model's performance by plotting Sensitivity (True Positive Rate) against 1 - Specificity (False Positive Rate) across thresholds. The closer the curve approaches the top-left corner, the better the model distinguishes between "Low Installs" and "High Installs." A high AUC value indicates strong classification performance.
+
+#### Feature Importance 
 
 ```{r}
-# 6. Feature Importance -------------------------------------------------
 
 importance_matrix <- xgb.importance(feature_names = colnames(X_train), model = xgb_model)
 xgb.plot.importance(importance_matrix, top_n = 10, main = "Feature Importance")
@@ -716,6 +723,7 @@ cat("Gradient Boosting achieved an accuracy of", conf_matrix$overall["Accuracy"]
     "and AUC of", auc_value, "\n")
 ```
 
+"Reviews" has the highest influence, followed by "Rating" and "Last.Updated." Features like "Price" and "Size" also contribute, albeit minimally. Other categorical variables, such as "catFAMILY" and "catMEDICAL," have negligible impact on the model's predictions.
 
 ## SVM
 
@@ -737,7 +745,7 @@ y_test <- y[-trainIndex]
 
 
 
-### Checking if the boundary is non-linear or linear
+#### Checking if the boundary is non-linear or linear
 ```{r}
 library(plotly)
 
@@ -783,7 +791,7 @@ As we can see we cannot decide if the boundary is linear or non-linear hence, le
 
 
 
-### Tuning to find the best parameter values for C and Gamma for SVM non-linear
+#### Tuning to find the best parameter values for C and Gamma for SVM non-linear
 
 ```{r}
 
@@ -822,7 +830,7 @@ print(best_params)
 
 As seen for the training set the best accuracy is achieved when C = 100 and gamma is 0.5
 
-### Tuning to find the best parameter values for C  for SVM linear
+#### Tuning to find the best parameter values for C  for SVM linear
 
 ```{r}
 
@@ -861,7 +869,7 @@ print(best_params)
 For linear model it could be seen that at C = 100, we attain an accuracy of 94 percent which suggests that its better to assume that the y was linearly seperable. 
 Hence, now lets find the accuracy, ROC, AUC score of the test data.
 
-### Bias variance MSE caluclation
+#### Bias variance MSE caluclation
 
 ```{r}
 # Load necessary libraries
@@ -945,7 +953,7 @@ Low Bias and Variance: The variance seems to be little higher which is expected 
 Hence, better to select C = 1000 for the SVM model to achieve an optimal balance between bias, variance, and MSE.
 
 
-### Model Evalution for Test Data
+#### Model Evalution for Test Data
 
 ```{r}
 # Load necessary libraries
@@ -1003,7 +1011,7 @@ The model achieved an impressive accuracy of 94% and a high AUC of 0.99, indicat
 
 
 
-### Feature importance for the model
+#### Feature importance for the model
 
 ```{r}
 # Assuming you have already trained your SVM model (svm_model) using e1071
