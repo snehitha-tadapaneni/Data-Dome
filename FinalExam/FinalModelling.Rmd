@@ -222,7 +222,7 @@ summary(data_apps) %>%
 ## Logistic Regression
 ```{r}
 data_apps$Installs_Category <- as.factor(data_apps$Installs_Category)
-X <- data_apps[, !names(data_apps) %in% c('Installs')]
+data_apps <- data_apps[, !names(data_apps) %in% c('Installs')]
 ```
 
 We first start with the basic Logistic model.
@@ -232,7 +232,7 @@ summary(glm_model)
 ```
 
 #### Stepwise Selection for GLM
-Next, the stepwise selection is proceeded based on the logistic model above. It can be seen that the model below has AIC value of 2258.3, indicating the below model performs better than the above (which has AIC of 2290). 
+Next, the stepwise selection is proceeded based on the logistic model above. It can be seen that the model below has AIC value of 2850, indicating the below model performs better than the above (which has AIC of 2881). 
 
 ```{r}
 stepwise_model <- stats::step(glm_model, direction = "both", trace = 0)
