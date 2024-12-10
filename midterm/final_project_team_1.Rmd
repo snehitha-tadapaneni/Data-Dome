@@ -2338,6 +2338,33 @@ rf_model <- randomForest(Installs_Category ~ .,
 # Print the model summary
 print(rf_model)
 ```
+```{r}
+library(randomForest)
+library(caret)
+
+# Generate predictions on test data
+rf_predictions <- predict(rf_model, newdata = testData)
+
+# Create a confusion matrix
+conf_matrix <- confusionMatrix(rf_predictions, testData$Installs_Category)
+
+# Print the confusion matrix
+print(conf_matrix)
+
+# Extract metrics
+accuracy <- conf_matrix$overall['Accuracy']
+precision <- conf_matrix$byClass['Precision']  # Or Positive Predictive Value
+recall <- conf_matrix$byClass['Recall']        # Or Sensitivity
+f1_score <- 2 * (precision * recall) / (precision + recall)
+
+# Display the metrics
+cat("Accuracy:", accuracy, "\n")
+cat("Precision:", precision, "\n")
+cat("Recall:", recall, "\n")
+cat("F1 Score:", f1_score, "\n")
+
+```
+
 #### Plotting the Random Forest Result
 
 ```{r}
