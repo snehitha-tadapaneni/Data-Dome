@@ -462,8 +462,7 @@ ggplot(k_accuracy_df, aes(x = k, y = accuracy)) +
   theme_minimal()
 ```
 
-As we can see, the most optimal k is found by using CV and accuracy as
-metric, highest accuracy of about 78% is achieved.
+As we can see, the most optimal k is found by using CV and accuracy as metric, highest accuracy of about 78% is achieved. This code trains a K-Nearest Neighbors (KNN) model with cross-validation to determine the optimal value of `k` (number of neighbors). It evaluates different `k` values, ranging from 1 to 20 with a step of 2, using 5-fold cross-validation for each value. The accuracy for each `k` is stored, creating a dataset of `k` values and their corresponding accuracies. Finally, a line plot is generated to visualize the relationship between `k` and cross-validation accuracy, helping to identify the optimal `k` that maximizes accuracy. This visualization aids in selecting the most effective model configuration.
 
 ### Evaluation metrics for test data using optimal k
 
