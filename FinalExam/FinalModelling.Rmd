@@ -432,6 +432,8 @@ preprocess_params <- preProcess(X_train, method = c("center", "scale"))
 X_train_scaled <- predict(preprocess_params, X_train)
 X_test_scaled <- predict(preprocess_params, X_test)
 ```
+This code begins by selecting relevant features for prediction, including numerical attributes like `Rating` and `Reviews` and categorical features identified by a specific naming pattern. It then splits the dataset into training (70%) and testing (30%) subsets, ensuring the distribution of the target variable remains consistent across both sets. Next, it scales the features using centering and standardization techniques to ensure that numerical variables are normalized with a mean of 0 and a standard deviation of 1, which is critical for models sensitive to feature scales. The scaling parameters are computed on the training data and then consistently applied to both training and testing datasets, preparing the data for accurate and reliable machine learning model training and evaluation.
+
 
 ### Find optimal K using Cross validation
 
