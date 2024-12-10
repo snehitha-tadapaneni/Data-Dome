@@ -568,7 +568,11 @@ updated, Content Rating and Reviews.
 The KNN model shows strong performance, effectively predicting app 
 installation categories based on key features like user engagement and 
 app characteristics. Features such as reviews, app size, and category 
-indicators play a significant role in influencing predictions.
+indicators play a significant role in influencing predictions. The model's 
+balanced precision and recall indicate reliable classification, and 
+visualizations confirm the model's ability to make confident predictions
+with minimal misclassification. Overall, it is a robust solution for 
+understanding and categorizing app installation trends.
 
 #-------------------------------------------------------------------------
 
