@@ -47,13 +47,34 @@ library(randomForest)
 
 # Introduction
 
-Our research focuses on exploring the featk
+Our research focuses on performing Exploratory Data Analysis (EDA) on
+Google Play Store apps to uncover patterns, trends, and insights
+regarding app characteristics, user behavior, and installation patterns.
+We are trying to see how app popularity, defined as the number of
+installs with high reviews and ratings, is impacted by categories, last
+updated, app sizes, version, and other factors.
+
+# SMART question
 
 “Which are the top 5 app categories, as identified by classification
 models (logistic regression,SVM, XGBoost, KNN, and random forest), that
 significantly influenced app success (measured by installs) based on app
 data from 2010 to 2018, and how accurately can these models predict
 success trends within this time period?”
+
+“Our research focuses on performing Modelling on Google Play Store apps to uncover patterns, trends, and insights regarding app characteristics, user behavior, and installation patterns. We are trying to see how app popularity, defined as the number of installs, is impacted by the top five categories, last updated, app sizes, version, and other factors.”
+
+*Specific*: The question focuses on identifying how app popularity (defined by the number of installs) is influenced by well-defined variables, including the top five app categories, last update date, app size, version, and additional characteristics such as content rating, pricing model, and user reviews. It also aims to uncover specific patterns and trends in user behavior and installation patterns.
+
+*Measurable*: The impact of each variable (categories, last update, size, version) on app popularity is quantifiable using metrics such as the number of installs, user reviews, ratings, app size in MB, frequency of updates, and category-specific rankings. This ensures that results can be expressed numerically or statistically.
+
+*Achievable*: Given the availability of historical data from the Google Play Store (e.g., datasets spanning years and including app attributes), the analysis is feasible using data analysis techniques, statistical modeling, and machine learning. Open-source libraries and tools can efficiently handle the data preprocessing and modeling.
+
+*Relevant*: The research is pertinent to app developers, marketers, and stakeholders in the mobile app ecosystem. Understanding the factors driving app installs directly addresses key industry challenges, such as improving app visibility, optimizing user engagement, and tailoring marketing strategies for success.
+
+*Time-specific*: The research will use data from a specific timeframe (e.g., 2010-2018), ensuring that insights are grounded in a defined historical context. The results could also include temporal trends to observe how factors influencing popularity have evolved over time.
+
+
 
 # Loading the Dataset
 
@@ -63,6 +84,8 @@ file using ()
 ```{r}
 #Loading the Dataset
 data_apps <- data.frame(read.csv("googleplaystore.csv"))
+summary(data_apps)
+head(data_apps)
 
 ```
 
