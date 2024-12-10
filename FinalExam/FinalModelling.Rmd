@@ -792,6 +792,12 @@ print(gini_plot)
 
 
 ```
+So the Random Forest Model performs pretty well and is reliable as the accuracy is 95.17%. 
+Also looking at the feature importance plot, we can say that Reviews, Ratings, Size and Last Update 
+has the highest contribution in predicting. When it comes to Categories, the top 5 categories are
+medical, events, entertainment, photography and gaming.
+
+
 
 ## Gradient Boosting
 
