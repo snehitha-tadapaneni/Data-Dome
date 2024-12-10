@@ -37,9 +37,42 @@ This analysis not only provides actionable insights for app developers and stake
 
 
 # **Exploratory Data Analysis (EDA)**
+
+### Dataset Overview
 <div style="text-align: justify;">
-Dataset Overview: Provide an overview of the dataset, including its source, size, and features.
-Data Cleaning and Preparation: Explain any preprocessing steps (e.g., removing missing values, outliers, etc.).
+The dataset used in this study is a popular collection of Google Play Store apps, sourced from Kaggle (faisaljanjua0555, 2023). It contains detailed information about 10,841 apps, organized across 13 variables, with each row representing an individual app. The dataset covers a range
+of app attributes, such as ratings, reviews, size, category, installs, price, and content rating, providing valuable insights into the
+characteristics that contribute to app popularity and user engagement. This comprehensive data serves as a foundation for analyzing patterns in
+user behavior, app performance, and trends within the mobile app ecosystem. 
+</div>
+
+### Data Cleaning
+<div style="text-align: justify;">
+The Google Play Store dataset, as analyzed, contains missing values and inconsistent formats across various columns. To clean and prepare this
+dataset for analysis, several steps were taken to address these data quality issues. Here is an overview of how missing records were managed
+and further improvements that could be considered:
+
+- Duplicates: Removed 1,181 duplicate apps, reducing the dataset from 10,841 to 9,660 unique apps to eliminate redundancy.
+- Price: Cleaned dollar symbols for numeric conversion and removed rows with missing or blank prices.
+- Type: Replaced one missing value with "Free" based on a logical inference.
+- Size: Standardized sizes (KB/MB) and replaced "Varies with device" entries with mean sizes by category.
+- Installs: Removed symbols (+, commas) and cleaned non-numeric entries for numeric conversion.
+- Rating & Reviews: Imputed 1,463 missing ratings with category-wise means; converted reviews to integer format.
+- Last Updated: Standardized date format for accuracy.
+- Category & Genres: Retained Category while removing redundant Genres for clarity.
+- Current Version: Excluded due to inconsistencies across records.
+- Android Version: Removed two rows with 'NaN' values.
+
+Additional Transformations:
+
+- Review & Install Categories: Binned data for balanced representation across reviews and installs.
+- Log Transformed Installs: Applied log transformation to normalize install data and reduce skewness.
+- Update Category: Classified updates as "Old" or "Recent" to analyze the impact on performance metrics.
+</div>
+
+
+# Data Visualizations
+<div style="text-align: justify;">
 Key Insights: Highlight patterns, distributions, correlations, or anomalies in the dataset (e.g., visualizations like histograms, scatter plots, or correlation matrices).
 </div>
 
