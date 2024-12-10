@@ -273,12 +273,12 @@ vip_plot +
 ```
 
 ```{r}
-glm_probs <- predict(stepwise_model, testData, type = "response")
+glm_probs <- predict(stepwise_model, data_apps, type = "response")
 
 glm_pred <- ifelse(glm_probs > 0.5, 1, 0)
 
 # Generate confusion matrix
-test_cm <- confusionMatrix(factor(glm_pred), factor(testData$Installs_Category))
+test_cm <- confusionMatrix(factor(glm_pred), factor(data_apps$Installs_Category))
 print(test_cm)
 
 ```
@@ -327,10 +327,10 @@ cat("F1 Score: ", f1_score, "\n")
 
 
 # Predict probabilities
-glm_probs <- predict(stepwise_model, testData, type = "response")
+glm_probs <- predict(stepwise_model, data_apps, type = "response")
 
 # Generate ROC curve
-roc_curve <- roc(testData$Installs_Category, glm_probs)
+roc_curve <- roc(data_apps$Installs_Category, glm_probs)
 
 
 # Plot ROC curve
@@ -395,6 +395,7 @@ ggplot(k_accuracy_df, aes(x = k, y = accuracy)) +
   theme_minimal()
 ```
 
+
 As we can see, the most optimal k is found by using CV and accuracy as metric, highest accuracy of about 78% is achieved.
 
 
@@ -457,6 +458,8 @@ plot(roc_curve, main = "ROC Curve for KNN Model",
 abline(a = 0, b = 1, lty = 2, col = "gray")
 legend("bottomright", legend = sprintf("AUC = %.3f", auc_score))
 ```
+
+
 The AUC for the model is 0.83 which is good. But the performance metrics such as accuracy, precision are anticipated to have an above 80% score.
 
 
@@ -493,6 +496,8 @@ ggplot(importance_df[1:39,], aes(x = reorder(Feature, Importance), y = Importanc
 
 ```
 
+
+
 The top 5 features contributing to the model are Size, Rating, Last updated, Content Rating and Reviews.
 
 
@@ -510,7 +515,7 @@ data <- data_apps[, !colnames(data_apps) %in% c("Installs")]
 set.seed(123)  # Ensure reproducibility
 trainIndex <- createDataPartition(data$Installs_Category, p = 0.8, list = FALSE)
 trainData <- data[trainIndex, ]
-testData <- data[-trainIndex, ]
+testData<- data[-trainIndex, ]
 ```
 
 ```{r}
@@ -725,7 +730,7 @@ print(gini_plot)
 
 # Separate features (X) and target (y)
 #X <- data_final %>% select(-Installs, -Success)
-X <- data_apps %>% select(-Installs, -Installs_Category)  # Exclude the target variable
+X <- data_apps %>% select(-Installs_Category)  # Exclude the target variable
 y <- data_apps$Installs_Category             # Extract the target variable
 
 
@@ -850,7 +855,7 @@ cat("Gradient Boosting achieved an accuracy of", conf_matrix$overall["Accuracy"]
 # Convert target variable to a factor
 # Split the data into features and target
 y <- as.factor(data_apps$Installs_Category)
-X <- data_apps[, !names(data_apps) %in% c('Installs_Category', 'Installs')]
+X <- data_apps[, !names(data_apps) %in% c('Installs_Category')]
 
 # Split data into training and testing sets
 set.seed(42)
@@ -991,10 +996,10 @@ Hence, now lets find the accuracy, ROC, AUC score of the test data.
 #### Bias variance MSE caluclation
 
 ```{r}
+
 # Load necessary libraries
 library(e1071)
 library(ggplot2)
-library(reshape2)
 
 # Assuming you have already defined X_train, y_train, X_test, y_test
 
@@ -1002,10 +1007,8 @@ library(reshape2)
 train_data <- as.data.frame(cbind(X_train, y_train))
 test_data <- as.data.frame(X_test)
 
-# Initialize vectors to store metrics
+# Initialize vectors to store MSE metrics
 C_values <- c(0.1, 1, 10, 100, 1000, 100000, 500000)
-bias_values <- c()
-variance_values <- c()
 mse_values <- c()
 
 # Loop through different values of C
@@ -1016,21 +1019,11 @@ for (C in C_values) {
   # Predict on the test set
   predictions <- predict(svm_model, newdata = test_data)
   
-  # Convert predictions and actual test values to numeric for calculations
+  # Convert predictions and actual test values to numeric for MSE calculation
   predictions_numeric <- as.numeric(as.character(predictions))
   y_test_numeric <- as.numeric(as.character(y_test))
   
-  # Calculate Bias: Mean squared difference between the true mean and the predicted mean
-  mean_true <- mean(y_test_numeric)
-  mean_pred <- mean(predictions_numeric)
-  bias <- (mean_true - mean_pred)^2
-  bias_values <- c(bias_values, bias)
-  
-  # Calculate Variance: Variability of the predictions
-  variance <- var(predictions_numeric)
-  variance_values <- c(variance_values, variance)
-  
-  # Calculate Mean Squared Error (MSE): Average squared error
+  # Calculate Mean Squared Error (MSE)
   mse <- mean((y_test_numeric - predictions_numeric)^2)
   mse_values <- c(mse_values, mse)
 }
@@ -1038,30 +1031,23 @@ for (C in C_values) {
 # Combine results into a data frame for plotting
 results <- data.frame(
   C = C_values,
-  Bias = bias_values,
-  Variance = variance_values,
   MSE = mse_values
 )
 
-# Reshape data for ggplot
-results_melted <- melt(results, id.vars = "C", variable.name = "Metric", value.name = "Value")
-
-# Plotting
-ggplot(results_melted, aes(x = factor(C), y = Value, color = Metric, group = Metric)) +
-  geom_line(size = 1) +
-  geom_point(size = 3) +
-  labs(title = "Bias-Variance Tradeoff and MSE for Different C Values",
+# Plotting MSE values
+ggplot(results, aes(x = factor(C), y = MSE)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "red", size = 3) +
+  labs(title = "MSE for Different C Values",
        x = "C Values",
-       y = "Value",
-       color = "Metric") +
+       y = "Mean Squared Error (MSE)") +
   theme_minimal(base_size = 15) +
   theme(
-    plot.title = element_text(hjust = 0.5, face = "bold"),
-    legend.position = "top"
+    plot.title = element_text(hjust = 0.5, face = "bold")
   ) +
-  scale_color_manual(values = c("Bias" = "blue", "Variance" = "red", "MSE" = "green")) +
   scale_x_discrete(labels = function(x) paste0("C = ", x)) +
-  geom_text(aes(label = round(Value, 2)), vjust = -0.5)  # Add value labels above points
+  geom_text(aes(label = round(MSE, 2)), vjust = -0.5)  # Add value labels above points
+
 
 
 ```
