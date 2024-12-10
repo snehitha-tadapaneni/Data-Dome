@@ -47,9 +47,7 @@ library(randomForest)
 
 # Introduction
 
-Our research focuses on exploring the features of Size, installs, reviews,rating, Category, content rating, and Price on apps on Google Play Store and using different algorithms to identify the most influential attributes of highly installed apps on Google Play Store.
-
-# Smart Question
+Our research focuses on exploring the featk
 
 “Which are the top 5 app categories, as identified by classification models (logistic regression,SVM, XGBoost, KNN, and random forest), that significantly influenced app success (measured by installs) based on app data from 2010 to 2018, and how accurately can these models predict success trends within this time period??”
 
@@ -223,14 +221,281 @@ summary(data_apps) %>%
 
 ## Logistic Regression
 ```{r}
+data_apps$Installs_Category <- as.factor(data_apps$Installs_Category)
+data_apps <- data_apps[, !names(data_apps) %in% c('Installs')]
+```
+
+We first start with the basic Logistic model.
+```{r}
+glm_model <- glm(Installs_Category ~ ., data = data_apps, family = binomial)
+summary(glm_model)
+```
+
+#### Stepwise Selection for GLM
+Next, the stepwise selection is proceeded based on the logistic model above. It can be seen that the model below has AIC value of 2850, indicating the below model performs better than the above (which has AIC of 2881). 
+
+```{r}
+stepwise_model <- stats::step(glm_model, direction = "both", trace = 0)
+
+summary(stepwise_model)
+```
+
+```{r}
+glm_varImp <- varImp(stepwise_model, scale = FALSE)
+print(glm_varImp)
+
+```
+
+```{r}
+#install.packages('vip')
+library(vip)
+
+
+# Plot the top 10 important features with the custom color
+vip_plot<-vip(stepwise_model, num_features = 10, bar = TRUE) 
+
+vip_plot +
+  # Set the custom color for bars
+  geom_bar(stat = "identity", fill = "#365b6d")  +
+  # Reversing the order of features for better visual flow
+  coord_flip() +
+  # Improving labels and text size
+  theme_minimal() +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14, face = "bold"),
+    plot.title = element_text(size = 16, face = "bold"),
+    legend.position = "none"  # Hides the legend if not needed
+  ) +
+  ggtitle("Top 10 Important Features - GLM Model")
+
+
+```
+
+```{r}
+glm_probs <- predict(stepwise_model, testData, type = "response")
+
+glm_pred <- ifelse(glm_probs > 0.5, 1, 0)
+
+# Generate confusion matrix
+test_cm <- confusionMatrix(factor(glm_pred), factor(testData$Installs_Category))
+print(test_cm)
 
 ```
 
 
-## KNN
 ```{r}
 
+
+# Extract confusion matrix table
+cm_table <- as.table(test_cm)
+
+# Convert the table to a data frame for ggplot
+cm_df <- as.data.frame(cm_table)
+
+cm_df <- as.data.frame(test_cm$table)
+cm_df$Percentage <- cm_df$Freq / sum(cm_df$Freq) * 100
+
+ggplot(cm_df, aes(x = Prediction, y = Reference)) +
+  geom_tile(aes(fill = Percentage), color = "white") +
+  geom_text(aes(label = sprintf("%.1f%%\n(n=%d)", Percentage, Freq)), 
+            size = 4, color = "black") +
+  scale_fill_gradient2(low = "white", high = "#6c9286", 
+                      midpoint = min(cm_df$Percentage)) +
+  labs(title = "Confusion Matrix Heatmap",
+       subtitle = sprintf("Overall Accuracy: %.1f%%", test_cm$overall["Accuracy"] * 100)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.text = element_text(size = 10),
+    legend.title = element_text(size = 10)
+  )
 ```
+
+```{r}
+precision <- test_cm$byClass["Pos Pred Value"]  # Precision
+recall <- test_cm$byClass["Sensitivity"]        # Recall
+f1_score <- test_cm$byClass["F1"]               # F1 Score
+
+cat("Precision: ", precision, "\n")
+cat("Recall: ", recall, "\n")
+cat("F1 Score: ", f1_score, "\n")
+```
+
+```{r}
+
+
+# Predict probabilities
+glm_probs <- predict(stepwise_model, testData, type = "response")
+
+# Generate ROC curve
+roc_curve <- roc(testData$Installs_Category, glm_probs)
+
+
+# Plot ROC curve
+plot(roc_curve, main = "ROC Curve")
+
+# AUC (Area Under the Curve)
+auc_value <- auc(roc_curve)
+cat("AUC: ", auc_value, "\n")
+```
+
+
+
+
+## KNN 
+
+### Splitting the Data into Train and Test
+```{r}
+# Split the data into features and target
+features <- c("Rating", "Reviews", "Size", "Price", "Content.Rating", "Last.Updated",
+              grep("^cat", names(data_apps), value = TRUE))
+X <- data_apps[, features]
+y <- data_apps$Installs_Category
+
+# Split the data into training and testing sets
+set.seed(123)
+train_index <- createDataPartition(y, p = 0.7, list = FALSE)
+X_train <- X[train_index, ]
+X_test <- X[-train_index, ]
+y_train <- y[train_index]
+y_test <- y[-train_index]
+
+# Scale the features
+preprocess_params <- preProcess(X_train, method = c("center", "scale"))
+X_train_scaled <- predict(preprocess_params, X_train)
+X_test_scaled <- predict(preprocess_params, X_test)
+```
+
+
+### Find optimal K using Cross validation
+```{r}
+
+# Train KNN model with cross-validation to find optimal k
+k_values <- seq(1, 20, by = 2)
+cv_results <- lapply(k_values, function(k) {
+  train_control <- trainControl(method = "cv", number = 5)
+  knn_model <- train(x = X_train_scaled, 
+                    y = y_train,
+                    method = "knn",
+                    tuneGrid = data.frame(k = k),
+                    trControl = train_control)
+  return(knn_model$results$Accuracy)
+})
+
+# Plot k values vs accuracy
+k_accuracy_df <- data.frame(k = k_values, accuracy = unlist(cv_results))
+ggplot(k_accuracy_df, aes(x = k, y = accuracy)) +
+  geom_line(color = "blue") +
+  geom_point(color = "red") +
+  labs(title = "K Values vs Cross-Validation Accuracy",
+       x = "Number of Neighbors (k)",
+       y = "Accuracy") +
+  theme_minimal()
+```
+
+As we can see, the most optimal k is found by using CV and accuracy as metric, highest accuracy of about 78% is achieved.
+
+
+### Evaluation metrics for test data using optimal k 
+```{r}
+
+optimal_k <- k_values[which.max(cv_results)]
+final_knn <- knn3(X_train_scaled, y_train, k = optimal_k)
+
+# Make predictions
+y_pred_prob <- predict(final_knn, X_test_scaled, type = "prob")
+y_pred <- factor(ifelse(y_pred_prob[,2] > 0.5, 1, 0), levels = c(0, 1))
+
+
+y_test_numeric <- as.numeric(as.character(y_test))
+
+# Calculate performance metrics
+conf_matrix <- confusionMatrix(y_pred, y_test)
+roc_curve <- roc(as.numeric(y_test_numeric), y_pred_prob[,2])
+auc_score <- auc(roc_curve)
+
+# Create performance summary table
+performance_summary <- data.frame(
+  Metric = c("Accuracy", "Precision", "Recall", "F1 Score", "AUC"),
+  Value = c(
+    conf_matrix$overall["Accuracy"],
+    conf_matrix$byClass["Precision"],
+    conf_matrix$byClass["Recall"],
+    conf_matrix$byClass["F1"],
+    auc_score
+  )
+)
+# Display performance summary using kable
+kable(performance_summary, caption = "KNN Model Performance Summary") %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
+
+#Confusion matrix heat map
+conf_matrix_df <- as.data.frame(conf_matrix$table)
+conf_matrix_df$Percentage <- conf_matrix_df$Freq / sum(conf_matrix_df$Freq) * 100
+
+ggplot(conf_matrix_df, aes(x = Prediction, y = Reference)) +
+  geom_tile(aes(fill = Percentage), color = "white") +
+  geom_text(aes(label = sprintf("%.1f%%\n(n=%d)", Percentage, Freq)), 
+            size = 4, color = "black") +
+  scale_fill_gradient2(low = "white", high = "#4A90E2", 
+                      midpoint = min(conf_matrix_df$Percentage)) +
+  labs(title = "Confusion Matrix Heatmap",
+       subtitle = sprintf("Overall Accuracy: %.1f%%", conf_matrix$overall["Accuracy"] * 100)) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5),
+    axis.text = element_text(size = 10),
+    legend.title = element_text(size = 10)
+  )
+
+# Plot ROC curve
+plot(roc_curve, main = "ROC Curve for KNN Model",
+     col = "blue", lwd = 2)
+abline(a = 0, b = 1, lty = 2, col = "gray")
+legend("bottomright", legend = sprintf("AUC = %.3f", auc_score))
+```
+The AUC for the model is 0.83 which is good. But the performance metrics such as accuracy, precision are anticipated to have an above 80% score.
+
+
+# Feature importance
+```{r}
+calc_importance <- function(feature) {
+  X_test_permuted <- X_test_scaled
+  X_test_permuted[,feature] <- sample(X_test_scaled[,feature])
+  pred_permuted <- predict(final_knn, X_test_permuted, type = "prob")
+  roc_permuted <- roc(as.numeric(y_test), pred_permuted[,2])
+  return(auc_score - auc(roc_permuted))
+}
+
+importance_scores <- sapply(features, calc_importance)
+importance_df <- data.frame(
+  Feature = features,
+  Importance = importance_scores
+)
+importance_df <- importance_df[order(-importance_df$Importance),]
+
+# Plot feature importance
+ggplot(importance_df[1:39,], aes(x = reorder(Feature, Importance), y = Importance)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Feature Importance (KNN Model)",
+       x = "Feature",
+       y = "Importance Score") +
+  theme_minimal()
+
+
+
+
+
+
+```
+
+The top 5 features contributing to the model are Size, Rating, Last updated, Content Rating and Reviews.
+
+
 #------------------------------------------------------------------------- 
 
 ## Decision Tree
@@ -454,8 +719,9 @@ print(gini_plot)
 
 ## Gradient Boosting
 
+####  Data Splitting 
 ```{r}
-#  Data Splitting -----------------------------------------------------
+
 
 # Separate features (X) and target (y)
 #X <- data_final %>% select(-Installs, -Success)
@@ -485,8 +751,9 @@ data_apps$Installs_Category <- factor(data_apps$Installs_Category, levels = c(0,
 
 ```
 
+#### Train Gradient Boosting Model
 ```{r}
-# 4. Train Gradient Boosting Model --------------------------------------
+# 4.  --------------------------------------
 
 params <- list(
   objective = "binary:logistic",  # Binary classification
@@ -511,9 +778,10 @@ xgb_model <- xgb.train(
 
 ```
 
+#### Model Evaluation 
 
 ```{r}
-# 5. Model Evaluation ---------------------------------------------------
+# 
 
 # Make predictions
 y_pred <- predict(xgb_model, dtest)
@@ -526,7 +794,7 @@ conf_matrix <- confusionMatrix(y_pred_class, y_test)
 print(conf_matrix)
 
 ```
-Confusion Matrix:
+
 
 ```{r confusion-matrix-heatmap, echo=FALSE}
 #Visulization of confusion matrix
@@ -540,6 +808,8 @@ ggplot(cm_table, aes(x = Reference, y = Prediction, fill = Freq)) +
   theme_minimal()
 ```
 
+Confusion Matrix:The model struggles significantly with distinguishing between "Low Installs" and "High Installs," especially misclassifying many "Low Installs" as "High Installs" (1414 cases).
+Precision for "High Installs" (proportion of correct "High Installs" predictions) and recall for "Low Installs" (proportion of correctly identified "Low Installs") are low.
 
 
 ```{r}
@@ -554,9 +824,11 @@ abline(a = 0, b = 1, lty = 2, col = "red")
 
 ```
 
+The ROC curve illustrates the model's performance by plotting Sensitivity (True Positive Rate) against 1 - Specificity (False Positive Rate) across thresholds. The closer the curve approaches the top-left corner, the better the model distinguishes between "Low Installs" and "High Installs." A high AUC value indicates strong classification performance.
+
+#### Feature Importance 
 
 ```{r}
-# 6. Feature Importance -------------------------------------------------
 
 importance_matrix <- xgb.importance(feature_names = colnames(X_train), model = xgb_model)
 xgb.plot.importance(importance_matrix, top_n = 10, main = "Feature Importance")
@@ -570,15 +842,15 @@ cat("Gradient Boosting achieved an accuracy of", conf_matrix$overall["Accuracy"]
     "and AUC of", auc_value, "\n")
 ```
 
+"Reviews" has the highest influence, followed by "Rating" and "Last.Updated." Features like "Price" and "Size" also contribute, albeit minimally. Other categorical variables, such as "catFAMILY" and "catMEDICAL," have negligible impact on the model's predictions.
 
 ## SVM
 
 ```{r}
 # Convert target variable to a factor
+# Split the data into features and target
 y <- as.factor(data_apps$Installs_Category)
-
-# Remove unused columns
-X <- data_apps[, !names(data_apps) %in% c('Installs', 'Installs_Category', 'Installs_Num')]
+X <- data_apps[, !names(data_apps) %in% c('Installs_Category', 'Installs')]
 
 # Split data into training and testing sets
 set.seed(42)
@@ -587,18 +859,49 @@ X_train <- X[trainIndex, ]
 X_test <- X[-trainIndex, ]
 y_train <- y[trainIndex]
 y_test <- y[-trainIndex]
-str(X_train)
+
 ```
 
 
-### Checking if the boundary is non-linear or linear
+
+#### Checking if the boundary is non-linear or linear
 ```{r}
-library(ggplot2)
-pca <- prcomp(X_train, center = TRUE, scale. = TRUE)
-pca_data <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, 2], Class = y_train)
-ggplot(pca_data, aes(x = PC1, y = PC2, color = Class)) +
-  geom_point(size = 3) +
-  labs(title = "PCA: Decision Boundary Visualization")
+library(plotly)
+
+# Prepare the plot data
+plot_data <- data.frame(X_train, Class = as.factor(y_train))
+
+# Create 3D scatter plot for features 1, 2, and 3
+plot_1_2_3 <- plot_ly(data = plot_data, 
+                      x = ~X_train[, 1], 
+                      y = ~X_train[, 2], 
+                      z = ~X_train[, 3], 
+                      color = ~Class,
+                      colors = c("red", "blue"),  # Set colors for classes (0 and 1)
+                      type = 'scatter3d', 
+                      mode = 'markers') %>%
+  layout(title = "3D Scatter Plot: Feature 1 vs Feature 2 vs Feature 3",
+         scene = list(xaxis = list(title = colnames(X_train)[1]),
+                      yaxis = list(title = colnames(X_train)[2]),
+                      zaxis = list(title = colnames(X_train)[3])))
+
+# Create 3D scatter plot for features 4, 5, and 6
+plot_4_5_6 <- plot_ly(data = plot_data, 
+                      x = ~X_train[, 4], 
+                      y = ~X_train[, 5], 
+                      z = ~X_train[, 6], 
+                      color = ~Class,
+                      colors = c("red", "blue"),  # Set colors for classes (0 and 1)
+                      type = 'scatter3d', 
+                      mode = 'markers') %>%
+  layout(title = "3D Scatter Plot: Feature 4 vs Feature 5 vs Feature 6",
+         scene = list(xaxis = list(title = colnames(X_train)[4]),
+                      yaxis = list(title = colnames(X_train)[5]),
+                      zaxis = list(title = colnames(X_train)[6])))
+
+# Show plots
+plot_1_2_3
+plot_4_5_6
 ```
 
 
@@ -607,7 +910,7 @@ As we can see we cannot decide if the boundary is linear or non-linear hence, le
 
 
 
-### Tuning to find the best parameter values for C and Gamma for SVM non-linear
+#### Tuning to find the best parameter values for C and Gamma for SVM non-linear
 
 ```{r}
 
@@ -633,7 +936,7 @@ tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100),
 svm_model <- train(y_train ~ ., data = train_data,
                    method = "svmRadial",
                    tuneGrid = tune_grid,
-                   trControl = train_control)
+                   trControl = train_control,scaled = TRUE)
 
 # Print the results of the tuning
 print(svm_model)
@@ -644,9 +947,9 @@ cat("Best Parameters:\n")
 print(best_params)
 ```
 
-As seen for the training set the best accuracy is achieved when C = 100 and gamma is 0.05
+As seen for the training set the best accuracy is achieved when C = 100 and gamma is 0.5
 
-### Tuning to find the best parameter values for C  for SVM linear
+#### Tuning to find the best parameter values for C  for SVM linear
 
 ```{r}
 
@@ -665,13 +968,13 @@ set.seed(42)
 train_control <- trainControl(method = "cv", number = 5)
 
 # Define the tuning grid for 'C' and 'sigma' (gamma)
-tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100))
+tune_grid <- expand.grid(C = c( 0.1, 1, 10, 100, 1000))
 
 # Train the SVM model using radial kernel with the tuning grid
 svm_model <- train(y_train ~ ., data = train_data,
                    method = "svmLinear",
                    tuneGrid = tune_grid,
-                   trControl = train_control)
+                   trControl = train_control,scaled = TRUE)
 
 # Print the results of the tuning
 print(svm_model)
@@ -682,22 +985,107 @@ cat("Best Parameters:\n")
 print(best_params)
 ```
 
-For linear model it could be seen that at C = 100, we attain an accuracy of 92 percent which suggets that the model is linearly seperable. Hence, now lets find the accuracy, ROC, AUC score of the test data.
+For linear model it could be seen that at C = 100, we attain an accuracy of 94 percent which suggests that its better to assume that the y was linearly seperable. 
+Hence, now lets find the accuracy, ROC, AUC score of the test data.
+
+#### Bias variance MSE caluclation
 
 ```{r}
-y_test
+# Load necessary libraries
+library(e1071)
+library(ggplot2)
+library(reshape2)
+
+# Assuming you have already defined X_train, y_train, X_test, y_test
+
+# Combine training and test sets into data frames
+train_data <- as.data.frame(cbind(X_train, y_train))
+test_data <- as.data.frame(X_test)
+
+# Initialize vectors to store metrics
+C_values <- c(0.1, 1, 10, 100, 1000, 100000, 500000)
+bias_values <- c()
+variance_values <- c()
+mse_values <- c()
+
+# Loop through different values of C
+for (C in C_values) {
+  # Train the SVM model
+  svm_model <- svm(y_train ~ ., data = train_data, kernel = "linear", cost = C, scale = TRUE)
+  
+  # Predict on the test set
+  predictions <- predict(svm_model, newdata = test_data)
+  
+  # Convert predictions and actual test values to numeric for calculations
+  predictions_numeric <- as.numeric(as.character(predictions))
+  y_test_numeric <- as.numeric(as.character(y_test))
+  
+  # Calculate Bias: Mean squared difference between the true mean and the predicted mean
+  mean_true <- mean(y_test_numeric)
+  mean_pred <- mean(predictions_numeric)
+  bias <- (mean_true - mean_pred)^2
+  bias_values <- c(bias_values, bias)
+  
+  # Calculate Variance: Variability of the predictions
+  variance <- var(predictions_numeric)
+  variance_values <- c(variance_values, variance)
+  
+  # Calculate Mean Squared Error (MSE): Average squared error
+  mse <- mean((y_test_numeric - predictions_numeric)^2)
+  mse_values <- c(mse_values, mse)
+}
+
+# Combine results into a data frame for plotting
+results <- data.frame(
+  C = C_values,
+  Bias = bias_values,
+  Variance = variance_values,
+  MSE = mse_values
+)
+
+# Reshape data for ggplot
+results_melted <- melt(results, id.vars = "C", variable.name = "Metric", value.name = "Value")
+
+# Plotting
+ggplot(results_melted, aes(x = factor(C), y = Value, color = Metric, group = Metric)) +
+  geom_line(size = 1) +
+  geom_point(size = 3) +
+  labs(title = "Bias-Variance Tradeoff and MSE for Different C Values",
+       x = "C Values",
+       y = "Value",
+       color = "Metric") +
+  theme_minimal(base_size = 15) +
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    legend.position = "top"
+  ) +
+  scale_color_manual(values = c("Bias" = "blue", "Variance" = "red", "MSE" = "green")) +
+  scale_x_discrete(labels = function(x) paste0("C = ", x)) +
+  geom_text(aes(label = round(Value, 2)), vjust = -0.5)  # Add value labels above points
+
+
 ```
+The analysis of bias, variance, and mean squared error (MSE) across different values of C shows:
+MSE dip: At C = 1000, the MSE is the minimum.
+Low Bias and Variance: The variance seems to be little higher which is expected for large C but it is not much high compared to 10, 100.
+ 
+Hence, better to select C = 1000 for the SVM model to achieve an optimal balance between bias, variance, and MSE.
 
 
+#### Model Evalution for Test Data
 
 ```{r}
+# Load necessary libraries
+library(e1071)
+library(pROC)  # For ROC and AUC
+
 # Assuming you have already defined X_train, y_train, X_test, y_test
 
 # Combine the training data into a data frame
 train_data <- as.data.frame(cbind(X_train, y_train))
 
 # Fit the SVM model with linear kernel
-svm_model <- svm(y_train ~ ., data = train_data, kernel = "linear", cost = 100, decision.values = TRUE)
+svm_model <- svm(y_train ~ ., data = train_data, kernel = "linear", cost = 1000, decision.values = TRUE,scaled = TRUE)
 
 # Step 1: Make predictions on the test set
 predictions <- predict(svm_model, newdata = as.data.frame(X_test))
@@ -707,7 +1095,17 @@ confusion_matrix <- table(Predicted = predictions, Actual = y_test)
 cat("Confusion Matrix:\n")
 print(confusion_matrix)
 
-# Step 3: Calculate accuracy
+confusion_matrix_caret <- confusionMatrix(confusion_matrix)
+
+# Step 2: Extract Precision, Recall, and F1 Score
+precision <- confusion_matrix_caret$byClass['Precision']
+recall <- confusion_matrix_caret$byClass['Recall']
+f1_score <- confusion_matrix_caret$byClass['F1']
+
+# Display the metrics
+cat("Precision:", precision, "\n")
+cat("Recall:", recall, "\n")
+cat("F1 Score:", f1_score, "\n")
 accuracy <- sum(diag(confusion_matrix)) / sum(confusion_matrix)
 cat("Accuracy:", accuracy, "\n")
 
@@ -727,6 +1125,9 @@ legend("bottomright", legend = paste("AUC =", round(auc_value, 2)), bty = "n")
 
 
 ```
+
+The model achieved an impressive accuracy of 94% and a high AUC of 0.99, indicating excellent performance in classification. Additionally, the high precision, recall, and F1-score values reflect the model's capability to accurately classify both class 0 and class 1. These results suggest that the model is highly effective in distinguishing between the two classes, making it reliable for practical applications.
+
 
 
 #### Feature importance for the model
@@ -767,19 +1168,21 @@ sorted_coefficients <- sort(abs(named_coefficients), decreasing = TRUE)
 # Print sorted feature importance
 cat("Sorted Feature Importance:\n")
 print(sorted_coefficients)
-
+top_coef = head(sorted_coefficients,15)
 # Optional: Visualize feature importance
 barplot(
-  sorted_coefficients,
+  top_coef,
   main = "Feature Importance from SVM Coefficients",
   xlab = "Features",
-  ylab = "Absolute Coefficient Value",
   col = "steelblue",
   las = 2,
-  cex.names = 0.7  # Adjust name size if necessary
+  cex.names = 0.3,# Adjust name size if necessary
+  horiz = TRUE
 )
 
 
 ```
+
+The analysis shows that Reviews, Price, and Lastupdated are the top features influencing the model's performance. Additionally, the leading app categories—Finance, Medical, Tools, Events, and News and Mangazines —suggest that focusing on these areas can enhance the chances of app success.
 
 
