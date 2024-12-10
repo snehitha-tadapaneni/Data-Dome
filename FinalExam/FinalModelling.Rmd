@@ -1262,4 +1262,6 @@ The analysis shows that Reviews, Price, and Lastupdated are the top
 features influencing the model's performance. Additionally, the leading
 app categories—Finance, Medical, Tools, Events, and News and Mangazines
 —suggest that focusing on these areas can enhance the chances of app
-success.
+success. Also from the confusion matrix, we can see the true negatives 
+are higher compared to false negatives which tells us that the target 
+variable Installs category is slightly imbalanced.
