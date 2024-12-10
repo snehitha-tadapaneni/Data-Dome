@@ -561,9 +561,11 @@ ggplot(importance_df[1:39,], aes(x = reorder(Feature, Importance), y = Importanc
 
 
 ```
+This code finalizes the KNN model by selecting the optimal number of neighbors (`k`) based on cross-validation. Using this optimized model, predictions are made on the test dataset, both as class labels and probabilities. Performance metrics, including accuracy, precision, recall, F1 score, and AUC, are calculated and summarized. A confusion matrix is visualized as a heatmap, showing the distribution of correct and incorrect predictions, and the ROC curve is plotted to evaluate the model's ability to discriminate between classes, with an AUC score of 0.83 indicating good performance. The top 5 features contributing to the model are Size, Rating, Last updated, Content Rating and Reviews.
 
-The top 5 features contributing to the model are Size, Rating, Last
-updated, Content Rating and Reviews.
+Feature importance is then computed using a permutation-based approach, where the impact of shuffling each feature on the model’s AUC is measured. This determines the significance of each feature in contributing to the model’s predictions. The importance scores are visualized in a bar plot, providing insights into the most influential features for the KNN model. This entire process not only evaluates the model but also highlights key features driving its predictions.
+
+
 
 ### Conclusion
 The KNN model shows strong performance, effectively predicting app 
