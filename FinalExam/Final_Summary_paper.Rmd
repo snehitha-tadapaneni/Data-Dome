@@ -52,12 +52,34 @@ Which are the top 5 app categories, as identified by classification models (logi
 
 
 # **Model Selection Process**
-<div style="text-align: justify;">
-Approach to Model Selection: Justify why Random Forest was chosen.
-Mention alternatives considered and reasons for rejection.
-Discuss advantages of Random Forest (e.g., handling non-linear relationships, robustness to overfitting).
-Hyperparameter Tuning: Explain parameter selection (e.g., ntree, mtry, etc.).
-</div>
+
+* Logistic Regression:
+-> Why?
+-> Advs
+-> Explain Parameter Selection
+
+* K-Nearest Neighbour:
+-> Why?
+-> Advs
+-> Explain Parameter Selection
+
+* Random Forest Classifier:
+-> Why?
+-> Advs
+-> Explain Parameter Selection
+
+* XG Boost:
+-> Why?
+-> Advs
+-> Explain Parameter Selection
+
+
+* Support Vector Machine:
+-> Why?
+-> Advs
+-> Explain Parameter Selection
+
+
 
 
 # **Model Evaluation**
