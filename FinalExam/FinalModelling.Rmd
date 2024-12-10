@@ -564,6 +564,12 @@ ggplot(importance_df[1:39,], aes(x = reorder(Feature, Importance), y = Importanc
 The top 5 features contributing to the model are Size, Rating, Last
 updated, Content Rating and Reviews.
 
+### Conclusion
+The KNN model shows strong performance, effectively predicting app 
+installation categories based on key features like user engagement and 
+app characteristics. Features such as reviews, app size, and category 
+indicators play a significant role in influencing predictions.
+
 #-------------------------------------------------------------------------
 
 ## Decision Tree
