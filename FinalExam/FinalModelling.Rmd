@@ -49,12 +49,16 @@ library(randomForest)
 
 Our research focuses on exploring the featk
 
-“Which are the top 5 app categories, as identified by classification models (logistic regression,SVM, XGBoost, KNN, and random forest), that significantly influenced app success (measured by installs) based on app data from 2010 to 2018, and how accurately can these models predict success trends within this time period??”
-
+“Which are the top 5 app categories, as identified by classification
+models (logistic regression,SVM, XGBoost, KNN, and random forest), that
+significantly influenced app success (measured by installs) based on app
+data from 2010 to 2018, and how accurately can these models predict
+success trends within this time period?”
 
 # Loading the Dataset
 
-Here, we have loaded the dataset 'Google Play Store Apps' stored in csv file using ()
+Here, we have loaded the dataset 'Google Play Store Apps' stored in csv
+file using ()
 
 ```{r}
 #Loading the Dataset
@@ -63,22 +67,34 @@ data_apps <- data.frame(read.csv("googleplaystore.csv"))
 ```
 
 #### Description of the App Dataset Columns
-1) App: The name of the application, represented as a character string.
-2) Category: The main category of the app, such as "ART_AND_DESIGN," represented as a character string.
-3) Rating: The average user rating of the app, recorded as a numeric value.
-4) Reviews: The total number of user reviews for the app, shown as a character string.
-5) Size: The size of the application, represented as a character string.
-6) Installs: The approximate number of installations for the app, stored as a character string.
-7) Type: Indicates whether the app is free or paid, represented as a character string.
-8) Price: The price of the app, stored as a character string. Free apps are listed as "0," while paid apps have a dollar amount.
-9) Content.Rating: The target age group for the app, represented as a character string.
-10) Genres: The genre(s) of the app.
-11) Last.Updated: The date of the app's last update, stored as a character string.
-12) Current.Ver: The current version of the app, represented as a character string.
-13) Android.Ver: The minimum Android version required to run the app, stored as a character string.
 
+1)  App: The name of the application, represented as a character string.
+2)  Category: The main category of the app, such as "ART_AND_DESIGN,"
+    represented as a character string.
+3)  Rating: The average user rating of the app, recorded as a numeric
+    value.
+4)  Reviews: The total number of user reviews for the app, shown as a
+    character string.
+5)  Size: The size of the application, represented as a character
+    string.
+6)  Installs: The approximate number of installations for the app,
+    stored as a character string.
+7)  Type: Indicates whether the app is free or paid, represented as a
+    character string.
+8)  Price: The price of the app, stored as a character string. Free apps
+    are listed as "0," while paid apps have a dollar amount.
+9)  Content.Rating: The target age group for the app, represented as a
+    character string.
+10) Genres: The genre(s) of the app.
+11) Last.Updated: The date of the app's last update, stored as a
+    character string.
+12) Current.Ver: The current version of the app, represented as a
+    character string.
+13) Android.Ver: The minimum Android version required to run the app,
+    stored as a character string.
 
 # Summary of dataset after Data Cleaning
+
 ```{r}
 #Dropping columns 
 data_apps <- data_apps[, !(colnames(data_apps) %in% c("Android.Ver", "Current.Ver", "Type", "App", "Genres"))]
@@ -220,19 +236,28 @@ summary(data_apps) %>%
 ```
 
 ## Logistic Regression
+
 ```{r}
 data_apps$Installs_Category <- as.factor(data_apps$Installs_Category)
 data_apps <- data_apps[, !names(data_apps) %in% c('Installs')]
 ```
 
-We first start with the basic Logistic model.
+We first start with the basic Logistic model which includes at the
+variables. The AIC value for this model is 2881.6.
+
 ```{r}
 glm_model <- glm(Installs_Category ~ ., data = data_apps, family = binomial)
 summary(glm_model)
 ```
 
-#### Stepwise Selection for GLM
-Next, the stepwise selection is proceeded based on the logistic model above. It can be seen that the model below has AIC value of 2850, indicating the below model performs better than the above (which has AIC of 2881). 
+### Stepwise Selection for Logistic Model
+
+Next, the stepwise selection is proceeded based on the logistic model
+above. It can be seen that the model below has AIC value of 2850,
+indicating the below model performs better than the above (which has AIC
+of 2881).
+
+This model includes 16 features out of the 39 variables in the dataset.
 
 ```{r}
 stepwise_model <- stats::step(glm_model, direction = "both", trace = 0)
@@ -246,6 +271,7 @@ print(glm_varImp)
 
 ```
 
+### Feature Importance
 ```{r}
 #install.packages('vip')
 library(vip)
@@ -272,6 +298,30 @@ vip_plot +
 
 ```
 
+As it can be seen from the graph above, the top five importance features
+from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
+`Content.Rating`. The top 5 categories that have most impacted in this
+model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
+`HOUSE_AND_HOME`.
+
+### Model's Performance Evaluation
+
+#### Confusion Matrix
+
+The confusion matrix shows that the model correctly classified 5763
+instances of class 0 and 4580 instances of class 1, with 370 false
+positives and 127 false negatives. The overall accuracy is 95.42%,
+indicating a high proportion of correct predictions, with a 95%
+confidence interval of (95.0%, 95.8%). The model achieves a Kappa
+statistic of 0.9072, reflecting strong agreement beyond chance.
+Sensitivity (recall for class 0) is 97.84%, and specificity (ability to
+identify class 1) is 92.53%, showing balanced performance. Positive
+predictive value (precision for class 0) is 93.97%, and negative
+predictive value (precision for class 1) is 97.30%. The balanced
+accuracy, accounting for both sensitivity and specificity, is 95.18%.
+The McNemar's test p-value (\<2.2e-16) suggests significant differences
+between misclassifications, and the prevalence of class 0 is 54.34%.
+
 ```{r}
 glm_probs <- predict(stepwise_model, data_apps, type = "response")
 
@@ -282,7 +332,6 @@ test_cm <- confusionMatrix(factor(glm_pred), factor(data_apps$Installs_Category)
 print(test_cm)
 
 ```
-
 
 ```{r}
 
@@ -313,6 +362,17 @@ ggplot(cm_df, aes(x = Prediction, y = Reference)) +
   )
 ```
 
+#### Precision, Recal, F1-Score
+
+The model achieves a precision of 93.97%, indicating that 93.97% of the
+predictions for class 0 are correct. Its recall is 97.84%, meaning the
+model successfully identifies 97.84% of all actual class 0 instances.
+The F1 score, which balances precision and recall, is 95.87%,
+highlighting the model's strong overall performance in accurately and
+consistently classifying instances of class 0. This combination of high
+precision and recall reflects the model's effectiveness in minimizing
+both false positives and false negatives.
+
 ```{r}
 precision <- test_cm$byClass["Pos Pred Value"]  # Precision
 recall <- test_cm$byClass["Sensitivity"]        # Recall
@@ -322,6 +382,13 @@ cat("Precision: ", precision, "\n")
 cat("Recall: ", recall, "\n")
 cat("F1 Score: ", f1_score, "\n")
 ```
+
+#### ROC-AUC
+
+The model achieves an AUC (Area Under the Curve) score of 0.9923,
+indicating excellent performance in distinguishing between classes. This
+demonstrates the model's strong predictive power and effectiveness in
+separating class 0 and class 1 instances.
 
 ```{r}
 
@@ -341,12 +408,10 @@ auc_value <- auc(roc_curve)
 cat("AUC: ", auc_value, "\n")
 ```
 
-
-
-
-## KNN 
+## KNN
 
 ### Splitting the Data into Train and Test
+
 ```{r}
 # Split the data into features and target
 features <- c("Rating", "Reviews", "Size", "Price", "Content.Rating", "Last.Updated",
@@ -368,8 +433,8 @@ X_train_scaled <- predict(preprocess_params, X_train)
 X_test_scaled <- predict(preprocess_params, X_test)
 ```
 
-
 ### Find optimal K using Cross validation
+
 ```{r}
 
 # Train KNN model with cross-validation to find optimal k
@@ -395,11 +460,11 @@ ggplot(k_accuracy_df, aes(x = k, y = accuracy)) +
   theme_minimal()
 ```
 
+As we can see, the most optimal k is found by using CV and accuracy as
+metric, highest accuracy of about 78% is achieved.
 
-As we can see, the most optimal k is found by using CV and accuracy as metric, highest accuracy of about 78% is achieved.
+### Evaluation metrics for test data using optimal k
 
-
-### Evaluation metrics for test data using optimal k 
 ```{r}
 
 optimal_k <- k_values[which.max(cv_results)]
@@ -459,11 +524,11 @@ abline(a = 0, b = 1, lty = 2, col = "gray")
 legend("bottomright", legend = sprintf("AUC = %.3f", auc_score))
 ```
 
-
-The AUC for the model is 0.83 which is good. But the performance metrics such as accuracy, precision are anticipated to have an above 80% score.
-
+The AUC for the model is 0.83 which is good. But the performance metrics
+such as accuracy, precision are anticipated to have an above 80% score.
 
 # Feature importance
+
 ```{r}
 calc_importance <- function(feature) {
   X_test_permuted <- X_test_scaled
@@ -496,12 +561,10 @@ ggplot(importance_df[1:39,], aes(x = reorder(Feature, Importance), y = Importanc
 
 ```
 
+The top 5 features contributing to the model are Size, Rating, Last
+updated, Content Rating and Reviews.
 
-
-The top 5 features contributing to the model are Size, Rating, Last updated, Content Rating and Reviews.
-
-
-#------------------------------------------------------------------------- 
+#-------------------------------------------------------------------------
 
 ## Decision Tree
 
@@ -551,14 +614,20 @@ cat("Test Accuracy: ", test_accuracy, "\n")
 
 ```
 
-Why shift to Random Forest?
-High Dimensionality: With 41 variables, random forest handles many features better and can identify the most important ones.<br>
-Feature Importance: Random forest provides a ranking of feature importance, helping us understand which variables influence the Installs_Category.<br>
-Accuracy: Random forest generally has better predictive accuracy for larger and more complex datasets.
+Why shift to Random Forest? High Dimensionality: With 41 variables,
+random forest handles many features better and can identify the most
+important ones.<br> Feature Importance: Random forest provides a ranking
+of feature importance, helping us understand which variables influence
+the Installs_Category.<br> Accuracy: Random forest generally has better
+predictive accuracy for larger and more complex datasets.
 
 ## Random Forest
 
-In this analysis, we employ a Random Forest model to predict the number of installs based on the top 5 app categories. The Random Forest algorithm is a robust ensemble learning method that builds multiple decision trees and combines their predictions to improve accuracy and reduce overfitting.
+In this analysis, we employ a Random Forest model to predict the number
+of installs based on the top 5 app categories. The Random Forest
+algorithm is a robust ensemble learning method that builds multiple
+decision trees and combines their predictions to improve accuracy and
+reduce overfitting.
 
 #### Building Random FOrest Classifier
 
@@ -574,6 +643,7 @@ rf_model <- randomForest(Installs_Category ~ .,
 # Print the model summary
 print(rf_model)
 ```
+
 #### Plotting the Random Forest Result
 
 ```{r}
@@ -638,7 +708,7 @@ print(comparison)
 
 ```
 
-#### AUC/ROC 
+#### AUC/ROC
 
 ```{r}
 # Install and load pROC package if not already installed
@@ -669,6 +739,7 @@ importance(rf_model)
 # Plot variable importance
 varImpPlot(rf_model)
 ```
+
 #### Visualization for Feature Importance
 
 ```{r}
@@ -724,7 +795,8 @@ print(gini_plot)
 
 ## Gradient Boosting
 
-####  Data Splitting 
+#### Data Splitting
+
 ```{r}
 
 
@@ -757,6 +829,7 @@ data_apps$Installs_Category <- factor(data_apps$Installs_Category, levels = c(0,
 ```
 
 #### Train Gradient Boosting Model
+
 ```{r}
 # 4.  --------------------------------------
 
@@ -783,7 +856,7 @@ xgb_model <- xgb.train(
 
 ```
 
-#### Model Evaluation 
+#### Model Evaluation
 
 ```{r}
 # 
@@ -800,7 +873,6 @@ print(conf_matrix)
 
 ```
 
-
 ```{r confusion-matrix-heatmap, echo=FALSE}
 #Visulization of confusion matrix
 # Code to generate and display the confusion matrix heatmap
@@ -813,9 +885,12 @@ ggplot(cm_table, aes(x = Reference, y = Prediction, fill = Freq)) +
   theme_minimal()
 ```
 
-Confusion Matrix:The model struggles significantly with distinguishing between "Low Installs" and "High Installs," especially misclassifying many "Low Installs" as "High Installs" (1414 cases).
-Precision for "High Installs" (proportion of correct "High Installs" predictions) and recall for "Low Installs" (proportion of correctly identified "Low Installs") are low.
-
+Confusion Matrix:The model struggles significantly with distinguishing
+between "Low Installs" and "High Installs," especially misclassifying
+many "Low Installs" as "High Installs" (1414 cases). Precision for "High
+Installs" (proportion of correct "High Installs" predictions) and recall
+for "Low Installs" (proportion of correctly identified "Low Installs")
+are low.
 
 ```{r}
 # AUC and ROC Curve
@@ -829,9 +904,14 @@ abline(a = 0, b = 1, lty = 2, col = "red")
 
 ```
 
-The ROC curve illustrates the model's performance by plotting Sensitivity (True Positive Rate) against 1 - Specificity (False Positive Rate) across thresholds. The closer the curve approaches the top-left corner, the better the model distinguishes between "Low Installs" and "High Installs." A high AUC value indicates strong classification performance.
+The ROC curve illustrates the model's performance by plotting
+Sensitivity (True Positive Rate) against 1 - Specificity (False Positive
+Rate) across thresholds. The closer the curve approaches the top-left
+corner, the better the model distinguishes between "Low Installs" and
+"High Installs." A high AUC value indicates strong classification
+performance.
 
-#### Feature Importance 
+#### Feature Importance
 
 ```{r}
 
@@ -847,7 +927,10 @@ cat("Gradient Boosting achieved an accuracy of", conf_matrix$overall["Accuracy"]
     "and AUC of", auc_value, "\n")
 ```
 
-"Reviews" has the highest influence, followed by "Rating" and "Last.Updated." Features like "Price" and "Size" also contribute, albeit minimally. Other categorical variables, such as "catFAMILY" and "catMEDICAL," have negligible impact on the model's predictions.
+"Reviews" has the highest influence, followed by "Rating" and
+"Last.Updated." Features like "Price" and "Size" also contribute, albeit
+minimally. Other categorical variables, such as "catFAMILY" and
+"catMEDICAL," have negligible impact on the model's predictions.
 
 ## SVM
 
@@ -867,9 +950,8 @@ y_test <- y[-trainIndex]
 
 ```
 
-
-
 #### Checking if the boundary is non-linear or linear
+
 ```{r}
 library(plotly)
 
@@ -909,11 +991,9 @@ plot_1_2_3
 plot_4_5_6
 ```
 
-
-As we can see we cannot decide if the boundary is linear or non-linear hence, lets make two models linear and non-linear SVM to check which one is a better fit.
-
-
-
+As we can see we cannot decide if the boundary is linear or non-linear
+hence, lets make two models linear and non-linear SVM to check which one
+is a better fit.
 
 #### Tuning to find the best parameter values for C and Gamma for SVM non-linear
 
@@ -952,9 +1032,10 @@ cat("Best Parameters:\n")
 print(best_params)
 ```
 
-As seen for the training set the best accuracy is achieved when C = 100 and gamma is 0.5
+As seen for the training set the best accuracy is achieved when C = 100
+and gamma is 0.5
 
-#### Tuning to find the best parameter values for C  for SVM linear
+#### Tuning to find the best parameter values for C for SVM linear
 
 ```{r}
 
@@ -990,8 +1071,10 @@ cat("Best Parameters:\n")
 print(best_params)
 ```
 
-For linear model it could be seen that at C = 100, we attain an accuracy of 94 percent which suggests that its better to assume that the y was linearly seperable. 
-Hence, now lets find the accuracy, ROC, AUC score of the test data.
+For linear model it could be seen that at C = 100, we attain an accuracy
+of 94 percent which suggests that its better to assume that the y was
+linearly seperable. Hence, now lets find the accuracy, ROC, AUC score of
+the test data.
 
 #### Bias variance MSE caluclation
 
@@ -1051,12 +1134,15 @@ ggplot(results, aes(x = factor(C), y = MSE)) +
 
 
 ```
-The analysis of bias, variance, and mean squared error (MSE) across different values of C shows:
-MSE dip: At C = 1000, the MSE is the minimum.
-Low Bias and Variance: The variance seems to be little higher which is expected for large C but it is not much high compared to 10, 100.
- 
-Hence, better to select C = 1000 for the SVM model to achieve an optimal balance between bias, variance, and MSE.
 
+The analysis of bias, variance, and mean squared error (MSE) across
+different values of C shows: MSE dip: At C = 1000, the MSE is the
+minimum. Low Bias and Variance: The variance seems to be little higher
+which is expected for large C but it is not much high compared to 10,
+100.
+
+Hence, better to select C = 1000 for the SVM model to achieve an optimal
+balance between bias, variance, and MSE.
 
 #### Model Evalution for Test Data
 
@@ -1112,9 +1198,12 @@ legend("bottomright", legend = paste("AUC =", round(auc_value, 2)), bty = "n")
 
 ```
 
-The model achieved an impressive accuracy of 94% and a high AUC of 0.99, indicating excellent performance in classification. Additionally, the high precision, recall, and F1-score values reflect the model's capability to accurately classify both class 0 and class 1. These results suggest that the model is highly effective in distinguishing between the two classes, making it reliable for practical applications.
-
-
+The model achieved an impressive accuracy of 94% and a high AUC of 0.99,
+indicating excellent performance in classification. Additionally, the
+high precision, recall, and F1-score values reflect the model's
+capability to accurately classify both class 0 and class 1. These
+results suggest that the model is highly effective in distinguishing
+between the two classes, making it reliable for practical applications.
 
 #### Feature importance for the model
 
@@ -1169,6 +1258,8 @@ barplot(
 
 ```
 
-The analysis shows that Reviews, Price, and Lastupdated are the top features influencing the model's performance. Additionally, the leading app categories—Finance, Medical, Tools, Events, and News and Mangazines —suggest that focusing on these areas can enhance the chances of app success.
-
-
+The analysis shows that Reviews, Price, and Lastupdated are the top
+features influencing the model's performance. Additionally, the leading
+app categories—Finance, Medical, Tools, Events, and News and Mangazines
+—suggest that focusing on these areas can enhance the chances of app
+success.
