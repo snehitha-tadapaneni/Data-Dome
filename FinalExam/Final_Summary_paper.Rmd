@@ -97,7 +97,8 @@ Which are the top 5 app categories, as identified by classification models (logi
 -> Explain Parameter Selection
 
 * Random Forest Classifier:
--> Why?
+Random Forest is an ensemble machine learning algorithm that constructs multiple decision trees during training and combines their predictions to improve accuracy and prevent overfitting. Each tree is trained on a random subset of the data, and features are randomly sampled at each split, which reduces correlation between trees and increases generalization. For classification problems like ours, Random Forest predicts the class by aggregating votes from all trees and selecting the majority vote.
+
 -> Advs
 -> Explain Parameter Selection
 
