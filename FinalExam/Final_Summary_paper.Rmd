@@ -1,6 +1,5 @@
 ---
----
-title: "Analysis ON<br>Google Play Store Apps"
+title: "Analysis On Google Play Store Apps"
 author: Snehitha Tadapaneni, Sai Rachana Kandikattu, Amrutha Jayachandradhara, Wilona
   Nguyen, Pramod Krishnachari
 date: "`r Sys.Date()`"
@@ -22,145 +21,284 @@ editor_options:
 knitr::opts_chunk$set(warning = F, results = "markdown", message = F)
 ```
 
-
 # **Introduction**
-<div style="text-align: justify;">
-In the fast-paced and competitive world of mobile applications, understanding what makes an application successful is a pressing challenge for developers, businesses, and researchers alike. With Android dominating the mobile operating system landscape—powering over 2.5 billion active devices globally (Brandom, 2019)—the Google Play Store has become the central hub for app distribution and user engagement. Offering millions of applications across diverse categories, the platform serves as an invaluable resource for analyzing user behavior and preferences.
 
-The key to an app's success lies in understanding the intricate relationships between various features, such as app category, ratings, reviews, content suitability, and technical compatibility. Identifying patterns within these factors enables developers to design apps that align with user expectations, thereby increasing downloads, engagement, and retention rates. In this project, we leverage the comprehensive dataset from the Google Play Store to predict app success based on these features.
+::: {style="text-align: justify;"}
+In the fast-paced and competitive world of mobile applications,
+understanding what makes an application successful is a pressing
+challenge for developers, businesses, and researchers alike. With
+Android dominating the mobile operating system landscape—powering over
+2.5 billion active devices globally (Brandom, 2019)—the Google Play
+Store has become the central hub for app distribution and user
+engagement. Offering millions of applications across diverse categories,
+the platform serves as an invaluable resource for analyzing user
+behavior and preferences.
 
-To address this problem, we have adopted a robust machine learning approach, employing and comparing multiple classification models, including Logistic Regression, k-Nearest Neighbors (kNN), Random Forest, Support Vector Machines (SVM), and Extreme Gradient Boosting (XGBoost). By systematically evaluating the performance of these models, we aim to determine the most effective classifier for predicting app success.
+The key to an app's success lies in understanding the intricate
+relationships between various features, such as app category, ratings,
+reviews, content suitability, and technical compatibility. Identifying
+patterns within these factors enables developers to design apps that
+align with user expectations, thereby increasing downloads, engagement,
+and retention rates. In this project, we leverage the comprehensive
+dataset from the Google Play Store to predict app success based on these
+features.
 
-This analysis not only provides actionable insights for app developers and stakeholders but also contributes to the broader understanding of user dynamics and preferences in the app ecosystem. Through this research, we aim to bridge the gap between user expectations and app design, empowering developers to make data-driven decisions that enhance user satisfaction and engagement.
+To address this problem, we have adopted a robust machine learning
+approach, employing and comparing multiple classification models,
+including Logistic Regression, k-Nearest Neighbors (kNN), Random Forest,
+Support Vector Machines (SVM), and Extreme Gradient Boosting (XGBoost).
+By systematically evaluating the performance of these models, we aim to
+determine the most effective classifier for predicting app success.
 
-</div>
-
+This analysis not only provides actionable insights for app developers
+and stakeholders but also contributes to the broader understanding of
+user dynamics and preferences in the app ecosystem. Through this
+research, we aim to bridge the gap between user expectations and app
+design, empowering developers to make data-driven decisions that enhance
+user satisfaction and engagement.
+:::
 
 # **Exploratory Data Analysis (EDA)**
 
 ### Dataset Overview
-<div style="text-align: justify;">
-The dataset used in this study is a popular collection of Google Play Store apps, sourced from Kaggle (faisaljanjua0555, 2023). It contains detailed information about 10,841 apps, organized across 13 variables, with each row representing an individual app. The dataset covers a range
-of app attributes, such as ratings, reviews, size, category, installs, price, and content rating, providing valuable insights into the
-characteristics that contribute to app popularity and user engagement. This comprehensive data serves as a foundation for analyzing patterns in
-user behavior, app performance, and trends within the mobile app ecosystem. 
-</div>
+
+::: {style="text-align: justify;"}
+The dataset used in this study is a popular collection of Google Play
+Store apps, sourced from Kaggle (faisaljanjua0555, 2023). It contains
+detailed information about 10,841 apps, organized across 13 variables,
+with each row representing an individual app. The dataset covers a range
+of app attributes, such as ratings, reviews, size, category, installs,
+price, and content rating, providing valuable insights into the
+characteristics that contribute to app popularity and user engagement.
+This comprehensive data serves as a foundation for analyzing patterns in
+user behavior, app performance, and trends within the mobile app
+ecosystem.
+:::
 
 ### Data Cleaning
-<div style="text-align: justify;">
-The Google Play Store dataset, as analyzed, contains missing values and inconsistent formats across various columns. To clean and prepare this
-dataset for analysis, several steps were taken to address these data quality issues. Here is an overview of how missing records were managed
+
+::: {style="text-align: justify;"}
+The Google Play Store dataset, as analyzed, contains missing values and
+inconsistent formats across various columns. To clean and prepare this
+dataset for analysis, several steps were taken to address these data
+quality issues. Here is an overview of how missing records were managed
 and further improvements that could be considered:
 
-- Duplicates: Removed 1,181 duplicate apps, reducing the dataset from 10,841 to 9,660 unique apps to eliminate redundancy.
-- Price: Cleaned dollar symbols for numeric conversion and removed rows with missing or blank prices.
-- Type: Replaced one missing value with "Free" based on a logical inference.
-- Size: Standardized sizes (KB/MB) and replaced "Varies with device" entries with mean sizes by category.
-- Installs: Removed symbols (+, commas) and cleaned non-numeric entries for numeric conversion.
-- Rating & Reviews: Imputed 1,463 missing ratings with category-wise means; converted reviews to integer format.
-- Last Updated: Standardized date format for accuracy.
-- Category & Genres: Retained Category while removing redundant Genres for clarity.
-- Current Version: Excluded due to inconsistencies across records.
-- Android Version: Removed two rows with 'NaN' values.
+-   Duplicates: Removed 1,181 duplicate apps, reducing the dataset from
+    10,841 to 9,660 unique apps to eliminate redundancy.
+-   Price: Cleaned dollar symbols for numeric conversion and removed
+    rows with missing or blank prices.
+-   Type: Replaced one missing value with "Free" based on a logical
+    inference.
+-   Size: Standardized sizes (KB/MB) and replaced "Varies with device"
+    entries with mean sizes by category.
+-   Installs: Removed symbols (+, commas) and cleaned non-numeric
+    entries for numeric conversion.
+-   Rating & Reviews: Imputed 1,463 missing ratings with category-wise
+    means; converted reviews to integer format.
+-   Last Updated: Standardized date format for accuracy.
+-   Category & Genres: Retained Category while removing redundant Genres
+    for clarity.
+-   Current Version: Excluded due to inconsistencies across records.
+-   Android Version: Removed two rows with 'NaN' values.
 
 Additional Transformations:
 
-- Review & Install Categories: Binned data for balanced representation across reviews and installs.
-- Log Transformed Installs: Applied log transformation to normalize install data and reduce skewness.
-- Update Category: Classified updates as "Old" or "Recent" to analyze the impact on performance metrics.
-</div>
+-   Review & Install Categories: Binned data for balanced representation
+    across reviews and installs.
+-   Log Transformed Installs: Applied log transformation to normalize
+    install data and reduce skewness.
+-   Update Category: Classified updates as "Old" or "Recent" to analyze
+    the impact on performance metrics.
+:::
 
+# **Data Visualizations**
 
-# Data Visualizations
-<div style="text-align: justify;">
-Key Insights: Highlight patterns, distributions, correlations, or anomalies in the dataset (e.g., visualizations like histograms, scatter plots, or correlation matrices).
-</div>
-
+::: {style="text-align: justify;"}
+Key Insights: Highlight patterns, distributions, correlations, or
+anomalies in the dataset (e.g., visualizations like histograms, scatter
+plots, or correlation matrices).
+:::
 
 # **SMART Question**
-<div style="text-align: justify;">
-Which are the top 5 app categories, as identified by classification models (logistic regression, SVM, XGBoost, KNN, and random forest), that significantly influenced app success (measured by installs) based on app data from 2010 to 2018, and how accurately can these models predict success trends within this time period?
-</div>
 
-
+::: {style="text-align: justify;"}
+Which are the top 5 app categories, as identified by classification
+models (logistic regression, SVM, XGBoost, KNN, and random forest), that
+significantly influenced app success (measured by installs) based on app
+data from 2010 to 2018, and how accurately can these models predict
+success trends within this time period?
+:::
 
 # **Model Selection Process**
 
-* Logistic Regression:
--> Why?
--> Advs
--> Explain Parameter Selection
+## Logistic Regression
 
-* K-Nearest Neighbour:
--> Why?
--> Advs
--> Explain Parameter Selection
+Logistic Regression model is considered because it is an interpretable
+model that is commonly used for classification such as in this project,
+the target varibale is binary (Low or High Installs). It estimates the
+probability of an outcome, providing clear insights into the
+relationship between predictors and the target variable through
+interpretable coefficients. In addition, logistic regression performs
+well with proper preprocessing and can handle multicollinearity and
+feature selection effectively using regularization techniques. While it
+may not be ideal for capturing complex, non-linear relationships,
+logistic regression can be a strong baseline for this problem.
 
-* Random Forest Classifier:
-Random Forest is an ensemble machine learning algorithm that constructs multiple decision trees during training and combines their predictions to improve accuracy and prevent overfitting. Each tree is trained on a random subset of the data, and features are randomly sampled at each split, which reduces correlation between trees and increases generalization. For classification problems like ours, Random Forest predicts the class by aggregating votes from all trees and selecting the majority vote.
+The initial logistic model includes all 39 variables and has the AIC
+value of 2881.6. The stepwise selection is proceeded based on this
+logistic model. The result shows that the stepwise model has AIC value
+of 2850, indicating that this model performs better than the initial
+model. The stepwise model includes 16 out of 39 variables: `Rating`,
+`Reviews`, `Price`, `Content.Rating`, `Last.Updated`, `catBUSINESS`,
+`catEDUCATION`, `catEVENTS`, `catFINANCE`, `catHOUSE_AND_HOME`,
+`catMAPS_AND_NAVIGATION`, `catMEDICAL`, `catNEWS_AND_MAGAZINES` ,
+`catPHOTOGRAPHY`, `catSPORTS`, `catVIDEO_PLAYERS`, `catPERSONALIZATION`,
+`catBEAUTY`, `catPARENTING.`
 
--> Advs
--> Explain Parameter Selection
+In Figure 1., from this stepwise model, the top five importance features
+from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
+`Content.Rating`. The top 5 categories that have most impacted in this
+model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
+`HOUSE_AND_HOME`.
 
-* XG Boost:
--> Why?
--> Advs
--> Explain Parameter Selection
+::: {style="text-align: center;"}
+**Figure 1**. Top 10 Important Features
+:::
 
+![](images/clipboard-1184837473.png)
 
-* Support Vector Machine:
--> Why?
--> Advs
--> Explain Parameter Selection
+## K-Nearest Neighbour
+-\> Why? -\> Advs -\> Explain Parameter
 
+```         
+Selection
+```
 
+## Random Forest Classifier
+Random Forest is an ensemble machine
 
+```         
+learning algorithm that constructs multiple decision trees during
+training and combines their predictions to improve accuracy and
+prevent overfitting. Each tree is trained on a random subset of the
+data, and features are randomly sampled at each split, which reduces
+correlation between trees and increases generalization. For
+classification problems like ours, Random Forest predicts the class
+by aggregating votes from all trees and selecting the majority vote.
+```
+
+-\> Advs -\> Explain Parameter Selection
+
+## XG Boost
+
+-\> Why? -\> Advs -\> Explain Parameter Selection
+
+## Support Vector Machine
+
+-\> Why? -\> Advs -\> Explain Parameter
+
+```         
+Selection
+```
 
 # **Model Evaluation**
-<div style="text-align: justify;">
-Performance Metrics: Include accuracy, ROC-AUC, sensitivity, specificity, and any other relevant metrics.
-Confusion Matrix: Summarize performance using the confusion matrix.
-OOB Error: Discuss the OOB error as an internal validation measure.
-Training vs. Testing Accuracy: Analyze and compare performance on different datasets to check for overfitting.
-</div>
 
+::: {style="text-align: justify;"}
+Performance Metrics: Include accuracy, ROC-AUC, sensitivity,
+specificity, and any other relevant metrics. Confusion Matrix: Summarize
+performance using the confusion matrix. OOB Error: Discuss the OOB error
+as an internal validation measure. Training vs. Testing Accuracy:
+Analyze and compare performance on different datasets to check for
+overfitting.
+:::
+
+## Logistic Model
+
+### Confusion Matrix
+
+The confusion matrix shows that the model correctly classified 5763
+instances of class 0 and 4580 instances of class 1, with 370 false
+positives and 127 false negatives. The overall accuracy is 95.42%,
+indicating a high proportion of correct predictions, with a 95%
+confidence interval of (95.0%, 95.8%). The model achieves a Kappa
+statistic of 0.9072, reflecting strong agreement beyond chance.
+Sensitivity (recall for class 0) is 97.84%, and specificity (ability to
+identify class 1) is 92.53%, showing balanced performance. Positive
+predictive value (precision for class 0) is 93.97%, and negative
+predictive value (precision for class 1) is 97.30%. The balanced
+accuracy, accounting for both sensitivity and specificity, is 95.18%.
+The McNemar's test p-value (\<2.2e-16) suggests significant differences
+between misclassifications, and the prevalence of class 0 is 54.34%.
+
+::: {style="text-align: center;"}
+**Figure 1**. Confusion Matrix
+:::
+
+![](images/clipboard-2963178691.png)
+
+### Precision, Racall Rate, F1-Score
+
+The model achieves a precision of 93.97%, indicating that 93.97% of the
+predictions for class 0 are correct. Its recall is 97.84%, meaning the
+model successfully identifies 97.84% of all actual class 0 instances.
+The F1 score, which balances precision and recall, is 95.87%,
+highlighting the model's strong overall performance in accurately and
+consistently classifying instances of class 0. This combination of high
+precision and recall reflects the model's effectiveness in minimizing
+both false positives and false negatives.
+
+### ROC-AUC
+
+The model achieves an AUC (Area Under the Curve) score of 0.9923,
+indicating excellent performance in distinguishing between classes. This
+demonstrates the model's strong predictive power and effectiveness in
+separating class 0 and class 1 instances.
+
+::: {style="text-align: center;"}
+**Figure 1**. ROC-AUC Curve
+:::
+
+![](images/clipboard-2219338.png)
 
 # **Predictions and Interpretability**
-<div style="text-align: justify;">
-Prediction Use Cases: Examples of actionable insights from the model (e.g., predicting app install categories, identifying trends).
-Feature Importance: Highlight the most significant predictors identified by the model.
-</div>
 
+::: {style="text-align: justify;"}
+Prediction Use Cases: Examples of actionable insights from the model
+(e.g., predicting app install categories, identifying trends). Feature
+Importance: Highlight the most significant predictors identified by the
+model.
+:::
 
 # **Reliability and Limitations**
-<div style="text-align: justify;">
-Reliability of Results: Discuss how reliable the results are, based on metrics, cross-validation, and OOB error.
-*Limitations:*
-Bias in the dataset.
-Model interpretability limitations.
-Potential overfitting.
-Mitigation Strategies: Discuss how limitations were addressed (e.g., feature engineering, parameter tuning).
-</div>
 
+::: {style="text-align: justify;"}
+Reliability of Results: Discuss how reliable the results are, based on
+metrics, cross-validation, and OOB error. *Limitations:* Bias in the
+dataset. Model interpretability limitations. Potential overfitting.
+Mitigation Strategies: Discuss how limitations were addressed (e.g.,
+feature engineering, parameter tuning).
+:::
 
 # **Future Work**
-<div style="text-align: justify;">
-Improvements: Suggest ways to improve the model, such as:
-Incorporating additional data.
-Trying advanced algorithms or ensembles.
-Refining features or engineering new ones.
-Further Analysis: Mention areas where additional analysis could add value (e.g., testing for seasonality, applying domain knowledge).
-</div>
 
+::: {style="text-align: justify;"}
+Improvements: Suggest ways to improve the model, such as: Incorporating
+additional data. Trying advanced algorithms or ensembles. Refining
+features or engineering new ones. Further Analysis: Mention areas where
+additional analysis could add value (e.g., testing for seasonality,
+applying domain knowledge).
+:::
 
 # **Conclusion**
-<div style="text-align: justify;">
+
+::: {style="text-align: justify;"}
 Summary of Findings: Summarize the outcomes and their implications.
 Impact: Highlight the potential impact of your analysis and predictions.
-</div>
-
+:::
 
 # **References**
-<div style="text-align: justify;">
+
+::: {style="text-align: justify;"}
 Use APA style to cite all sources.
-</div>
+:::
