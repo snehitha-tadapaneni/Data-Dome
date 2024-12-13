@@ -140,6 +140,18 @@ Additional Transformations:
 
 ![](Inst_cat.png){style="display: block; margin: 0 auto;"}
 
+# **Data Pre-processing**
+
+::: {style="text-align: justify;"}
+- *Category Encoding*<br>
+The Category column was transformed into dummy variables using model.matrix(), and the original column was removed. Column names were standardized by replacing spaces with underscores.
+- *Installs Classification*<br>
+The Installs column was converted into a binary variable (Low Installs as 0 and High Installs as 1) based on the median value. A histogram was created to visualize the distribution of categories.
+- *Last Updated Transformation*<br>
+The Last.Updated column was converted into numeric values representing the days since the most recent update, ensuring a quantitative measure of recency.
+
+
+-\>why choose installs as target variable????????
 
 :::
 
