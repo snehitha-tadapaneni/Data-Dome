@@ -176,19 +176,22 @@ Selection
 ```
 
 ## Random Forest Classifier
-Random Forest is an ensemble machine
 
-```         
-learning algorithm that constructs multiple decision trees during
-training and combines their predictions to improve accuracy and
-prevent overfitting. Each tree is trained on a random subset of the
-data, and features are randomly sampled at each split, which reduces
-correlation between trees and increases generalization. For
-classification problems like ours, Random Forest predicts the class
-by aggregating votes from all trees and selecting the majority vote.
-```
+The Random Forest classifier is considered because it is a robust and flexible model that performs well in classification tasks, such as in this project, where the target variable is binary (Low or High Installs). It combines multiple decision trees to produce a more accurate and stable prediction through an ensemble approach. Random Forest handles non-linear relationships effectively and is resistant to overfitting due to its random sampling and feature selection techniques. Additionally, it provides insights into feature importance, which can guide further analysis and feature selection.
 
--\> Advs -\> Explain Parameter Selection
+The initial Random Forest model is built using all 39 variables, and its performance metrics, such as accuracy and F1-score, demonstrate its capability to classify effectively. Feature importance analysis highlights the top predictors contributing to the model's performance. These include Reviews, Price, Rating, Last.Updated, Size, cat_MEDICAL, cat_EVENTS, cat_ENTERTAINMENT, cat_EDUCATION, cat_BUSINESS, and cat_GAME.
+
+The model benefits from hyperparameter tuning to optimize its performance, ensuring that it balances complexity and accuracy. Although Random Forest may lack the direct interpretability of logistic regression, its ability to model complex interactions and rank features based on importance makes it a strong candidate for this classification task. Due to the overfitting ability of the model, I have tuned the 'mtry' taking values as 2,4,6,8,10. The model's ability to overfit has reduced for the value 'mtry': 4.
+
+In Figure 2., from the mean decrease accuracy values, the top five importance features
+from this model is: 'Reviews', 'Price', 'Rating', 'Last.Updated', 'Size'. The top 5 categories that have most impacted in this
+model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT', 'cat_EDUCATION', 'cat_BUSINESS', and 'cat_GAME'.
+
+::: {style="text-align: center;"}
+**Figure 2**. Top 10 Important Features for Random Forest Classifier
+:::
+
+![](images/clipboard-1184837473.png)
 
 ## XG Boost
 
