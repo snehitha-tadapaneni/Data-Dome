@@ -115,9 +115,32 @@ Additional Transformations:
 # **Data Visualizations**
 
 ::: {style="text-align: justify;"}
-Key Insights: Highlight patterns, distributions, correlations, or
-anomalies in the dataset (e.g., visualizations like histograms, scatter
-plots, or correlation matrices).
+**Figure 1**. Installs vs reviews
+[description]
+
+![](Inst_reviews.png){style="display: block; margin: 0 auto;"}
+
+
+**Figure 1**. Installs vs ratings
+[description]
+
+![](Inst_rating.png){style="display: block; margin: 0 auto;"}
+
+
+
+**Figure 1**. Installs vs Price
+
+[description]
+![](Inst_price.png){style="display: block; margin: 0 auto;"}
+
+
+
+**Figure 1**. Installs vs Category
+[description]
+
+![](Inst_cat.png){style="display: block; margin: 0 auto;"}
+
+
 :::
 
 # **SMART Question**
