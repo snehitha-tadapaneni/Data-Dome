@@ -166,7 +166,7 @@ model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
 **Figure 1**. Top 10 Important Features
 :::
 
-![](images/clipboard-1184837473.png)
+![](images/clipboard-1184837473.png){style="display: block; margin: 0 auto;"}
 
 ## K-Nearest Neighbour
 -\> Why? -\> Advs -\> Explain Parameter
@@ -191,7 +191,7 @@ model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT', 'cat_EDUCATION', 'cat
 **Figure 2**. Top 10 Important Features for Random Forest Classifier
 :::
 
-![](images/clipboard-1184837473.png)
+![](feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
 
 ## XG Boost
 
@@ -235,10 +235,10 @@ The McNemar's test p-value (\<2.2e-16) suggests significant differences
 between misclassifications, and the prevalence of class 0 is 54.34%.
 
 ::: {style="text-align: center;"}
-**Figure 1**. Confusion Matrix
+**Figure 1**. Confusion Matrix of Logistic Regression
 :::
 
-![](images/clipboard-2963178691.png)
+![](images/clipboard-2963178691.png){style="display: block; margin: 0 auto;"}
 
 ### Precision, Racall Rate, F1-Score
 
@@ -262,7 +262,32 @@ separating class 0 and class 1 instances.
 **Figure 1**. ROC-AUC Curve
 :::
 
-![](images/clipboard-2219338.png)
+![](images/clipboard-2219338.png){style="display: block; margin: 0 auto;"}
+
+## Random FOrest Classifier
+
+### Confusion Matrix
+The Random Forest model correctly classified 4425 instances of class 0 and 2918 instances of class 1, with 171 false positives and 202 false negatives. This results in an overall accuracy of 95.4%, indicating a high proportion of correct predictions. The performance is consistent across datasets, with a training accuracy of 96.3%, testing accuracy of 95.4%, and an Out-Of-Bag (OOB) accuracy of 95.2%, reflecting the model's robustness and minimal overfitting.
+
+::: {style="text-align: center;"}
+**Figure 3**. Confusion Matrix of Random Forest
+:::
+
+![](cm_RF.png){style="display: block; margin: 0 auto;"}
+
+### Graph Analysis: Error Rates and Model Stability
+The graph in the slide illustrates the error rates for the Random Forest model as the number of trees increases.
+
+*Out-Of-Bag (OOB) Error:* The black line represents the OOB error rate, which stabilizes at a low level as the model grows more trees. This indicates that adding more trees contributes to better performance without overfitting.
+*Class 1 and Class 2 Errors:* The red and green lines represent the error rates for class 1 and class 2, respectively. Both error rates decrease rapidly as the number of trees increases and stabilize, demonstrating the model's ability to effectively classify instances of both classes.
+The error analysis shows that the model achieves convergence, with consistently low error rates across all classes, highlighting the reliability of the Random Forest classifier.
+As, per the graph, the model is pretty reliable with generalizability.
+
+::: {style="text-align: center;"}
+**Figure 3**. Confusion Matrix of Random Forest
+:::
+
+![](RF_eval.png){style="display: block; margin: 0 auto;"}
 
 # **Predictions and Interpretability**
 
