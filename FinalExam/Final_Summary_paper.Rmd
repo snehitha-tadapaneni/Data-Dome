@@ -118,6 +118,7 @@ Additional Transformations:
 Key Insights: Highlight patterns, distributions, correlations, or
 anomalies in the dataset (e.g., visualizations like histograms, scatter
 plots, or correlation matrices).
+
 :::
 
 # **SMART Question**
@@ -129,6 +130,38 @@ significantly influenced app success (measured by installs) based on app
 data from 2010 to 2018, and how accurately can these models predict
 success trends within this time period?
 :::
+
+::: {style="text-align: center;"}
+**Figure 1**. Installs vs Category
+:::
+
+![](images/Installs-Categories.png)
+
+From Figure 1, it could be observed that the top 5 categories having highest Installs are Game, Communication, Tools, Productivity, Social.
+
+::: {style="text-align: center;"}
+**Figure 2**. Installs vs Reviews
+:::
+
+![](images/Installs-Reviews.png)
+
+From Figure 2, It is evident that for higher Reviews the installs range is higher, indicating higher Installs for higher Reviews.
+
+::: {style="text-align: center;"}
+**Figure 3**. Installs vs Rating
+:::
+
+
+![](images/Installs-Rating.png)
+From Figure 3, It could be seen that for high installs the ratings are clustered in the higher range
+
+::: {style="text-align: center;"}
+**Figure 4**. Installs vs Price
+:::
+
+![](images/Installs-Price.png)
+
+From Figure 4, The installs are higher for apps which are free and decrease in installs as the price increases, indicating better to have a free app for high installs.
 
 # **Model Selection Process**
 
@@ -156,14 +189,14 @@ model. The stepwise model includes 16 out of 39 variables: `Rating`,
 `catPHOTOGRAPHY`, `catSPORTS`, `catVIDEO_PLAYERS`, `catPERSONALIZATION`,
 `catBEAUTY`, `catPARENTING.`
 
-In Figure 1., from this stepwise model, the top five importance features
+In Figure 5., from this stepwise model, the top five importance features
 from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
 `Content.Rating`. The top 5 categories that have most impacted in this
 model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
 `HOUSE_AND_HOME`.
 
 ::: {style="text-align: center;"}
-**Figure 1**. Top 10 Important Features
+**Figure 5**. Top 10 Important Features
 :::
 
 ![](images/clipboard-1184837473.png)
@@ -179,7 +212,7 @@ Selection
 Random Forest is an ensemble machine
 
 ```         
-learning algorithm that constructs multiple decision trees during
+Learning algorithm that constructs multiple decision trees during
 training and combines their predictions to improve accuracy and
 prevent overfitting. Each tree is trained on a random subset of the
 data, and features are randomly sampled at each split, which reduces
@@ -194,9 +227,35 @@ by aggregating votes from all trees and selecting the majority vote.
 
 -\> Why? -\> Advs -\> Explain Parameter Selection
 
-## Support Vector Machine
+## Support Vector Machine (SVM)
 
--\> Why? -\> Advs -\> Explain Parameter
+Support Vector Machines (SVM) are supervised learning models used for classification and regression tasks. For this dataset, a **linear SVM** model was chosen.
+
+### Why SVM?
+
+The decision to use a linear SVM instead of a non-linear SVM was based on the observed **linear relationship** between variables, as indicated by the correlation matrix. Additionally, the linear SVM demonstrated higher accuracy compared to the non-linear SVM for this data.
+
+Unlike logistic regression, SVM incorporates the concept of a **soft margin**. This allows for some misclassification to improve generalization. While this increases bias, it reduces variance, making SVM particularly effective when the boundary between classes is not perfectly clear.
+
+### Advantages
+
+SVM models are versatile and can be adjusted using their parameters to control flexibility. This adaptability makes them suitable for a variety of datasets. In addition, SVMs are effective for handling high-dimensional data and are robust to overfitting, especially when using appropriate regularization.
+
+### Parameters
+
+The linear SVM model has a key parameter, **C**, which controls the trade-off between margin width and classification error.  
+
+- **Lower C values** create wider margins, allowing more misclassifications but increasing generalization.  
+
+- **Higher C values** create narrower margins, aiming for more accurate classification but potentially leading to overfitting.  
+
+In this case, **C = 1000** was selected because it yielded the lowest Mean Squared Error (MSE) compared to other values which indicates that the classes in data are more linearly separable as seen in Figure 6. This balance ensured an optimal trade-off between accuracy and model complexity.
+
+::: {style="text-align: center;"}
+**Figure 6**. Finding Optimal C using MSE
+:::
+
+![](images/SVM-C.png)
 
 ```         
 Selection
@@ -217,7 +276,7 @@ overfitting.
 
 ### Confusion Matrix
 
-The confusion matrix shows that the model correctly classified 5763
+The confusion matrix in Figure 7 shows that the model correctly classified 5763
 instances of class 0 and 4580 instances of class 1, with 370 false
 positives and 127 false negatives. The overall accuracy is 95.42%,
 indicating a high proportion of correct predictions, with a 95%
@@ -232,7 +291,7 @@ The McNemar's test p-value (\<2.2e-16) suggests significant differences
 between misclassifications, and the prevalence of class 0 is 54.34%.
 
 ::: {style="text-align: center;"}
-**Figure 1**. Confusion Matrix
+**Figure 7**. Confusion Matrix
 :::
 
 ![](images/clipboard-2963178691.png)
@@ -250,16 +309,54 @@ both false positives and false negatives.
 
 ### ROC-AUC
 
-The model achieves an AUC (Area Under the Curve) score of 0.9923,
+The model achieves an AUC (Area Under the Curve) score of 0.9923 as seen from Figure 8,
 indicating excellent performance in distinguishing between classes. This
 demonstrates the model's strong predictive power and effectiveness in
 separating class 0 and class 1 instances.
 
 ::: {style="text-align: center;"}
-**Figure 1**. ROC-AUC Curve
+**Figure 8**. ROC-AUC Curve
 :::
 
 ![](images/clipboard-2219338.png)
+
+## SVM
+### Confusion Matrix
+
+::: {style="text-align: center;"}
+**Figure 9**. Confusion Matrix
+:::
+
+![](images/SVM-Confusion.png)
+In Figure 9:
+
+**Strong Classification**: The majority of predictions lie along the diagonal (True Negatives and True Positives), indicating that the model performs well in distinguishing between the two classes.
+
+**Low Error Rates**: Off-diagonal elements (False Positives and False Negatives) are relatively small, suggesting minimal misclassification.
+
+**Class Imbalance Impact**: A slightly higher number of True Negatives (1441) compared to True Positives (1123) may be attributed to a mild class imbalance, with slightly more instances belonging to class 0 than class 1.
+
+**Balanced Performance**: Despite this imbalance, the model demonstrates effective handling of both classes, with errors distributed proportionally and no significant bias toward either class.
+
+### Precision, Recall, and F1-Score
+
+The model achieves a precision of **92.10%** for class 1, indicating that 92.10% of the predicted class 1 instances are correct. Its recall for class 1 is **97.33%**, meaning the model successfully identifies 97.33% of all actual class 1 instances.  
+
+For class 0, the precision is **97.91%**, indicating that 97.91% of the predicted class 0 instances are correct, while the recall is **92.67%**, showing that 92.67% of all actual class 0 instances are correctly identified.  
+
+The F1 score, which balances precision and recall, is **94.65%** for class 1 and **95.20%** for class 0, reflecting the model's strong overall performance. This combination of high precision and recall demonstrates the model's ability to minimize false positives and false negatives effectively, ensuring reliable and consistent classification.
+
+
+
+### ROC
+
+::: {style="text-align: center;"}
+**Figure 10**. Confusion Matrix
+:::
+
+![](images/SVM-ROC.png)
+
+As observed from Figure 10, AUC values close to 1 suggest robust predictive capabilities, and in this case, the model excels at minimizing misclassification. These results confirm that the linear SVM is a suitable choice for this dataset, effectively capturing the linear relationships between variables while maintaining reliable generalization.
 
 # **Predictions and Interpretability**
 
@@ -268,6 +365,30 @@ Prediction Use Cases: Examples of actionable insights from the model
 (e.g., predicting app install categories, identifying trends). Feature
 Importance: Highlight the most significant predictors identified by the
 model.
+
+## SVM
+
+### Insights from SVM model : 
+Apps with high installs tend to share features such as higher review counts and potentially other engagement metrics  ratings and active user feedback. These factors should be a focal point in marketing strategies to boost installs.
+
+### Feature Importance : 
+
+::: {style="text-align: center;"}
+**Figure 11**. Top Categories
+:::
+
+![](images/SVM-Feature.png)
+
+
+**Top 5 Features** :
+The top five features influencing app installs are Reviews, Ratings, Last Updated, Price, and Size. Reviews are critical, as positive user feedback significantly enhances an app's appeal. Higher ratings correlate with increased installs, reflecting user satisfaction. Frequent updates signal active support and improvements, boosting user trust. Additionally, free or low-cost apps tend to attract more users, while lighter apps that occupy less storage are preferred. Focusing on these features can enhance an app's competitiveness in the market.
+
+**Top 5 Categories** : 
+
+The leading categories for app installs are Medical, Fitness, Finance, Family, and News & Magazines. These categories indicate a strong demand for practical applications that address everyday needs. Medical and Fitness apps highlight the focus on health, while Finance apps emphasize financial management. Family-oriented apps cater to safe and engaging content for households and are reachable for a broader range of audience, and News & Magazines apps fulfill the need for reliable information. Targeting these popular categories can create opportunities for higher installs and greater market reach.
+
+
+
 :::
 
 # **Reliability and Limitations**
@@ -278,16 +399,34 @@ metrics, cross-validation, and OOB error. *Limitations:* Bias in the
 dataset. Model interpretability limitations. Potential overfitting.
 Mitigation Strategies: Discuss how limitations were addressed (e.g.,
 feature engineering, parameter tuning).
+
+## SVM 
+
+There is a slight indication of overfitting, as evidenced by the marginal difference between training and testing accuracies. While this overfitting is relatively minor and manageable, it is essential to monitor to ensure that the model maintains its generalization ability on unseen data.
+
+Additionally, the interpretability of the model poses challenges, as SVMs often create complex decision boundaries that are difficult to understand
+
 :::
 
 # **Future Work**
 
 ::: {style="text-align: justify;"}
+
+## SVM
 Improvements: Suggest ways to improve the model, such as: Incorporating
 additional data. Trying advanced algorithms or ensembles. Refining
 features or engineering new ones. Further Analysis: Mention areas where
 additional analysis could add value (e.g., testing for seasonality,
 applying domain knowledge).
+
+## SVM 
+
+Expanding the dataset with diverse samples can improve generalization and reduce bias.
+
+Trying algorithms like Random Forests or Gradient Boosting and using ensemble methods can enhance accuracy.
+
+Conducting further feature engineering such as adding interaction terms to create new relevant features can capture hidden patterns and improve predictive capabilities.
+
 :::
 
 # **Conclusion**
