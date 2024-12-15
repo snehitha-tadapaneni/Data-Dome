@@ -225,7 +225,82 @@ by aggregating votes from all trees and selecting the majority vote.
 
 ## XG Boost
 
--\> Why? -\> Advs -\> Explain Parameter Selection
+### Why Gradient boost 
+This project utilized a gradient boosting algorithm to predict "Low Installs" vs. "High Installs" for Play Store apps. Gradient boosting was chosen for its ability to handle complex relationships, mixed data types, and imbalanced datasets, while providing feature importance insights and high predictive power.                
+
+### Modelling:
+After the data has been divided into 80% training data and 20% testing data.Following are the parameters for building the model:
+
+::: {style="text-align: justify;"}
+-   Objective: The model is designed for binary classification
+-   Evaluation metric:optimizing logloss 
+-   max depth of 6 to control tree complexity, 
+-   learning rate (ETA) of 0.1 for gradual training, 
+-   subsample of 0.8 to reduce overfitting by sampling 80% of the data, and 
+-   colsample_bytree set to 0.8 to randomize feature selection. 
+::: 
+These settings have balanced  model performance, generalization, and training stability.
+
+### Confusion matrix:
+
+::: {style="text-align: center;"}
+
+**Figure 1**. Confusion Matrix of Gradient Boosting
+![](images/confusionmatrix_GB.png)
+:::
+The confusion matrix reveals notable classification challenges. The model accurately identifies 65 true positives and 71 true negatives but misclassifies a substantial number of cases: 1414 "Low Installs" as "High Installs" and 1702 "High Installs" as "Low Installs." These high misclassification rates indicate the model struggles to effectively differentiate between the two classes. This results in poor recall for "Low Installs" and low precision for "High Installs”.
+
+
+### Evaluation of the model: 
+For classification tasks, Gradient Boosting models are evaluated on their ability to predict categorical labels.
+
+**Logloss:**
+
+::: {style="text-align: center;"}
+
+**Figure 2**. LogLoss over iterations
+![](images/Logloss_GB.png)
+:::
+
+Logloss evaluates classification models by measuring how close predicted probabilities are to actual class labels, with lower values indicating better performance. Monitoring overfitting involves checking if train-logloss decreases while test-logloss increases. In this model, train and test logloss values decrease with a slight gap, indicating minimal overfitting. Both curves plateau, signaling convergence and stable performance. The final logloss (~0.61) is moderate, with potential for improvement through tuning or adjustments to enhance predictive accuracy.
+
+
+
+
+
+
+**ROC/AUC curve:**
+
+::: {style="text-align: center;"}
+
+**Figure 3**. ROC Curve for Gradient Boosting
+![](images/ROC_GB.png)
+:::
+
+The ROC curve demonstrates strong model performance, as the blue curve closely approaches the top-left corner, indicating high sensitivity and specificity. This signifies the model's excellent ability to distinguish between classes. The red dashed line represents random guessing, and the model's performance clearly surpasses this baseline. The area under the curve (AUC) would be high, reflecting robust discriminative capability. Overall, the ROC curve highlights the model's reliability in binary classification tasks.
+
+**Accuracy, precision and recall:**
+
+Accuracy (%):95.82
+Precision(%): 96
+Recall(%):96.32 
+
+
+The model achieved strong overall performance, with an accuracy of 95.82%, precision of 96.00%, and recall of 96.32%. These metrics highlight the model's reliability in predicting "High Installs" while effectively minimizing false positives and false negatives.
+
+### Feature importance:
+::: {style="text-align: center;"}
+**Figure 4**. Feature Importance of Gradient Boosting
+
+![](images/FeatureImp_GB.png)
+
+:::
+
+*Reviews Dominance:* The high importance of Reviews suggests that the number of reviews is strongly correlated with the success metric. It might reflect the popularity or credibility of an app.
+
+*Secondary Factors:* Rating, Last.Updated, Price, and Size might provide additional predictive power but are not as influential as Reviews.
+
+*Categories:* The low importance of categorical features (catMEDICAL, catFAMILY, etc.) indicates that these categories do not contribute much to the predictive task. This might be due to insufficient variance or weak correlation with the target variable.
 
 ## Support Vector Machine (SVM)
 
