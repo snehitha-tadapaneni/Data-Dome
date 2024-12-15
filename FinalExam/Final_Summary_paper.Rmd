@@ -250,10 +250,8 @@ Selection
 
 ## Random Forest Classifier
 
-<<<<<<< HEAD
 The Random Forest classifier is considered because it is a robust and flexible model that performs well in classification tasks, such as in this project, where the target variable is binary (Low or High Installs). It combines multiple decision trees to produce a more accurate and stable prediction through an ensemble approach. Random Forest handles non-linear relationships effectively and is resistant to overfitting due to its random sampling and feature selection techniques. Additionally, it provides insights into feature importance, which can guide further analysis and feature selection.
-=======
-```         
+         
 Learning algorithm that constructs multiple decision trees during
 training and combines their predictions to improve accuracy and
 prevent overfitting. Each tree is trained on a random subset of the
@@ -261,8 +259,7 @@ data, and features are randomly sampled at each split, which reduces
 correlation between trees and increases generalization. For
 classification problems like ours, Random Forest predicts the class
 by aggregating votes from all trees and selecting the majority vote.
-```
->>>>>>> 50990e45b0a6525beadbcf0c1f717275661a6ae2
+
 
 The initial Random Forest model is built using all 39 variables, and its performance metrics, such as accuracy and F1-score, demonstrate its capability to classify effectively. Feature importance analysis highlights the top predictors contributing to the model's performance. These include Reviews, Price, Rating, Last.Updated, Size, cat_MEDICAL, cat_EVENTS, cat_ENTERTAINMENT, cat_EDUCATION, cat_BUSINESS, and cat_GAME.
 
