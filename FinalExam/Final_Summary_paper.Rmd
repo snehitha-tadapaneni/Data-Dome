@@ -1,5 +1,5 @@
 ---
-title: "Analysis On Google Play Store Apps"
+title: "**Analysis On Google Play Store Apps**"
 author: Snehitha Tadapaneni, Sai Rachana Kandikattu, Amrutha Jayachandradhara, Wilona
   Nguyen, Pramod Krishnachari
 date: "`r Sys.Date()`"
@@ -188,7 +188,7 @@ focusing on "Installs" as the target variable aligns with the objective
 of optimizing app performance and success.
 :::
 
-# **Model Selection Process**
+# **Model's Development Process**
 
 ## Logistic Regression
 
@@ -221,167 +221,6 @@ excellent baseline for benchmarking classification problems and can be
 extended to handle multi-class and ordered outcomes. With wide
 applicability across fields such as medicine, finance, and marketing,
 logistic regression remains a fundamental tool for predictive modeling.
-
-## K-Nearest Neighbors
-
-### Why KNN?
-
-The decision to use **K-Nearest Neighbors (KNN)** was motivated by the need to examine whether the data exhibited a **non-linear relationship** and to explore if the data could naturally form clusters rather than adhering to a linear classification boundary. KNN is particularly effective for data with non-linear patterns due to its instance-based approach, where decisions are made locally using the nearest neighbors.
-
-
-
-### Parameters
-
-The **KNN parameter `K`** plays a crucial role in determining the model's performance:  
-
-- **Optimal Value of `K`**:  
-  - The value of `K` was optimized using a **cross-validation technique** to evaluate accuracy for different values of `K`.  
-  - After testing, the optimal value was found to be **`K = 7`**, having the highest accuracy
-
-- **Distance Metric**:  
-The **Euclidean Distance** was utilized as the distance measure, as this metric calculates the straight-line distance between points in the feature space, making it suitable for continuous numerical data as most of our data is numerical data
-
-
-
-### Advantages
-
-The KNN model achieved an accuracy of **76%**, which indicates that:
-
-- The relationship between the variables is **non-linear**, confirming the initial hypothesis.
-
-
-## Random Forest Classifier
-
-### Why Random Forest?
-
-The Random Forest classifier is considered because it is a robust and
-flexible model that performs well in classification tasks, such as in
-this project, where the target variable is binary (Low or High
-Installs). It combines multiple decision trees to produce a more
-accurate and stable prediction through an ensemble approach. Random
-Forest handles non-linear relationships effectively and is resistant to
-overfitting due to its random sampling and feature selection techniques.
-Additionally, it provides insights into feature importance, which can
-guide further analysis and feature selection.
-
-### Modelling
-
-The initial Random Forest model was built using all 39 variables, and
-its performance metrics, such as accuracy and F1-score, demonstrated its
-strong classification capability. To optimize the model, hyperparameter
-tuning was conducted to balance complexity and accuracy. Key parameters
-such as mtry (number of features considered at each split), ntree
-(number of trees in the forest), and nodesize (minimum size of terminal
-nodes) were fine-tuned. The tuning process evaluated mtry values of 2,
-4, 6, 8, and 10, with the optimal value determined to be 4, which
-significantly reduced the model's tendency to overfit. Adjusting these
-parameters ensured a better generalization of the model while
-maintaining high classification accuracy.
-
-### Advantages
-
-Random Forest offers several advantages that make it a strong candidate
-for classification tasks. It is highly robust and capable of modeling
-complex, non-linear relationships by aggregating results from multiple
-decision trees. This ensemble approach reduces the risk of overfitting,
-especially with proper parameter tuning. Additionally, the model
-provides feature importance rankings, offering insights into the
-predictors most relevant to the outcome. Random Forest performs well
-with large datasets and can handle a mix of categorical and continuous
-variables without requiring extensive preprocessing. Its ability to
-handle missing data and reduce variance through bootstrapping further
-enhances its reliability in predictive modeling tasks.
-
-## XG Boost
-
-### Why Gradient boost
-
-This project utilized a gradient boosting algorithm to predict "Low
-Installs" vs. "High Installs" for Play Store apps. Gradient boosting was
-chosen for its ability to handle complex relationships, mixed data
-types, and imbalanced datasets, while providing feature importance
-insights and high predictive power.
-
-### Modelling:
-
-After the data has been divided into 80% training data and 20% testing
-data.Following are the parameters for building the model:
-
-::: {style="text-align: justify;"}
--   Objective: The model is designed for binary classification
--   Evaluation metric:optimizing logloss
--   max depth of 6 to control tree complexity,
--   learning rate (ETA) of 0.1 for gradual training,
--   subsample of 0.8 to reduce overfitting by sampling 80% of the data,
-    and
--   colsample_bytree set to 0.8 to randomize feature selection.
-:::
-
-These settings have balanced model performance, generalization, and
-training stability.
-
-## Support Vector Machine (SVM)
-
-Support Vector Machines (SVM) are supervised learning models used for
-classification and regression tasks. For this dataset, a **linear SVM**
-model was chosen.
-
-### Why SVM?
-
-The decision to use a linear SVM instead of a non-linear SVM was based
-on the observed **linear relationship** between variables, as indicated
-by the correlation matrix. Additionally, the linear SVM demonstrated
-higher accuracy compared to the non-linear SVM for this data.
-
-Unlike logistic regression, SVM incorporates the concept of a **soft
-margin**. This allows for some misclassification to improve
-generalization. While this increases bias, it reduces variance, making
-SVM particularly effective when the boundary between classes is not
-perfectly clear.
-
-### Advantages
-
-SVM models are versatile and can be adjusted using their parameters to
-control flexibility. This adaptability makes them suitable for a variety
-of datasets. In addition, SVMs are effective for handling
-high-dimensional data and are robust to overfitting, especially when
-using appropriate regularization.
-
-### Parameters
-
-The linear SVM model has a key parameter, **C**, which controls the
-trade-off between margin width and classification error.
-
--   **Lower C values** create wider margins, allowing more
-    misclassifications but increasing generalization.
-
--   **Higher C values** create narrower margins, aiming for more
-    accurate classification but potentially leading to overfitting.
-
-In this case, **C = 1000** was selected because it yielded the lowest
-Mean Squared Error (MSE) compared to other values which indicates that
-the classes in data are more linearly separable as seen in Figure 5.
-This balance ensured an optimal trade-off between accuracy and model
-complexity.
-
-::: {style="text-align: center;"}
-**Figure 5**. Finding Optimal C using MSE
-:::
-
-![](images/SVM-C.png)
-
-# **Model Evaluation**
-
-::: {style="text-align: justify;"}
-Performance Metrics: Include accuracy, ROC-AUC, sensitivity,
-specificity, and any other relevant metrics. Confusion Matrix: Summarize
-performance using the confusion matrix. OOB Error: Discuss the OOB error
-as an internal validation measure. Training vs. Testing Accuracy:
-Analyze and compare performance on different datasets to check for
-overfitting.
-:::
-
-## Logistic Model
 
 ### Confusion Matrix
 
@@ -429,7 +268,68 @@ and effectiveness in separating class 0 and class 1 instances.
 
 ![](images/clipboard-2219338.png){style="display: block; margin: 0 auto;"}
 
+
+### Feature Importance :
+
+The initial logistic model includes all 39 variables and has the AIC
+value of 2881.6. The stepwise selection is proceeded based on this
+logistic model. The result shows that the stepwise model has AIC value
+of 2850, indicating that this model performs better than the initial
+model. The stepwise model includes 16 out of 39 variables: `Rating`,
+`Reviews`, `Price`, `Content.Rating`, `Last.Updated`, `catBUSINESS`,
+`catEDUCATION`, `catEVENTS`, `catFINANCE`, `catHOUSE_AND_HOME`,
+`catMAPS_AND_NAVIGATION`, `catMEDICAL`, `catNEWS_AND_MAGAZINES` ,
+`catPHOTOGRAPHY`, `catSPORTS`, `catVIDEO_PLAYERS`, `catPERSONALIZATION`,
+`catBEAUTY`, `catPARENTING.`
+
+In Figure 14., from this stepwise model, the top five importance features
+from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
+`Content.Rating`. The top 5 categories that have most impacted in this
+model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
+`HOUSE_AND_HOME`.
+
+::: {style="text-align: center;"}
+**Figure 14**. Top 10 Important Features
+:::
+
+![](images/clipboard-1184837473.png){style="display: block; margin: 0 auto;"}
+
+
+
 ## K-Nearest Neighbors
+
+### Why KNN?
+
+The decision to use **K-Nearest Neighbors (KNN)** was motivated by the need to examine whether the data exhibited a **non-linear relationship** and to explore if the data could naturally form clusters rather than adhering to a linear classification boundary. KNN is particularly effective for data with non-linear patterns due to its instance-based approach, where decisions are made locally using the nearest neighbors.
+
+### Confusion Matrix
+
+::: {style="text-align: center;"}
+**Figure 8**. Confusion Matrix
+:::
+
+![](images/KNN-Confusion.png) 
+
+
+
+### Parameters
+
+The **KNN parameter `K`** plays a crucial role in determining the model's performance:  
+
+- **Optimal Value of `K`**:  
+  - The value of `K` was optimized using a **cross-validation technique** to evaluate accuracy for different values of `K`.  
+  - After testing, the optimal value was found to be **`K = 7`**, having the highest accuracy
+
+- **Distance Metric**:  
+The **Euclidean Distance** was utilized as the distance measure, as this metric calculates the straight-line distance between points in the feature space, making it suitable for continuous numerical data as most of our data is numerical data
+
+
+
+### Advantages
+
+The KNN model achieved an accuracy of **76%**, which indicates that:
+
+- The relationship between the variables is **non-linear**, confirming the initial hypothesis.
 
 ### Confusion Matrix
 
@@ -476,7 +376,68 @@ Finally, the F1 score, which balances precision and recall, stands at **77.79%**
 
 As observed from Figure 9, the KNN model achieves an AUC of **0.832**, indicating moderate predictive capabilities. This performance suggests room for improvement, possibly due to linear relationships between the variables that KNN may not fully leverage.
 
+
+### Feature Importance :
+
+Apps with high installs tend to share features such as higher review
+counts and More frequent updates. These factors should be a focal point in marketing strategies
+to boost installs.
+
+
+::: {style="text-align: center;"}
+**Figure 15**. Top Categories
+:::
+
+![](images/KNN-Feature.png)
+
+**Top 5 Features**
+Features like **Reviews**, **Last Updated**, and **Size** have the highest importance, indicating they strongly influence the classification of apps into low or high installs.
+
+**Top 5 Categories**
+Features derived from categorical variables (e.g., **catGAME**, **catBUSINESS**) show moderate importance, reflecting the varying impact of app categories.
+
+
 ## Random Forest Classifier
+
+### Why Random Forest?
+
+The Random Forest classifier is considered because it is a robust and
+flexible model that performs well in classification tasks, such as in
+this project, where the target variable is binary (Low or High
+Installs). It combines multiple decision trees to produce a more
+accurate and stable prediction through an ensemble approach. Random
+Forest handles non-linear relationships effectively and is resistant to
+overfitting due to its random sampling and feature selection techniques.
+Additionally, it provides insights into feature importance, which can
+guide further analysis and feature selection.
+
+### Modelling
+
+The initial Random Forest model was built using all 39 variables, and
+its performance metrics, such as accuracy and F1-score, demonstrated its
+strong classification capability. To optimize the model, hyperparameter
+tuning was conducted to balance complexity and accuracy. Key parameters
+such as mtry (number of features considered at each split), ntree
+(number of trees in the forest), and nodesize (minimum size of terminal
+nodes) were fine-tuned. The tuning process evaluated mtry values of 2,
+4, 6, 8, and 10, with the optimal value determined to be 4, which
+significantly reduced the model's tendency to overfit. Adjusting these
+parameters ensured a better generalization of the model while
+maintaining high classification accuracy.
+
+### Advantages
+
+Random Forest offers several advantages that make it a strong candidate
+for classification tasks. It is highly robust and capable of modeling
+complex, non-linear relationships by aggregating results from multiple
+decision trees. This ensemble approach reduces the risk of overfitting,
+especially with proper parameter tuning. Additionally, the model
+provides feature importance rankings, offering insights into the
+predictors most relevant to the outcome. Random Forest performs well
+with large datasets and can handle a mix of categorical and continuous
+variables without requiring extensive preprocessing. Its ability to
+handle missing data and reduce variance through bootstrapping further
+enhances its reliability in predictive modeling tasks.
 
 ### Confusion Matrix
 
@@ -493,6 +454,7 @@ robustness and minimal overfitting.
 :::
 
 ![](cm_RF.png){style="display: block; margin: 0 auto;"}
+
 
 ### Graph Analysis: Error Rates and Model Stability
 
@@ -517,76 +479,57 @@ As, per the graph, the model is pretty reliable with generalizability.
 
 ![](RF_eval.png){style="display: block; margin: 0 auto;"}
 
-## SVM
 
-### Confusion Matrix
+### Feature Importance :
 
-::: {style="text-align: center;"}
-**Figure 9**. Confusion Matrix
-:::
-
-![](images/SVM-Confusion.png) 
-
-
-In Figure 9:
-
-**Strong Classification**: The majority of predictions lie along the
-diagonal (True Negatives and True Positives), indicating that the model
-performs well in distinguishing between the two classes.
-
-**Low Error Rates**: Off-diagonal elements (False Positives and False
-Negatives) are relatively small, suggesting minimal misclassification.
-
-**Class Imbalance Impact**: A slightly higher number of True Negatives
-(1441) compared to True Positives (1123) may be attributed to a mild
-class imbalance, with slightly more instances belonging to class 0 than
-class 1.
-
-**Balanced Performance**: Despite this imbalance, the model demonstrates
-effective handling of both classes, with errors distributed
-proportionally and no significant bias toward either class.
-
-### Precision, Recall, and F1-Score
-
-The model achieves a precision of **92.10%** for class 1, indicating
-that 92.10% of the predicted class 1 instances are correct. Its recall
-for class 1 is **97.33%**, meaning the model successfully identifies
-97.33% of all actual class 1 instances.
-
-For class 0, the precision is **97.91%**, indicating that 97.91% of the
-predicted class 0 instances are correct, while the recall is **92.67%**,
-showing that 92.67% of all actual class 0 instances are correctly
-identified.
-
-The F1 score, which balances precision and recall, is **94.65%** for
-class 1 and **95.20%** for class 0, reflecting the model's strong
-overall performance. This combination of high precision and recall
-demonstrates the model's ability to minimize false positives and false
-negatives effectively, ensuring reliable and consistent classification.
-
-### ROC
+In Figure 16., from the mean decrease accuracy values, the top five
+importance features from this model is: 'Reviews', 'Price', 'Rating',
+'Last.Updated', 'Size'. The top 5 categories that have most impacted in
+this model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT',
+'cat_EDUCATION', 'cat_BUSINESS', and 'cat_GAME'.
 
 ::: {style="text-align: center;"}
-**Figure 10**. ROC Curve
+**Figure 16**. Top 10 Important Features for Random Forest Classifier
 :::
 
-![](images/SVM-ROC.png)
+![](feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
 
-As observed from Figure 10, AUC values close to 1 suggest robust
-predictive capabilities, and in this case, the model excels at
-minimizing misclassification. These results confirm that the linear SVM
-is a suitable choice for this dataset, effectively capturing the linear
-relationships between variables while maintaining reliable
-generalization.
 
-## Gradient Boosting
+
+## XG Boost
+
+### Why Gradient boost
+
+This project utilized a gradient boosting algorithm to predict "Low
+Installs" vs. "High Installs" for Play Store apps. Gradient boosting was
+chosen for its ability to handle complex relationships, mixed data
+types, and imbalanced datasets, while providing feature importance
+insights and high predictive power.
+
+### Modelling:
+
+After the data has been divided into 80% training data and 20% testing
+data.Following are the parameters for building the model:
+
+::: {style="text-align: justify;"}
+-   Objective: The model is designed for binary classification
+-   Evaluation metric:optimizing logloss
+-   max depth of 6 to control tree complexity,
+-   learning rate (ETA) of 0.1 for gradual training,
+-   subsample of 0.8 to reduce overfitting by sampling 80% of the data,
+    and
+-   colsample_bytree set to 0.8 to randomize feature selection.
+:::
+
+These settings have balanced model performance, generalization, and
+training stability.
 
 ### Confusion matrix:
 
 ::: {style="text-align: center;"}
 **Figure 11**. Confusion Matrix of Gradient Boosting
 ![](images/confusionmatrix_GB.png)
-:::
+
 
 The confusion matrix reveals notable classification challenges. The
 model accurately identifies 65 true positives and 71 true negatives but
@@ -641,6 +584,160 @@ The model achieved strong overall performance, with an accuracy of
 highlight the model's reliability in predicting "High Installs" while
 effectively minimizing false positives and false negatives.
 
+### Feature importance :
+
+::: {style="text-align: center;"}
+**Figure 18**. Feature Importance of Gradient Boosting
+
+![](images/FeatureImp_GB.png)
+:::
+
+*Reviews Dominance:* The high importance of Reviews suggests that the
+number of reviews is strongly correlated with the success metric. It
+might reflect the popularity or credibility of an app.
+
+*Secondary Factors:* Rating, Last.Updated, Price, and Size might provide
+additional predictive power but are not as influential as Reviews.
+
+*Categories:* The low importance of categorical features (catMEDICAL,
+catFAMILY, etc.) indicates that these categories do not contribute much
+to the predictive task. This might be due to insufficient variance or
+weak correlation with the target variable.
+:::::::
+
+
+## Support Vector Machine (SVM)
+
+Support Vector Machines (SVM) are supervised learning models used for
+classification and regression tasks. For this dataset, a **linear SVM**
+model was chosen.
+
+### Why SVM?
+
+The decision to use a linear SVM instead of a non-linear SVM was based
+on the observed **linear relationship** between variables, as indicated
+by the correlation matrix. Additionally, the linear SVM demonstrated
+higher accuracy compared to the non-linear SVM for this data.
+
+Unlike logistic regression, SVM incorporates the concept of a **soft
+margin**. This allows for some misclassification to improve
+generalization. While this increases bias, it reduces variance, making
+SVM particularly effective when the boundary between classes is not
+perfectly clear.
+
+### Advantages
+
+SVM models are versatile and can be adjusted using their parameters to
+control flexibility. This adaptability makes them suitable for a variety
+of datasets. In addition, SVMs are effective for handling
+high-dimensional data and are robust to overfitting, especially when
+using appropriate regularization.
+
+### Parameters
+
+The linear SVM model has a key parameter, **C**, which controls the
+trade-off between margin width and classification error.
+
+-   **Lower C values** create wider margins, allowing more
+    misclassifications but increasing generalization.
+
+-   **Higher C values** create narrower margins, aiming for more
+    accurate classification but potentially leading to overfitting.
+
+In this case, **C = 1000** was selected because it yielded the lowest
+Mean Squared Error (MSE) compared to other values which indicates that
+the classes in data are more linearly separable as seen in Figure 5.
+This balance ensured an optimal trade-off between accuracy and model
+complexity.
+
+::: {style="text-align: center;"}
+**Figure 5**. Finding Optimal C using MSE
+:::
+
+![](images/SVM-C.png)
+### Confusion Matrix
+
+::: {style="text-align: center;"}
+**Figure 9**. Confusion Matrix
+:::
+
+![](images/SVM-Confusion.png) 
+
+
+In Figure 9:
+
+**Strong Classification**: The majority of predictions lie along the
+diagonal (True Negatives and True Positives), indicating that the model
+performs well in distinguishing between the two classes.
+
+**Low Error Rates**: Off-diagonal elements (False Positives and False
+Negatives) are relatively small, suggesting minimal misclassification.
+
+**Class Imbalance Impact**: A slightly higher number of True Negatives
+(1441) compared to True Positives (1123) may be attributed to a mild
+class imbalance, with slightly more instances belonging to class 0 than
+class 1.
+
+**Balanced Performance**: Despite this imbalance, the model demonstrates
+effective handling of both classes, with errors distributed
+proportionally and no significant bias toward either class.
+
+### Precision, Recall, and F1-Score
+
+The model achieves a precision of **92.10%** for class 1, indicating
+that 92.10% of the predicted class 1 instances are correct. Its recall
+for class 1 is **97.33%**, meaning the model successfully identifies
+97.33% of all actual class 1 instances.
+
+For class 0, the precision is **97.91%**, indicating that 97.91% of the
+predicted class 0 instances are correct, while the recall is **92.67%**,
+showing that 92.67% of all actual class 0 instances are correctly
+identified.
+
+The F1 score, which balances precision and recall, is **94.65%** for
+class 1 and **95.20%** for class 0, reflecting the model's strong
+overall performance. This combination of high precision and recall
+demonstrates the model's ability to minimize false positives and false
+negatives effectively, ensuring reliable and consistent classification.
+
+### ROC
+
+::: {style="text-align: center;"}
+**Figure 10**. ROC Curve
+:::
+
+![](images/SVM-ROC.png)
+
+
+### Insights from SVM model :
+
+Apps with high installs tend to share features such as higher review
+counts and potentially other engagement metrics auch as ratings and active user
+feedback. These factors should be a focal point in marketing strategies
+to boost installs.
+
+
+### Feature Importance :
+
+::: {style="text-align: center;"}
+**Figure 17**. Top Categories
+:::
+
+![](images/SVM-Feature.png)
+
+
+**
+As observed from Figure 10, AUC values close to 1 suggest robust
+predictive capabilities, and in this case, the model excels at
+minimizing misclassification. These results confirm that the linear SVM
+is a suitable choice for this dataset, effectively capturing the linear
+relationships between variables while maintaining reliable
+generalization.
+**
+:::
+
+
+
 ## Overall
 
 The table below compares the performance of five machine learning
@@ -679,119 +776,16 @@ research and real-world implementation.
 # **Predictions and Interpretability**
 
 ::::::: {style="text-align: justify;"}
-## Logistic Regression
-
-### Feature Importance :
-
-The initial logistic model includes all 39 variables and has the AIC
-value of 2881.6. The stepwise selection is proceeded based on this
-logistic model. The result shows that the stepwise model has AIC value
-of 2850, indicating that this model performs better than the initial
-model. The stepwise model includes 16 out of 39 variables: `Rating`,
-`Reviews`, `Price`, `Content.Rating`, `Last.Updated`, `catBUSINESS`,
-`catEDUCATION`, `catEVENTS`, `catFINANCE`, `catHOUSE_AND_HOME`,
-`catMAPS_AND_NAVIGATION`, `catMEDICAL`, `catNEWS_AND_MAGAZINES` ,
-`catPHOTOGRAPHY`, `catSPORTS`, `catVIDEO_PLAYERS`, `catPERSONALIZATION`,
-`catBEAUTY`, `catPARENTING.`
-
-In Figure 14., from this stepwise model, the top five importance features
-from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
-`Content.Rating`. The top 5 categories that have most impacted in this
-model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
-`HOUSE_AND_HOME`.
-
-::: {style="text-align: center;"}
-**Figure 14**. Top 10 Important Features
-:::
-
-![](images/clipboard-1184837473.png){style="display: block; margin: 0 auto;"}
-
-## K-Nearest Neighbors
-Apps with high installs tend to share features such as higher review
-counts and More frequent updates. These factors should be a focal point in marketing strategies
-to boost installs.
-
-
-### Feature Importance :
-
-::: {style="text-align: center;"}
-**Figure 15**. Top Categories
-:::
-
-![](images/KNN-Feature.png)
-
-**Top 5 Features**
-Features like **Reviews**, **Last Updated**, and **Size** have the highest importance, indicating they strongly influence the classification of apps into low or high installs.
-
-**Top 5 Categories**
-Features derived from categorical variables (e.g., **catGAME**, **catBUSINESS**) show moderate importance, reflecting the varying impact of app categories.
-
-
-## Random Forest Classifier
-
-### Feature Importance :
-
-In Figure 16., from the mean decrease accuracy values, the top five
-importance features from this model is: 'Reviews', 'Price', 'Rating',
-'Last.Updated', 'Size'. The top 5 categories that have most impacted in
-this model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT',
-'cat_EDUCATION', 'cat_BUSINESS', and 'cat_GAME'.
-
-::: {style="text-align: center;"}
-**Figure 16**. Top 10 Important Features for Random Forest Classifier
-:::
-
-![](feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
-
-## SVM
-
-### Insights from SVM model :
-
-Apps with high installs tend to share features such as higher review
-counts and potentially other engagement metrics auch as ratings and active user
-feedback. These factors should be a focal point in marketing strategies
-to boost installs.
-
-### Feature Importance :
-
-::: {style="text-align: center;"}
-**Figure 17**. Top Categories
-:::
-
-![](images/SVM-Feature.png)
 
 **Top 5 Features**: The key features influencing app installs are Reviews, Ratings, Last Updated, Price, and Size. Positive Reviews enhance appeal, while higher Ratings indicate user satisfaction. Frequent updates build trust, and free or low-cost apps attract more users. Additionally, smaller apps that occupy less storage are preferred. Focusing on these aspects can improve an app's market competitiveness.
 
 **Top 5 Categories**: The most popular app categories are Medical, Fitness, Finance, Family, and News & Magazines. These categories reflect a strong demand for practical solutions. Medical and Fitness apps prioritize health, Finance apps focus on financial management, Family apps provide safe content for households, and News & Magazines apps offer reliable information. Targeting these categories can lead to higher installs and broader market reach.
 
 
-
-## XG Boosting
-
-### Feature importance :
-
-::: {style="text-align: center;"}
-**Figure 18**. Feature Importance of Gradient Boosting
-
-![](images/FeatureImp_GB.png)
-:::
-
-*Reviews Dominance:* The high importance of Reviews suggests that the
-number of reviews is strongly correlated with the success metric. It
-might reflect the popularity or credibility of an app.
-
-*Secondary Factors:* Rating, Last.Updated, Price, and Size might provide
-additional predictive power but are not as influential as Reviews.
-
-*Categories:* The low importance of categorical features (catMEDICAL,
-catFAMILY, etc.) indicates that these categories do not contribute much
-to the predictive task. This might be due to insufficient variance or
-weak correlation with the target variable.
-:::::::
-
 # **Reliability and Limitations**
 
 ::: {style="text-align: justify;"}
+
 ### Reliability
 
 *Model Robustness:* The use of ensemble techniques like Random Forest
@@ -821,6 +815,7 @@ changes in user preferences or technological advancements over time.
 *Model Limitations:* Despite their strengths, models like Random Forest
 and XGBoost can be computationally intensive and may lack
 interpretability compared to simpler methods like Logistic Regression.
+
 :::
 
 # **Future Work**
