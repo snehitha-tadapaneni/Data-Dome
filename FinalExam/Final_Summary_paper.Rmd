@@ -112,7 +112,7 @@ Additional Transformations:
     the impact on performance metrics.
 :::
 
-# **Data Visualizations**
+## Data Visualizations
 
 ::: {style="text-align: center;"}
 **Figure 1**. Installs vs Category
@@ -224,7 +224,31 @@ logistic regression remains a fundamental tool for predictive modeling.
 
 ## K-Nearest Neighbors
 
--\> Why? -\> Advs -\> Explain Parameter
+### Why KNN?
+
+The decision to use **K-Nearest Neighbors (KNN)** was motivated by the need to examine whether the data exhibited a **non-linear relationship** and to explore if the data could naturally form clusters rather than adhering to a linear classification boundary. KNN is particularly effective for data with non-linear patterns due to its instance-based approach, where decisions are made locally using the nearest neighbors.
+
+
+
+### Parameters
+
+The **KNN parameter `K`** plays a crucial role in determining the model's performance:  
+
+- **Optimal Value of `K`**:  
+  - The value of `K` was optimized using a **cross-validation technique** to evaluate accuracy for different values of `K`.  
+  - After testing, the optimal value was found to be **`K = 7`**, having the highest accuracy
+
+- **Distance Metric**:  
+The **Euclidean Distance** was utilized as the distance measure, as this metric calculates the straight-line distance between points in the feature space, making it suitable for continuous numerical data as most of our data is numerical data
+
+
+
+### Advantages
+
+The KNN model achieved an accuracy of **76%**, which indicates that:
+
+- The relationship between the variables is **non-linear**, confirming the initial hypothesis.
+
 
 ## Random Forest Classifier
 
@@ -336,12 +360,12 @@ trade-off between margin width and classification error.
 
 In this case, **C = 1000** was selected because it yielded the lowest
 Mean Squared Error (MSE) compared to other values which indicates that
-the classes in data are more linearly separable as seen in Figure 6.
+the classes in data are more linearly separable as seen in Figure 5.
 This balance ensured an optimal trade-off between accuracy and model
 complexity.
 
 ::: {style="text-align: center;"}
-**Figure 6**. Finding Optimal C using MSE
+**Figure 5**. Finding Optimal C using MSE
 :::
 
 ![](images/SVM-C.png)
@@ -361,7 +385,7 @@ overfitting.
 
 ### Confusion Matrix
 
-The confusion matrix in Figure 7 shows that the model correctly
+The confusion matrix in Figure 6 shows that the model correctly
 classified 5763 instances of class 0 and 4580 instances of class 1, with
 370 false positives and 127 false negatives. The overall accuracy is
 95.42%, indicating a high proportion of correct predictions, with a 95%
@@ -376,7 +400,7 @@ The McNemar's test p-value (\<2.2e-16) suggests significant differences
 between misclassifications, and the prevalence of class 0 is 54.34%.
 
 ::: {style="text-align: center;"}
-**Figure 7**. Confusion Matrix
+**Figure 6**. Confusion Matrix
 :::
 
 ![](images/clipboard-2963178691.png){style="display: block; margin: 0 auto;"}
@@ -395,17 +419,62 @@ both false positives and false negatives.
 ### ROC-AUC
 
 The model achieves an AUC (Area Under the Curve) score of 0.9923 as seen
-from Figure 8, indicating excellent performance in distinguishing
+from Figure 7, indicating excellent performance in distinguishing
 between classes. This demonstrates the model's strong predictive power
 and effectiveness in separating class 0 and class 1 instances.
 
 ::: {style="text-align: center;"}
-**Figure 8**. ROC-AUC Curve
+**Figure 7**. ROC-AUC Curve
 :::
 
 ![](images/clipboard-2219338.png){style="display: block; margin: 0 auto;"}
 
 ## K-Nearest Neighbors
+
+### Confusion Matrix
+
+::: {style="text-align: center;"}
+**Figure 8**. Confusion Matrix
+:::
+
+![](images/KNN-Confusion.png) 
+
+
+In Figure 8:
+
+### Model Performance Summary
+
+**Moderate Classification**: The model achieves a moderate level of accuracy with 1361 True Negatives and 1114 True Positives, indicating some success but also limitations.
+
+**Significant Misclassification**: A total of 371 False Positives and 406 False Negatives suggest notable misclassification and a need for refinement.
+
+**Class Imbalance Issues**: The slight imbalance between classes may hinder effective generalization, impacting the model's predictive capabilities.
+
+**Inconsistent Performance**: The model shows weakness in identifying class 1, as evidenced by the high False Negatives, reflecting areas for improvement.
+
+
+### Precision, Recall, and F1-Score
+
+
+The model achieves a precision of **78.57%**, indicating that 78.57% of the predicted instances are correct. While this is a positive indication, it falls below the desired threshold of 80%.
+
+The overall accuracy is **76.10%**, reflecting the model's correctness in predictions, but again, it does not meet the 80% benchmark.
+
+The recall is measured at **77.02%**, meaning the model successfully identifies 77.02% of all actual instances, which suggests some room for improvement in capturing all relevant cases.
+
+Finally, the F1 score, which balances precision and recall, stands at **77.79%**. This metric indicates a moderate performance level, highlighting the need for enhancements to minimize false positives and false negatives for more consistent classification.
+
+
+
+### ROC
+
+::: {style="text-align: center;"}
+**Figure 9**. ROC Curve
+:::
+
+![](images/KNN-ROC.png)
+
+As observed from Figure 9, the KNN model achieves an AUC of **0.832**, indicating moderate predictive capabilities. This performance suggests room for improvement, possibly due to linear relationships between the variables that KNN may not fully leverage.
 
 ## Random Forest Classifier
 
@@ -420,7 +489,7 @@ across datasets, with a training accuracy of 96.3%, testing accuracy of
 robustness and minimal overfitting.
 
 ::: {style="text-align: center;"}
-**Figure 3**. Confusion Matrix of Random Forest
+**Figure 10**. Confusion Matrix of Random Forest
 :::
 
 ![](cm_RF.png){style="display: block; margin: 0 auto;"}
@@ -443,7 +512,7 @@ classes, highlighting the reliability of the Random Forest classifier.
 As, per the graph, the model is pretty reliable with generalizability.
 
 ::: {style="text-align: center;"}
-**Figure 3**. Confusion Matrix of Random Forest
+**Figure 11**. Confusion Matrix of Random Forest
 :::
 
 ![](RF_eval.png){style="display: block; margin: 0 auto;"}
@@ -456,7 +525,10 @@ As, per the graph, the model is pretty reliable with generalizability.
 **Figure 9**. Confusion Matrix
 :::
 
-![](images/SVM-Confusion.png) In Figure 9:
+![](images/SVM-Confusion.png) 
+
+
+In Figure 9:
 
 **Strong Classification**: The majority of predictions lie along the
 diagonal (True Negatives and True Positives), indicating that the model
@@ -495,7 +567,7 @@ negatives effectively, ensuring reliable and consistent classification.
 ### ROC
 
 ::: {style="text-align: center;"}
-**Figure 10**. Confusion Matrix
+**Figure 10**. ROC Curve
 :::
 
 ![](images/SVM-ROC.png)
@@ -512,7 +584,7 @@ generalization.
 ### Confusion matrix:
 
 ::: {style="text-align: center;"}
-**Figure 1**. Confusion Matrix of Gradient Boosting
+**Figure 11**. Confusion Matrix of Gradient Boosting
 ![](images/confusionmatrix_GB.png)
 :::
 
@@ -532,7 +604,7 @@ their ability to predict categorical labels.
 **Logloss:**
 
 ::: {style="text-align: center;"}
-**Figure 2**. LogLoss over iterations ![](images/Logloss_GB.png)
+**Figure 12**. LogLoss over iterations ![](images/Logloss_GB.png)
 :::
 
 Logloss evaluates classification models by measuring how close predicted
@@ -548,7 +620,7 @@ predictive accuracy.
 **ROC/AUC curve:**
 
 ::: {style="text-align: center;"}
-**Figure 3**. ROC Curve for Gradient Boosting ![](images/ROC_GB.png)
+**Figure 13**. ROC Curve for Gradient Boosting ![](images/ROC_GB.png)
 :::
 
 The ROC curve demonstrates strong model performance, as the blue curve
@@ -622,34 +694,51 @@ model. The stepwise model includes 16 out of 39 variables: `Rating`,
 `catPHOTOGRAPHY`, `catSPORTS`, `catVIDEO_PLAYERS`, `catPERSONALIZATION`,
 `catBEAUTY`, `catPARENTING.`
 
-In Figure 5., from this stepwise model, the top five importance features
+In Figure 14., from this stepwise model, the top five importance features
 from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
 `Content.Rating`. The top 5 categories that have most impacted in this
 model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
 `HOUSE_AND_HOME`.
 
 ::: {style="text-align: center;"}
-**Figure 5**. Top 10 Important Features
+**Figure 14**. Top 10 Important Features
 :::
 
 ![](images/clipboard-1184837473.png){style="display: block; margin: 0 auto;"}
 
 ## K-Nearest Neighbors
+Apps with high installs tend to share features such as higher review
+counts and More frequent updates. These factors should be a focal point in marketing strategies
+to boost installs.
+
 
 ### Feature Importance :
+
+::: {style="text-align: center;"}
+**Figure 15**. Top Categories
+:::
+
+![](images/KNN-Feature.png)
+
+**Top 5 Features**
+Features like **Reviews**, **Last Updated**, and **Size** have the highest importance, indicating they strongly influence the classification of apps into low or high installs.
+
+**Top 5 Categories**
+Features derived from categorical variables (e.g., **catGAME**, **catBUSINESS**) show moderate importance, reflecting the varying impact of app categories.
+
 
 ## Random Forest Classifier
 
 ### Feature Importance :
 
-In Figure 2., from the mean decrease accuracy values, the top five
+In Figure 16., from the mean decrease accuracy values, the top five
 importance features from this model is: 'Reviews', 'Price', 'Rating',
 'Last.Updated', 'Size'. The top 5 categories that have most impacted in
 this model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT',
 'cat_EDUCATION', 'cat_BUSINESS', and 'cat_GAME'.
 
 ::: {style="text-align: center;"}
-**Figure 2**. Top 10 Important Features for Random Forest Classifier
+**Figure 16**. Top 10 Important Features for Random Forest Classifier
 :::
 
 ![](feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
@@ -659,45 +748,30 @@ this model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT',
 ### Insights from SVM model :
 
 Apps with high installs tend to share features such as higher review
-counts and potentially other engagement metrics ratings and active user
+counts and potentially other engagement metrics auch as ratings and active user
 feedback. These factors should be a focal point in marketing strategies
 to boost installs.
 
 ### Feature Importance :
 
 ::: {style="text-align: center;"}
-**Figure 11**. Top Categories
+**Figure 17**. Top Categories
 :::
 
 ![](images/SVM-Feature.png)
 
-**Top 5 Features** : The top five features influencing app installs are
-Reviews, Ratings, Last Updated, Price, and Size. Reviews are critical,
-as positive user feedback significantly enhances an app's appeal. Higher
-ratings correlate with increased installs, reflecting user satisfaction.
-Frequent updates signal active support and improvements, boosting user
-trust. Additionally, free or low-cost apps tend to attract more users,
-while lighter apps that occupy less storage are preferred. Focusing on
-these features can enhance an app's competitiveness in the market.
+**Top 5 Features**: The key features influencing app installs are Reviews, Ratings, Last Updated, Price, and Size. Positive Reviews enhance appeal, while higher Ratings indicate user satisfaction. Frequent updates build trust, and free or low-cost apps attract more users. Additionally, smaller apps that occupy less storage are preferred. Focusing on these aspects can improve an app's market competitiveness.
 
-**Top 5 Categories** :
+**Top 5 Categories**: The most popular app categories are Medical, Fitness, Finance, Family, and News & Magazines. These categories reflect a strong demand for practical solutions. Medical and Fitness apps prioritize health, Finance apps focus on financial management, Family apps provide safe content for households, and News & Magazines apps offer reliable information. Targeting these categories can lead to higher installs and broader market reach.
 
-The leading categories for app installs are Medical, Fitness, Finance,
-Family, and News & Magazines. These categories indicate a strong demand
-for practical applications that address everyday needs. Medical and
-Fitness apps highlight the focus on health, while Finance apps emphasize
-financial management. Family-oriented apps cater to safe and engaging
-content for households and are reachable for a broader range of
-audience, and News & Magazines apps fulfill the need for reliable
-information. Targeting these popular categories can create opportunities
-for higher installs and greater market reach.
+
 
 ## XG Boosting
 
 ### Feature importance :
 
 ::: {style="text-align: center;"}
-**Figure 4**. Feature Importance of Gradient Boosting
+**Figure 18**. Feature Importance of Gradient Boosting
 
 ![](images/FeatureImp_GB.png)
 :::
