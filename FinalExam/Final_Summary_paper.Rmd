@@ -192,7 +192,7 @@ of optimizing app performance and success.
 ## Logistic Regression
 
 ### Why Logistic Regression?
-
+::: {style="text-align: justify;"}
 The Logistic Regression model is considered because it is an
 interpretable model commonly used for classification tasks. In this
 project, the target variable is binary (Low or High Installs). It
@@ -203,9 +203,10 @@ well with proper preprocessing and effectively handles multicollinearity
 and feature selection using regularization techniques. While it may not
 be ideal for capturing complex, non-linear relationships, logistic
 regression serves as a strong baseline for this problem.
+:::
 
 ### Advantages
-
+::: {style="text-align: justify;"}
 Logistic regression is a simple yet powerful statistical method widely
 used for binary classification tasks. It is easy to implement,
 computationally efficient, and highly interpretable, as its coefficients
@@ -220,12 +221,13 @@ excellent baseline for benchmarking classification problems and can be
 extended to handle multi-class and ordered outcomes. With wide
 applicability across fields such as medicine, finance, and marketing,
 logistic regression remains a fundamental tool for predictive modeling.
+:::
 
 ### Model Evaluation
 
 #### 1. Confusion Matrix
-
-The confusion matrix in Figure 6 shows that the model correctly
+::: {style="text-align: justify;"}
+The confusion matrix in Figure 5 shows that the model correctly
 classified 5763 instances of class 0 and 4580 instances of class 1, with
 370 false positives and 127 false negatives. The overall accuracy is
 95.42%, indicating a high proportion of correct predictions, with a 95%
@@ -238,15 +240,15 @@ predictive value (precision for class 1) is 97.30%. The balanced
 accuracy, accounting for both sensitivity and specificity, is 95.18%.
 The McNemar's test p-value (\<2.2e-16) suggests significant differences
 between misclassifications, and the prevalence of class 0 is 54.34%.
-
+:::
 ::: {style="text-align: center;"}
-**Figure 6**. Confusion Matrix
+**Figure 5**. Confusion Matrix
 :::
 
 ![](images/clipboard-2963178691.png){style="display: block; margin: 0 auto;"}
 
 #### 2. Precision, Racall Rate, F1-Score
-
+::: {style="text-align: justify;"}
 The model achieves a precision of 93.97%, indicating that 93.97% of the
 predictions for class 0 are correct. Its recall is 97.84%, meaning the
 model successfully identifies 97.84% of all actual class 0 instances.
@@ -255,22 +257,24 @@ highlighting the model's strong overall performance in accurately and
 consistently classifying instances of class 0. This combination of high
 precision and recall reflects the model's effectiveness in minimizing
 both false positives and false negatives.
+:::
 
 #### 3. ROC-AUC
-
+::: {style="text-align: justify;"}
 The model achieves an AUC (Area Under the Curve) score of 0.9923 as seen
-from Figure 7, indicating excellent performance in distinguishing
+from Figure 6, indicating excellent performance in distinguishing
 between classes. This demonstrates the model's strong predictive power
 and effectiveness in separating class 0 and class 1 instances.
+:::
 
 ::: {style="text-align: center;"}
-**Figure 7**. ROC-AUC Curve
+**Figure 6**. ROC-AUC Curve
 :::
 
 ![](images/clipboard-2219338.png){style="display: block; margin: 0 auto;"}
 
 ### Interpretation: Feature Importance
-
+::: {style="text-align: justify;"}
 The initial logistic model includes all 39 variables and has the AIC
 value of 2881.6. The stepwise selection is proceeded based on this
 logistic model. The result shows that the stepwise model has AIC value
@@ -282,34 +286,36 @@ model. The stepwise model includes 16 out of 39 variables: `Rating`,
 `catPHOTOGRAPHY`, `catSPORTS`, `catVIDEO_PLAYERS`, `catPERSONALIZATION`,
 `catBEAUTY`, `catPARENTING.`
 
-In Figure 14., from this stepwise model, the top five importance features
+In Figure 7., from this stepwise model, the top five importance features
 from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
 `Content.Rating`. The top 5 categories that have most impacted in this
 model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
 `HOUSE_AND_HOME`.
+:::
 
 ::: {style="text-align: center;"}
-**Figure 14**. Top 10 Important Features
+**Figure 7**. Top 10 Important Features
 :::
 
 ![](images/clipboard-1184837473.png){style="display: block; margin: 0 auto;"}
 
 
-
 ## K-Nearest Neighbors
 
 ### Why KNN?
-
+::: {style="text-align: justify;"}
 The decision to use **K-Nearest Neighbors (KNN)** was motivated by the need to examine whether the data exhibited a **non-linear relationship** and to explore if the data could naturally form clusters rather than adhering to a linear classification boundary. KNN is particularly effective for data with non-linear patterns due to its instance-based approach, where decisions are made locally using the nearest neighbors.
+:::
 
 ### Advantages
-
+::: {style="text-align: justify;"}
 The K-Nearest Neighbors (KNN) classifier offers several advantages that make it a popular choice for machine learning tasks. Its simplicity and ease of implementation allow for quick understanding and application. As a lazy learning algorithm, KNN does not require a training phase, making it computationally inexpensive during model building. Being non-parametric, it does not assume any specific data distribution, making it suitable for complex datasets. Additionally, KNN is versatile, supporting both classification and regression tasks, and it naturally handles multi-class problems without requiring extensive modifications. It is particularly effective for small datasets and allows for incremental learning, where new data can be incorporated without retraining the model. These characteristics make KNN ideal for scenarios requiring adaptability, interpretability, and dynamic data handling.
+:::
 
 ### Model Evaluation
 
 #### 1. Parameters
-
+::: {style="text-align: justify;"}
 The **KNN parameter `K`** plays a crucial role in determining the model's performance:  
 
 - **Optimal Value of `K`**:  
@@ -322,6 +328,7 @@ The **Euclidean Distance** was utilized as the distance measure, as this metric 
 The KNN model achieved an accuracy of **76%**, which indicates that:
 
 - The relationship between the variables is **non-linear**, confirming the initial hypothesis.
+:::
 
 #### 2. Confusion Matrix
 
@@ -333,7 +340,7 @@ The KNN model achieved an accuracy of **76%**, which indicates that:
 
 
 ##### In Figure 8: Model Performance Summary
-
+::: {style="text-align: justify;"}
 **Moderate Classification**: The model achieves a moderate level of accuracy with 1361 True Negatives and 1114 True Positives, indicating some success but also limitations.
 
 **Significant Misclassification**: A total of 371 False Positives and 406 False Negatives suggest notable misclassification and a need for refinement.
@@ -341,11 +348,10 @@ The KNN model achieved an accuracy of **76%**, which indicates that:
 **Class Imbalance Issues**: The slight imbalance between classes may hinder effective generalization, impacting the model's predictive capabilities.
 
 **Inconsistent Performance**: The model shows weakness in identifying class 1, as evidenced by the high False Negatives, reflecting areas for improvement.
-
+:::
 
 #### 3. Precision, Recall, and F1-Score
-
-
+::: {style="text-align: justify;"}
 The model achieves a precision of **78.57%**, indicating that 78.57% of the predicted instances are correct. While this is a positive indication, it falls below the desired threshold of 80%.
 
 The overall accuracy is **76.10%**, reflecting the model's correctness in predictions, but again, it does not meet the 80% benchmark.
@@ -353,7 +359,7 @@ The overall accuracy is **76.10%**, reflecting the model's correctness in predic
 The recall is measured at **77.02%**, meaning the model successfully identifies 77.02% of all actual instances, which suggests some room for improvement in capturing all relevant cases.
 
 Finally, the F1 score, which balances precision and recall, stands at **77.79%**. This metric indicates a moderate performance level, highlighting the need for enhancements to minimize false positives and false negatives for more consistent classification.
-
+:::
 
 
 #### 4. ROC
@@ -363,34 +369,34 @@ Finally, the F1 score, which balances precision and recall, stands at **77.79%**
 :::
 
 ![](images/KNN-ROC.png)
-
+::: {style="text-align: justify;"}
 As observed from Figure 9, the KNN model achieves an AUC of **0.832**, indicating moderate predictive capabilities. This performance suggests room for improvement, possibly due to linear relationships between the variables that KNN may not fully leverage.
-
+:::
 
 ### Interpretability: Feature Importance
-
+::: {style="text-align: justify;"}
 Apps with high installs tend to share features such as higher review
 counts and More frequent updates. These factors should be a focal point in marketing strategies
 to boost installs.
-
+:::
 
 ::: {style="text-align: center;"}
-**Figure 15**. Top Categories
+**Figure 10**. Top Categories
 :::
 
 ![](images/KNN-Feature.png)
-
+::: {style="text-align: justify;"}
 **Top 5 Features**
 Features like **Reviews**, **Last Updated**, and **Size** have the highest importance, indicating they strongly influence the classification of apps into low or high installs.
 
 **Top 5 Categories**
 Features derived from categorical variables (e.g., **catGAME**, **catBUSINESS**) show moderate importance, reflecting the varying impact of app categories.
-
+:::
 
 ## Random Forest Classifier
 
 ### Why Random Forest?
-
+::: {style="text-align: justify;"}
 The Random Forest classifier is considered because it is a robust and
 flexible model that performs well in classification tasks, such as in
 this project, where the target variable is binary (Low or High
@@ -400,9 +406,10 @@ Forest handles non-linear relationships effectively and is resistant to
 overfitting due to its random sampling and feature selection techniques.
 Additionally, it provides insights into feature importance, which can
 guide further analysis and feature selection.
+:::
 
 ### Modelling
-
+::: {style="text-align: justify;"}
 The initial Random Forest model was built using all 39 variables, and
 its performance metrics, such as accuracy and F1-score, demonstrated its
 strong classification capability. To optimize the model, hyperparameter
@@ -414,9 +421,10 @@ nodes) were fine-tuned. The tuning process evaluated mtry values of 2,
 significantly reduced the model's tendency to overfit. Adjusting these
 parameters ensured a better generalization of the model while
 maintaining high classification accuracy.
+:::
 
 ### Advantages
-
+::: {style="text-align: justify;"}
 Random Forest offers several advantages that make it a strong candidate
 for classification tasks. It is highly robust and capable of modeling
 complex, non-linear relationships by aggregating results from multiple
@@ -428,11 +436,12 @@ with large datasets and can handle a mix of categorical and continuous
 variables without requiring extensive preprocessing. Its ability to
 handle missing data and reduce variance through bootstrapping further
 enhances its reliability in predictive modeling tasks.
+:::
 
 ### Model Evaluation
 
 #### 1. Confusion Matrix
-
+::: {style="text-align: justify;"}
 The Random Forest model correctly classified 4425 instances of class 0
 and 2918 instances of class 1, with 171 false positives and 202 false
 negatives. This results in an overall accuracy of 95.4%, indicating a
@@ -440,23 +449,26 @@ high proportion of correct predictions. The performance is consistent
 across datasets, with a training accuracy of 96.3%, testing accuracy of
 95.4%, and an Out-Of-Bag (OOB) accuracy of 95.2%, reflecting the model's
 robustness and minimal overfitting.
+:::
 
 ::: {style="text-align: center;"}
-**Figure 10**. Confusion Matrix of Random Forest
+**Figure 11**. Confusion Matrix of Random Forest
 :::
 
 ![](cm_RF.png){style="display: block; margin: 0 auto;"}
 
 
 #### 2. Graph Analysis: Error Rates and Model Stability
-
+::: {style="text-align: justify;"}
 The graph in the slide illustrates the error rates for the Random Forest
 model as the number of trees increases.
 
-*Out-Of-Bag (OOB) Error:* The black line represents the OOB error rate,
+* *Out-Of-Bag (OOB) Error:* The black line represents the OOB error rate,
 which stabilizes at a low level as the model grows more trees. This
 indicates that adding more trees contributes to better performance
-without overfitting. *Class 1 and Class 2 Errors:* The red and green
+without overfitting. 
+
+* *Class 1 and Class 2 Errors:* The red and green
 lines represent the error rates for class 1 and class 2, respectively.
 Both error rates decrease rapidly as the number of trees increases and
 stabilize, demonstrating the model's ability to effectively classify
@@ -464,24 +476,26 @@ instances of both classes. The error analysis shows that the model
 achieves convergence, with consistently low error rates across all
 classes, highlighting the reliability of the Random Forest classifier.
 As, per the graph, the model is pretty reliable with generalizability.
+:::
 
 ::: {style="text-align: center;"}
-**Figure 11**. Confusion Matrix of Random Forest
+**Figure 12**. Confusion Matrix of Random Forest
 :::
 
 ![](RF_eval.png){style="display: block; margin: 0 auto;"}
 
 
 ### Interpretability: Feature Importance 
-
-In Figure 16., from the mean decrease accuracy values, the top five
+::: {style="text-align: justify;"}
+In Figure 13., from the mean decrease accuracy values, the top five
 importance features from this model is: 'Reviews', 'Price', 'Rating',
 'Last.Updated', 'Size'. The top 5 categories that have most impacted in
 this model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT',
 'cat_EDUCATION', 'cat_BUSINESS', and 'cat_GAME'.
+:::
 
 ::: {style="text-align: center;"}
-**Figure 16**. Top 10 Important Features for Random Forest Classifier
+**Figure 13**. Top 10 Important Features for Random Forest Classifier
 :::
 
 ![](feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
@@ -491,15 +505,15 @@ this model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT',
 ## XG Boost
 
 ### Why Gradient boost
-
+::: {style="text-align: justify;"}
 This project utilized a gradient boosting algorithm to predict "Low
 Installs" vs. "High Installs" for Play Store apps. Gradient boosting was
 chosen for its ability to handle complex relationships, mixed data
 types, and imbalanced datasets, while providing feature importance
 insights and high predictive power.
-
-### Modelling:
-
+:::
+### Modelling
+::: {style="text-align: justify;"}
 After the data has been divided into 80% training data and 20% testing
 data.Following are the parameters for building the model:
 
@@ -515,17 +529,17 @@ data.Following are the parameters for building the model:
 
 These settings have balanced model performance, generalization, and
 training stability.
-
+:::
 
 ### Model Evaluation
 
-#### 1. Confusion matrix:
+#### 1. Confusion matrix
 
 ::: {style="text-align: center;"}
-**Figure 11**. Confusion Matrix of Gradient Boosting
+**Figure 14**. Confusion Matrix of Gradient Boosting
 ![](images/confusionmatrix_GB.png)
 :::
-
+::: {style="text-align: justify;"}
 The confusion matrix reveals notable classification challenges. The
 model accurately identifies 65 true positives and 71 true negatives but
 misclassifies a substantial number of cases: 1414 "Low Installs" as
@@ -536,13 +550,13 @@ differentiate between the two classes. This results in poor recall for
 
 For classification tasks, Gradient Boosting models are evaluated on
 their ability to predict categorical labels.
-
-#### 2. **Logloss:**
+:::
+#### 2. Logloss
 
 ::: {style="text-align: center;"}
-**Figure 12**. LogLoss over iterations ![](images/Logloss_GB.png)
+**Figure 14**. LogLoss over iterations ![](images/Logloss_GB.png)
 :::
-
+::: {style="text-align: justify;"}
 Logloss evaluates classification models by measuring how close predicted
 probabilities are to actual class labels, with lower values indicating
 better performance. Monitoring overfitting involves checking if
@@ -552,13 +566,13 @@ minimal overfitting. Both curves plateau, signaling convergence and
 stable performance. The final logloss (\~0.61) is moderate, with
 potential for improvement through tuning or adjustments to enhance
 predictive accuracy.
-
-#### 3. **ROC/AUC curve:**
+:::
+#### 3. ROC/AUC curve
 
 ::: {style="text-align: center;"}
-**Figure 13**. ROC Curve for Gradient Boosting ![](images/ROC_GB.png)
+**Figure 15**. ROC Curve for Gradient Boosting ![](images/ROC_GB.png)
 :::
-
+::: {style="text-align: justify;"}
 The ROC curve demonstrates strong model performance, as the blue curve
 closely approaches the top-left corner, indicating high sensitivity and
 specificity. This signifies the model's excellent ability to distinguish
@@ -567,24 +581,26 @@ model's performance clearly surpasses this baseline. The area under the
 curve (AUC) would be high, reflecting robust discriminative capability.
 Overall, the ROC curve highlights the model's reliability in binary
 classification tasks.
+:::
 
-#### 4. **Accuracy, precision and recall:**
-
+#### 4. Accuracy, precision and recall
+::: {style="text-align: justify;"}
 Accuracy (%):95.82 Precision(%): 96 Recall(%):96.32
 
 The model achieved strong overall performance, with an accuracy of
 95.82%, precision of 96.00%, and recall of 96.32%. These metrics
 highlight the model's reliability in predicting "High Installs" while
 effectively minimizing false positives and false negatives.
+:::
 
 ### Interpretability: Feature importance
 
 ::: {style="text-align: center;"}
-**Figure 18**. Feature Importance of Gradient Boosting
+**Figure 16**. Feature Importance of Gradient Boosting
 
 ![](images/FeatureImp_GB.png)
 :::
-
+::: {style="text-align: justify;"}
 *Reviews Dominance:* The high importance of Reviews suggests that the
 number of reviews is strongly correlated with the success metric. It
 might reflect the popularity or credibility of an app.
@@ -596,17 +612,17 @@ additional predictive power but are not as influential as Reviews.
 catFAMILY, etc.) indicates that these categories do not contribute much
 to the predictive task. This might be due to insufficient variance or
 weak correlation with the target variable.
-
-
+:::
 
 ## Support Vector Machine (SVM)
-
+::: {style="text-align: justify;"}
 Support Vector Machines (SVM) are supervised learning models used for
 classification and regression tasks. For this dataset, a **linear SVM**
 model was chosen.
+:::
 
 ### Why SVM?
-
+::: {style="text-align: justify;"}
 The decision to use a linear SVM instead of a non-linear SVM was based
 on the observed **linear relationship** between variables, as indicated
 by the correlation matrix. Additionally, the linear SVM demonstrated
@@ -617,17 +633,19 @@ margin**. This allows for some misclassification to improve
 generalization. While this increases bias, it reduces variance, making
 SVM particularly effective when the boundary between classes is not
 perfectly clear.
+:::
 
 ### Advantages
-
+::: {style="text-align: justify;"}
 SVM models are versatile and can be adjusted using their parameters to
 control flexibility. This adaptability makes them suitable for a variety
 of datasets. In addition, SVMs are effective for handling
 high-dimensional data and are robust to overfitting, especially when
 using appropriate regularization.
+:::
 
 ### Parameters
-
+::: {style="text-align: justify;"}
 The linear SVM model has a key parameter, **C**, which controls the
 trade-off between margin width and classification error.
 
@@ -642,9 +660,10 @@ Mean Squared Error (MSE) compared to other values which indicates that
 the classes in data are more linearly separable as seen in Figure 5.
 This balance ensured an optimal trade-off between accuracy and model
 complexity.
+:::
 
 ::: {style="text-align: center;"}
-**Figure 5**. Finding Optimal C using MSE
+**Figure 17**. Finding Optimal C using MSE
 :::
 
 ![](images/SVM-C.png)
@@ -654,14 +673,14 @@ complexity.
 #### 1. Confusion Matrix
 
 ::: {style="text-align: center;"}
-**Figure 9**. Confusion Matrix
+**Figure 18**. Confusion Matrix
 :::
 
 ![](images/SVM-Confusion.png) 
 
 
-In Figure 9:
-
+In Figure 18:
+::: {style="text-align: justify;"}
 **Strong Classification**: The majority of predictions lie along the
 diagonal (True Negatives and True Positives), indicating that the model
 performs well in distinguishing between the two classes.
@@ -677,9 +696,10 @@ class 1.
 **Balanced Performance**: Despite this imbalance, the model demonstrates
 effective handling of both classes, with errors distributed
 proportionally and no significant bias toward either class.
+:::
 
 #### 2. Precision, Recall, and F1-Score
-
+::: {style="text-align: justify;"}
 The model achieves a precision of **92.10%** for class 1, indicating
 that 92.10% of the predicted class 1 instances are correct. Its recall
 for class 1 is **97.33%**, meaning the model successfully identifies
@@ -695,25 +715,26 @@ class 1 and **95.20%** for class 0, reflecting the model's strong
 overall performance. This combination of high precision and recall
 demonstrates the model's ability to minimize false positives and false
 negatives effectively, ensuring reliable and consistent classification.
+:::
 
 #### 3. ROC
 
 ::: {style="text-align: center;"}
-**Figure 10**. ROC Curve
+**Figure 19**. ROC Curve
 :::
 
 ![](images/SVM-ROC.png)
 
 
 ### Interpretability: Feature Importance
-
+::: {style="text-align: justify;"}
 Apps with high installs tend to share features such as higher review
 counts and potentially other engagement metrics auch as ratings and active user
 feedback. These factors should be a focal point in marketing strategies
 to boost installs.
 
 ::: {style="text-align: center;"}
-**Figure 17**. Top Categories
+**Figure 20**. Top Categories
 :::
 
 ![](images/SVM-Feature.png)
@@ -721,11 +742,11 @@ to boost installs.
 **Top 5 Features**: The key features influencing app installs are Reviews, Ratings, Last Updated, Price, and Size. Positive Reviews enhance appeal, while higher Ratings indicate user satisfaction. Frequent updates build trust, and free or low-cost apps attract more users. Additionally, smaller apps that occupy less storage are preferred. Focusing on these aspects can improve an app's market competitiveness.
 
 **Top 5 Categories**: The most popular app categories are Medical, Fitness, Finance, Family, and News & Magazines. These categories reflect a strong demand for practical solutions. Medical and Fitness apps prioritize health, Finance apps focus on financial management, Family apps provide safe content for households, and News & Magazines apps offer reliable information. Targeting these categories can lead to higher installs and broader market reach.
+:::
 
 
-
-## Overall
-
+## **Overall**
+::: {style="text-align: justify;"}
 The table below compares the performance of five machine learning
 models—Logistic Regression, KNN, Random Forest, Gradient Boost, and
 SVM—across various evaluation metrics, including Accuracy, Precision,
@@ -758,44 +779,42 @@ research and real-world implementation.
 | AUC-ROC | 0.990 | 0.832 | 0.981 | 0.99 | 0.99 |
 | Overfitting Tendency | Low | Low | Moderate | Moderate | Low |
 | Interpretability | High | Moderate | Moderate | Moderate | Moderate |
-
+:::
 
 
 
 # **Reliability and Limitations**
 
-::: {style="text-align: justify;"}
-
 ### Reliability
-
-*Model Robustness:* The use of ensemble techniques like Random Forest
+::: {style="text-align: justify;"}
+1. *Model Robustness:* The use of ensemble techniques like Random Forest
 and XGBoost enhances the reliability of predictions by aggregating
 multiple decision paths and reducing overfitting.
 
-*Feature Importance*: All the models provide insights into feature
+2. *Feature Importance*: All the models provide insights into feature
 importance, which adds transparency to the decision-making process.
 
-*Balanced Data Representation:* Data cleaning and transformations, such
+3. *Balanced Data Representation:* Data cleaning and transformations, such
 as binning and log transformations, ensured a more balanced
 representation of key features, improving the reliability of model
 outputs.
+:::
 
 ### Limitations
-
-*Dataset Size and Scope:* Although comprehensive, the dataset is limited
+::: {style="text-align: justify;"}
+1. *Dataset Size and Scope:* Although comprehensive, the dataset is limited
 to apps listed on the Google Play Store between 2010 and 2018,
 potentially omitting recent trends and app categories.
 
-*Imputed Data:* The imputation of missing values, while necessary, may
+2. *Imputed Data:* The imputation of missing values, while necessary, may
 introduce bias or inaccuracies in the analysis.
 
-*Static Analysis:* The study does not consider temporal trends, such as
+3. *Static Analysis:* The study does not consider temporal trends, such as
 changes in user preferences or technological advancements over time.
 
-*Model Limitations:* Despite their strengths, models like Random Forest
+4. *Model Limitations:* Despite their strengths, models like Random Forest
 and XGBoost can be computationally intensive and may lack
 interpretability compared to simpler methods like Logistic Regression.
-
 :::
 
 # **Future Work**
@@ -818,7 +837,7 @@ interpretability compared to simpler methods like Logistic Regression.
 :::
 
 # **Conclusion**
-
+::: {style="text-align: justify;"}
 Developers and stakeholders can leverage these insights to make
 data-driven decisions and prioritize features and strategies that have
 the greatest impact on driving app installs. Enhancing user reviews and
@@ -836,6 +855,7 @@ for user engagement and growth. By aligning their efforts with these
 findings, developers can better meet user expectations, enhance overall
 app performance, and gain a competitive advantage in the rapidly
 evolving app marketplace.
+:::
 
 # **References**
 
