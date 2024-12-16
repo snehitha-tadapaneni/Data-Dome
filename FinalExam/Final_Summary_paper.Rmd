@@ -455,7 +455,7 @@ robustness and minimal overfitting.
 **Figure 11**. Confusion Matrix of Random Forest
 :::
 
-![](cm_RF.png){style="display: block; margin: 0 auto;"}
+![](images/cm_RF.png){style="display: block; margin: 0 auto;"}
 
 
 #### 2. Graph Analysis: Error Rates and Model Stability
@@ -482,7 +482,7 @@ As, per the graph, the model is pretty reliable with generalizability.
 **Figure 12**. Confusion Matrix of Random Forest
 :::
 
-![](RF_eval.png){style="display: block; margin: 0 auto;"}
+![](images/RF_eval.png){style="display: block; margin: 0 auto;"}
 
 
 ### Interpretability: Feature Importance 
@@ -498,7 +498,7 @@ this model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT',
 **Figure 13**. Top 10 Important Features for Random Forest Classifier
 :::
 
-![](feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
+![](images/feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
 
 
 
