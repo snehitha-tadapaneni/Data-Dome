@@ -157,15 +157,12 @@ The Category column was transformed into dummy variables using model.matrix(), a
 The Installs column was converted into a binary variable (Low Installs as 0 and High Installs as 1) based on the median value. A histogram was created to visualize the distribution of categories.
 - *Last Updated Transformation*<br>
 The Last.Updated column was converted into numeric values representing the days since the most recent update, ensuring a quantitative measure of recency.
+:::
 
 
--\>why choose installs as target variable????????
-=======
-Key Insights: Highlight patterns, distributions, correlations, or
-anomalies in the dataset (e.g., visualizations like histograms, scatter
-plots, or correlation matrices).
-
-
+##### Reason for 'Installs' being our target variable:
+::: {style="text-align: justify;"}
+We chose "Installs" as our target variable because the visualizations indicate that it is strongly correlated with several key features, including Reviews, Ratings, Price, and Size. These correlations suggest that the number of installs plays a crucial role in determining an app's success. More installs are associated with increased user engagement, reflected in higher reviews and ratings. Considering these factors, focusing on "Installs" as the target variable aligns with the objective of optimizing app performance and success.
 :::
 
 # **SMART Question**
