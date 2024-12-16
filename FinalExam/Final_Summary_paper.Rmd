@@ -581,5 +581,12 @@ Impact: Highlight the potential impact of your analysis and predictions.
 # **References**
 
 ::: {style="text-align: justify;"}
-Use APA style to cite all sources.
+P.Charuza[Online].Available: https://fueled.com/blog/much- money-can-earn-app [Accessed 19 Nov 2018].
+
+“kaggle”[Online].Available:https://www.kaggle.com/lava18/goo gle-play-store-apps [Accessed 16 Nov 2018].
+
+Y. Tian, M. Nagappan, D. Lo, and A. E. Hassan, “What are the charac- teristics of high-rated apps? a case study on free android applications,” in Software Maintenance and Evolution (ICSME), 2015 IEEE International Conference on, Sept 2015, pp. 301–310.
+
+L.Guerrouj,S.Azad,andP.C.Rigby,“Theinfluenceofappchurnonapp success and stackoverflow discussions,” in 2015 IEEE 22nd International Conference on Software Analysis, Evolution, and Reengineering (SANER), March 2015, pp. 321–330.
+
 :::
