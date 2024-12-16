@@ -114,62 +114,6 @@ Additional Transformations:
 
 # **Data Visualizations**
 
-::: {style="text-align: justify;"}
-<<<<<<< HEAD
-**Figure 1**. Installs vs reviews
-[description]
-
-![](Inst_reviews.png){style="display: block; margin: 0 auto;"}
-
-
-**Figure 1**. Installs vs ratings
-[description]
-
-![](Inst_rating.png){style="display: block; margin: 0 auto;"}
-
-
-
-**Figure 1**. Installs vs Price
-
-[description]
-![](Inst_price.png){style="display: block; margin: 0 auto;"}
-
-
-
-**Figure 1**. Installs vs Category
-[description]
-
-![](Inst_cat.png){style="display: block; margin: 0 auto;"}
-
-# **Data Pre-processing**
-
-::: {style="text-align: justify;"}
-- *Category Encoding*<br>
-The Category column was transformed into dummy variables using model.matrix(), and the original column was removed. Column names were standardized by replacing spaces with underscores.
-- *Installs Classification*<br>
-The Installs column was converted into a binary variable (Low Installs as 0 and High Installs as 1) based on the median value. A histogram was created to visualize the distribution of categories.
-- *Last Updated Transformation*<br>
-The Last.Updated column was converted into numeric values representing the days since the most recent update, ensuring a quantitative measure of recency.
-
-
--\>why choose installs as target variable????????
-=======
-Key Insights: Highlight patterns, distributions, correlations, or
-anomalies in the dataset (e.g., visualizations like histograms, scatter
-plots, or correlation matrices).
->>>>>>> 50990e45b0a6525beadbcf0c1f717275661a6ae2
-
-:::
-
-# **SMART Question**
-
-::: {style="text-align: justify;"}
-Which are the top 5 app categories, as identified by classification
-models (logistic regression, SVM, XGBoost, KNN, and random forest), that
-significantly influenced app success (measured by installs) based on app
-data from 2010 to 2018, and how accurately can these models predict
-success trends within this time period?
-:::
 
 ::: {style="text-align: center;"}
 **Figure 1**. Installs vs Category
@@ -203,82 +147,71 @@ From Figure 3, It could be seen that for high installs the ratings are clustered
 
 From Figure 4, The installs are higher for apps which are free and decrease in installs as the price increases, indicating better to have a free app for high installs.
 
+
+# **Data Pre-processing**
+
+::: {style="text-align: justify;"}
+- *Category Encoding*<br>
+The Category column was transformed into dummy variables using model.matrix(), and the original column was removed. Column names were standardized by replacing spaces with underscores.
+- *Installs Classification*<br>
+The Installs column was converted into a binary variable (Low Installs as 0 and High Installs as 1) based on the median value. A histogram was created to visualize the distribution of categories.
+- *Last Updated Transformation*<br>
+The Last.Updated column was converted into numeric values representing the days since the most recent update, ensuring a quantitative measure of recency.
+
+
+-\>why choose installs as target variable????????
+=======
+Key Insights: Highlight patterns, distributions, correlations, or
+anomalies in the dataset (e.g., visualizations like histograms, scatter
+plots, or correlation matrices).
+
+
+:::
+
+# **SMART Question**
+
+::: {style="text-align: justify;"}
+Which are the top 5 app categories, as identified by classification
+models (logistic regression, SVM, XGBoost, KNN, and random forest), that
+significantly influenced app success (measured by installs) based on app
+data from 2010 to 2018, and how accurately can these models predict
+success trends within this time period?
+:::
+
 # **Model Selection Process**
 
 ## Logistic Regression
 
-Logistic Regression model is considered because it is an interpretable
-model that is commonly used for classification such as in this project,
-the target varibale is binary (Low or High Installs). It estimates the
-probability of an outcome, providing clear insights into the
-relationship between predictors and the target variable through
-interpretable coefficients. In addition, logistic regression performs
-well with proper preprocessing and can handle multicollinearity and
-feature selection effectively using regularization techniques. While it
-may not be ideal for capturing complex, non-linear relationships,
-logistic regression can be a strong baseline for this problem.
+### Why Logistic Regression?
+The Logistic Regression model is considered because it is an interpretable model commonly used for classification tasks. In this project, the target variable is binary (Low or High Installs). It estimates the probability of an outcome, providing clear insights into the relationship between predictors and the target variable through interpretable coefficients. Additionally, logistic regression performs well with proper preprocessing and effectively handles multicollinearity and feature selection using regularization techniques. While it may not be ideal for capturing complex, non-linear relationships, logistic regression serves as a strong baseline for this problem.
 
-The initial logistic model includes all 39 variables and has the AIC
-value of 2881.6. The stepwise selection is proceeded based on this
-logistic model. The result shows that the stepwise model has AIC value
-of 2850, indicating that this model performs better than the initial
-model. The stepwise model includes 16 out of 39 variables: `Rating`,
-`Reviews`, `Price`, `Content.Rating`, `Last.Updated`, `catBUSINESS`,
-`catEDUCATION`, `catEVENTS`, `catFINANCE`, `catHOUSE_AND_HOME`,
-`catMAPS_AND_NAVIGATION`, `catMEDICAL`, `catNEWS_AND_MAGAZINES` ,
-`catPHOTOGRAPHY`, `catSPORTS`, `catVIDEO_PLAYERS`, `catPERSONALIZATION`,
-`catBEAUTY`, `catPARENTING.`
+### Advantages
+Logistic regression is a simple yet powerful statistical method widely used for binary classification tasks. It is easy to implement, computationally efficient, and highly interpretable, as its coefficients indicate the influence of predictors on the target variable. Logistic regression provides probabilistic outputs, making it ideal for threshold-based decision-making and ranking. It works well with small datasets, is robust to multicollinearity, and does not require predictors to be normally distributed or linearly related to the target. The model supports regularization techniques like L1 and L2 to address overfitting and perform feature selection. Additionally, it serves as an excellent baseline for benchmarking classification problems and can be extended to handle multi-class and ordered outcomes. With wide applicability across fields such as medicine, finance, and marketing, logistic regression remains a fundamental tool for predictive modeling.
 
-In Figure 5., from this stepwise model, the top five importance features
-from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
-`Content.Rating`. The top 5 categories that have most impacted in this
-model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
-`HOUSE_AND_HOME`.
-
-::: {style="text-align: center;"}
-**Figure 5**. Top 10 Important Features
-:::
-
-![](images/clipboard-1184837473.png){style="display: block; margin: 0 auto;"}
 
 ## K-Nearest Neighbour
 -\> Why? -\> Advs -\> Explain Parameter
 
-```         
-Selection
-```
+
 
 ## Random Forest Classifier
 
+### Why Random Forest?
+
 The Random Forest classifier is considered because it is a robust and flexible model that performs well in classification tasks, such as in this project, where the target variable is binary (Low or High Installs). It combines multiple decision trees to produce a more accurate and stable prediction through an ensemble approach. Random Forest handles non-linear relationships effectively and is resistant to overfitting due to its random sampling and feature selection techniques. Additionally, it provides insights into feature importance, which can guide further analysis and feature selection.
-         
-Learning algorithm that constructs multiple decision trees during
-training and combines their predictions to improve accuracy and
-prevent overfitting. Each tree is trained on a random subset of the
-data, and features are randomly sampled at each split, which reduces
-correlation between trees and increases generalization. For
-classification problems like ours, Random Forest predicts the class
-by aggregating votes from all trees and selecting the majority vote.
+
+### Modelling
+The initial Random Forest model was built using all 39 variables, and its performance metrics, such as accuracy and F1-score, demonstrated its strong classification capability. To optimize the model, hyperparameter tuning was conducted to balance complexity and accuracy. Key parameters such as mtry (number of features considered at each split), ntree (number of trees in the forest), and nodesize (minimum size of terminal nodes) were fine-tuned. The tuning process evaluated mtry values of 2, 4, 6, 8, and 10, with the optimal value determined to be 4, which significantly reduced the model's tendency to overfit. Adjusting these parameters ensured a better generalization of the model while maintaining high classification accuracy.
+
+### Advantages
+Random Forest offers several advantages that make it a strong candidate for classification tasks. It is highly robust and capable of modeling complex, non-linear relationships by aggregating results from multiple decision trees. This ensemble approach reduces the risk of overfitting, especially with proper parameter tuning. Additionally, the model provides feature importance rankings, offering insights into the predictors most relevant to the outcome. Random Forest performs well with large datasets and can handle a mix of categorical and continuous variables without requiring extensive preprocessing. Its ability to handle missing data and reduce variance through bootstrapping further enhances its reliability in predictive modeling tasks.
 
 
-The initial Random Forest model is built using all 39 variables, and its performance metrics, such as accuracy and F1-score, demonstrate its capability to classify effectively. Feature importance analysis highlights the top predictors contributing to the model's performance. These include Reviews, Price, Rating, Last.Updated, Size, cat_MEDICAL, cat_EVENTS, cat_ENTERTAINMENT, cat_EDUCATION, cat_BUSINESS, and cat_GAME.
-
-The model benefits from hyperparameter tuning to optimize its performance, ensuring that it balances complexity and accuracy. Although Random Forest may lack the direct interpretability of logistic regression, its ability to model complex interactions and rank features based on importance makes it a strong candidate for this classification task. Due to the overfitting ability of the model, I have tuned the 'mtry' taking values as 2,4,6,8,10. The model's ability to overfit has reduced for the value 'mtry': 4.
-
-In Figure 2., from the mean decrease accuracy values, the top five importance features
-from this model is: 'Reviews', 'Price', 'Rating', 'Last.Updated', 'Size'. The top 5 categories that have most impacted in this
-model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT', 'cat_EDUCATION', 'cat_BUSINESS', and 'cat_GAME'.
-
-::: {style="text-align: center;"}
-**Figure 2**. Top 10 Important Features for Random Forest Classifier
-:::
-
-![](feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
 
 ## XG Boost
 
 ### Why Gradient boost 
-This project utilized a gradient boosting algorithm to predict "Low Installs" vs. "High Installs" for Play Store apps. Gradient boosting was chosen for its ability to handle complex relationships, mixed data types, and imbalanced datasets, while providing feature importance insights and high predictive power.                
+This project utilized a gradient boosting algorithm to predict "Low Installs" vs. "High Installs" for Play Store apps. Gradient boosting was chosen for its ability to handle complex relationships, mixed data types, and imbalanced datasets, while providing feature importance insights and high predictive power.  
 
 ### Modelling:
 After the data has been divided into 80% training data and 20% testing data.Following are the parameters for building the model:
@@ -293,66 +226,7 @@ After the data has been divided into 80% training data and 20% testing data.Foll
 ::: 
 These settings have balanced  model performance, generalization, and training stability.
 
-### Confusion matrix:
 
-::: {style="text-align: center;"}
-
-**Figure 1**. Confusion Matrix of Gradient Boosting
-![](images/confusionmatrix_GB.png)
-:::
-The confusion matrix reveals notable classification challenges. The model accurately identifies 65 true positives and 71 true negatives but misclassifies a substantial number of cases: 1414 "Low Installs" as "High Installs" and 1702 "High Installs" as "Low Installs." These high misclassification rates indicate the model struggles to effectively differentiate between the two classes. This results in poor recall for "Low Installs" and low precision for "High Installs”.
-
-
-### Evaluation of the model: 
-For classification tasks, Gradient Boosting models are evaluated on their ability to predict categorical labels.
-
-**Logloss:**
-
-::: {style="text-align: center;"}
-
-**Figure 2**. LogLoss over iterations
-![](images/Logloss_GB.png)
-:::
-
-Logloss evaluates classification models by measuring how close predicted probabilities are to actual class labels, with lower values indicating better performance. Monitoring overfitting involves checking if train-logloss decreases while test-logloss increases. In this model, train and test logloss values decrease with a slight gap, indicating minimal overfitting. Both curves plateau, signaling convergence and stable performance. The final logloss (~0.61) is moderate, with potential for improvement through tuning or adjustments to enhance predictive accuracy.
-
-
-
-
-
-
-**ROC/AUC curve:**
-
-::: {style="text-align: center;"}
-
-**Figure 3**. ROC Curve for Gradient Boosting
-![](images/ROC_GB.png)
-:::
-
-The ROC curve demonstrates strong model performance, as the blue curve closely approaches the top-left corner, indicating high sensitivity and specificity. This signifies the model's excellent ability to distinguish between classes. The red dashed line represents random guessing, and the model's performance clearly surpasses this baseline. The area under the curve (AUC) would be high, reflecting robust discriminative capability. Overall, the ROC curve highlights the model's reliability in binary classification tasks.
-
-**Accuracy, precision and recall:**
-
-Accuracy (%):95.82
-Precision(%): 96
-Recall(%):96.32 
-
-
-The model achieved strong overall performance, with an accuracy of 95.82%, precision of 96.00%, and recall of 96.32%. These metrics highlight the model's reliability in predicting "High Installs" while effectively minimizing false positives and false negatives.
-
-### Feature importance:
-::: {style="text-align: center;"}
-**Figure 4**. Feature Importance of Gradient Boosting
-
-![](images/FeatureImp_GB.png)
-
-:::
-
-*Reviews Dominance:* The high importance of Reviews suggests that the number of reviews is strongly correlated with the success metric. It might reflect the popularity or credibility of an app.
-
-*Secondary Factors:* Rating, Last.Updated, Price, and Size might provide additional predictive power but are not as influential as Reviews.
-
-*Categories:* The low importance of categorical features (catMEDICAL, catFAMILY, etc.) indicates that these categories do not contribute much to the predictive task. This might be due to insufficient variance or weak correlation with the target variable.
 
 ## Support Vector Machine (SVM)
 
@@ -384,9 +258,6 @@ In this case, **C = 1000** was selected because it yielded the lowest Mean Squar
 
 ![](images/SVM-C.png)
 
-```         
-Selection
-```
 
 # **Model Evaluation**
 
@@ -418,11 +289,9 @@ The McNemar's test p-value (\<2.2e-16) suggests significant differences
 between misclassifications, and the prevalence of class 0 is 54.34%.
 
 ::: {style="text-align: center;"}
-<<<<<<< HEAD
 **Figure 1**. Confusion Matrix of Logistic Regression
 =======
 **Figure 7**. Confusion Matrix
->>>>>>> 50990e45b0a6525beadbcf0c1f717275661a6ae2
 :::
 
 ![](images/clipboard-2963178691.png){style="display: block; margin: 0 auto;"}
@@ -451,6 +320,8 @@ separating class 0 and class 1 instances.
 
 ![](images/clipboard-2219338.png){style="display: block; margin: 0 auto;"}
 
+
+
 ## Random FOrest Classifier
 
 ### Confusion Matrix
@@ -475,6 +346,8 @@ As, per the graph, the model is pretty reliable with generalizability.
 :::
 
 ![](RF_eval.png){style="display: block; margin: 0 auto;"}
+
+
 
 ## SVM
 ### Confusion Matrix
@@ -503,7 +376,6 @@ For class 0, the precision is **97.91%**, indicating that 97.91% of the predicte
 The F1 score, which balances precision and recall, is **94.65%** for class 1 and **95.20%** for class 0, reflecting the model's strong overall performance. This combination of high precision and recall demonstrates the model's ability to minimize false positives and false negatives effectively, ensuring reliable and consistent classification.
 
 
-
 ### ROC
 
 ::: {style="text-align: center;"}
@@ -514,13 +386,108 @@ The F1 score, which balances precision and recall, is **94.65%** for class 1 and
 
 As observed from Figure 10, AUC values close to 1 suggest robust predictive capabilities, and in this case, the model excels at minimizing misclassification. These results confirm that the linear SVM is a suitable choice for this dataset, effectively capturing the linear relationships between variables while maintaining reliable generalization.
 
+## Gradient Boosting
+
+
+### Confusion matrix:
+
+::: {style="text-align: center;"}
+
+**Figure 1**. Confusion Matrix of Gradient Boosting
+![](images/confusionmatrix_GB.png)
+:::
+The confusion matrix reveals notable classification challenges. The model accurately identifies 65 true positives and 71 true negatives but misclassifies a substantial number of cases: 1414 "Low Installs" as "High Installs" and 1702 "High Installs" as "Low Installs." These high misclassification rates indicate the model struggles to effectively differentiate between the two classes. This results in poor recall for "Low Installs" and low precision for "High Installs”.
+
+
+### Evaluation of the model: 
+For classification tasks, Gradient Boosting models are evaluated on their ability to predict categorical labels.
+
+**Logloss:**
+
+::: {style="text-align: center;"}
+
+**Figure 2**. LogLoss over iterations
+![](images/Logloss_GB.png)
+:::
+
+Logloss evaluates classification models by measuring how close predicted probabilities are to actual class labels, with lower values indicating better performance. Monitoring overfitting involves checking if train-logloss decreases while test-logloss increases. In this model, train and test logloss values decrease with a slight gap, indicating minimal overfitting. Both curves plateau, signaling convergence and stable performance. The final logloss (~0.61) is moderate, with potential for improvement through tuning or adjustments to enhance predictive accuracy.
+
+**ROC/AUC curve:**
+
+::: {style="text-align: center;"}
+
+**Figure 3**. ROC Curve for Gradient Boosting
+![](images/ROC_GB.png)
+:::
+
+The ROC curve demonstrates strong model performance, as the blue curve closely approaches the top-left corner, indicating high sensitivity and specificity. This signifies the model's excellent ability to distinguish between classes. The red dashed line represents random guessing, and the model's performance clearly surpasses this baseline. The area under the curve (AUC) would be high, reflecting robust discriminative capability. Overall, the ROC curve highlights the model's reliability in binary classification tasks.
+
+**Accuracy, precision and recall:**
+
+Accuracy (%):95.82
+Precision(%): 96
+Recall(%):96.32 
+
+
+The model achieved strong overall performance, with an accuracy of 95.82%, precision of 96.00%, and recall of 96.32%. These metrics highlight the model's reliability in predicting "High Installs" while effectively minimizing false positives and false negatives.
+
+
 # **Predictions and Interpretability**
 
 ::: {style="text-align: justify;"}
-Prediction Use Cases: Examples of actionable insights from the model
-(e.g., predicting app install categories, identifying trends). Feature
-Importance: Highlight the most significant predictors identified by the
-model.
+
+## Logistic Regression
+
+### Feature Importance :
+The initial logistic model includes all 39 variables and has the AIC
+value of 2881.6. The stepwise selection is proceeded based on this
+logistic model. The result shows that the stepwise model has AIC value
+of 2850, indicating that this model performs better than the initial
+model. The stepwise model includes 16 out of 39 variables: `Rating`,
+`Reviews`, `Price`, `Content.Rating`, `Last.Updated`, `catBUSINESS`,
+`catEDUCATION`, `catEVENTS`, `catFINANCE`, `catHOUSE_AND_HOME`,
+`catMAPS_AND_NAVIGATION`, `catMEDICAL`, `catNEWS_AND_MAGAZINES` ,
+`catPHOTOGRAPHY`, `catSPORTS`, `catVIDEO_PLAYERS`, `catPERSONALIZATION`,
+`catBEAUTY`, `catPARENTING.`
+
+In Figure 5., from this stepwise model, the top five importance features
+from this model is: `Review`, `Price`, `Rating`, `Last.Updated`, and
+`Content.Rating`. The top 5 categories that have most impacted in this
+model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
+`HOUSE_AND_HOME`.
+
+::: {style="text-align: center;"}
+**Figure 5**. Top 10 Important Features
+:::
+
+![](images/clipboard-1184837473.png){style="display: block; margin: 0 auto;"}
+
+
+
+## KNN
+
+### Feature Importance :
+
+
+
+
+## Random Forest Classifier
+
+### Feature Importance :
+
+In Figure 2., from the mean decrease accuracy values, the top five importance features
+from this model is: 'Reviews', 'Price', 'Rating', 'Last.Updated', 'Size'. The top 5 categories that have most impacted in this
+model is 'cat_MEDICAL', 'cat_EVENTS', 'cat_ENTERTAINMENT', 'cat_EDUCATION', 'cat_BUSINESS', and 'cat_GAME'.
+
+::: {style="text-align: center;"}
+**Figure 2**. Top 10 Important Features for Random Forest Classifier
+:::
+
+![](feature_importance_accuracy_large.png){style="display: block; margin: 0 auto;"}
+
+
+
+
 
 ## SVM
 
@@ -542,6 +509,25 @@ The top five features influencing app installs are Reviews, Ratings, Last Update
 **Top 5 Categories** : 
 
 The leading categories for app installs are Medical, Fitness, Finance, Family, and News & Magazines. These categories indicate a strong demand for practical applications that address everyday needs. Medical and Fitness apps highlight the focus on health, while Finance apps emphasize financial management. Family-oriented apps cater to safe and engaging content for households and are reachable for a broader range of audience, and News & Magazines apps fulfill the need for reliable information. Targeting these popular categories can create opportunities for higher installs and greater market reach.
+
+
+
+
+## XG Boosting
+
+### Feature importance :
+::: {style="text-align: center;"}
+**Figure 4**. Feature Importance of Gradient Boosting
+
+![](images/FeatureImp_GB.png)
+
+:::
+
+*Reviews Dominance:* The high importance of Reviews suggests that the number of reviews is strongly correlated with the success metric. It might reflect the popularity or credibility of an app.
+
+*Secondary Factors:* Rating, Last.Updated, Price, and Size might provide additional predictive power but are not as influential as Reviews.
+
+*Categories:* The low importance of categorical features (catMEDICAL, catFAMILY, etc.) indicates that these categories do not contribute much to the predictive task. This might be due to insufficient variance or weak correlation with the target variable.
 
 
 
