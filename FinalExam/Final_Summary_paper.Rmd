@@ -472,7 +472,7 @@ As, per the graph, the model is pretty reliable with generalizability.
 ![](RF_eval.png){style="display: block; margin: 0 auto;"}
 
 
-###Interpretability: Feature Importance 
+### Interpretability: Feature Importance 
 
 In Figure 16., from the mean decrease accuracy values, the top five
 importance features from this model is: 'Reviews', 'Price', 'Rating',
@@ -524,7 +524,7 @@ training stability.
 ::: {style="text-align: center;"}
 **Figure 11**. Confusion Matrix of Gradient Boosting
 ![](images/confusionmatrix_GB.png)
-
+:::
 
 The confusion matrix reveals notable classification challenges. The
 model accurately identifies 65 true positives and 71 true negatives but
@@ -596,7 +596,7 @@ additional predictive power but are not as influential as Reviews.
 catFAMILY, etc.) indicates that these categories do not contribute much
 to the predictive task. This might be due to insufficient variance or
 weak correlation with the target variable.
-:::::::
+
 
 
 ## Support Vector Machine (SVM)
@@ -705,15 +705,12 @@ negatives effectively, ensuring reliable and consistent classification.
 ![](images/SVM-ROC.png)
 
 
-#### Insights from SVM model :
+### Interpretability: Feature Importance
 
 Apps with high installs tend to share features such as higher review
 counts and potentially other engagement metrics auch as ratings and active user
 feedback. These factors should be a focal point in marketing strategies
 to boost installs.
-
-
-### Interpretability: Feature Importance
 
 ::: {style="text-align: center;"}
 **Figure 17**. Top Categories
@@ -724,8 +721,6 @@ to boost installs.
 **Top 5 Features**: The key features influencing app installs are Reviews, Ratings, Last Updated, Price, and Size. Positive Reviews enhance appeal, while higher Ratings indicate user satisfaction. Frequent updates build trust, and free or low-cost apps attract more users. Additionally, smaller apps that occupy less storage are preferred. Focusing on these aspects can improve an app's market competitiveness.
 
 **Top 5 Categories**: The most popular app categories are Medical, Fitness, Finance, Family, and News & Magazines. These categories reflect a strong demand for practical solutions. Medical and Fitness apps prioritize health, Finance apps focus on financial management, Family apps provide safe content for households, and News & Magazines apps offer reliable information. Targeting these categories can lead to higher installs and broader market reach.
-
-+3
 
 
 
