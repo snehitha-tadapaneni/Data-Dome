@@ -165,7 +165,6 @@ free app for high installs.
     recent update, ensuring a quantitative measure of recency.
 :::
 
-##### 
 
 # **SMART Question**
 
@@ -188,7 +187,7 @@ focusing on "Installs" as the target variable aligns with the objective
 of optimizing app performance and success.
 :::
 
-# **Model's Development Process**
+# **Model Development Process**
 
 ## Logistic Regression
 
@@ -222,7 +221,9 @@ extended to handle multi-class and ordered outcomes. With wide
 applicability across fields such as medicine, finance, and marketing,
 logistic regression remains a fundamental tool for predictive modeling.
 
-### Confusion Matrix
+### Model Evaluation
+
+#### 1. Confusion Matrix
 
 The confusion matrix in Figure 6 shows that the model correctly
 classified 5763 instances of class 0 and 4580 instances of class 1, with
@@ -244,7 +245,7 @@ between misclassifications, and the prevalence of class 0 is 54.34%.
 
 ![](images/clipboard-2963178691.png){style="display: block; margin: 0 auto;"}
 
-### Precision, Racall Rate, F1-Score
+#### 2. Precision, Racall Rate, F1-Score
 
 The model achieves a precision of 93.97%, indicating that 93.97% of the
 predictions for class 0 are correct. Its recall is 97.84%, meaning the
@@ -255,7 +256,7 @@ consistently classifying instances of class 0. This combination of high
 precision and recall reflects the model's effectiveness in minimizing
 both false positives and false negatives.
 
-### ROC-AUC
+#### 3. ROC-AUC
 
 The model achieves an AUC (Area Under the Curve) score of 0.9923 as seen
 from Figure 7, indicating excellent performance in distinguishing
@@ -268,8 +269,7 @@ and effectiveness in separating class 0 and class 1 instances.
 
 ![](images/clipboard-2219338.png){style="display: block; margin: 0 auto;"}
 
-
-### Feature Importance :
+### Interpretation: Feature Importance
 
 The initial logistic model includes all 39 variables and has the AIC
 value of 2881.6. The stepwise selection is proceeded based on this
@@ -302,17 +302,13 @@ model is `FINANCE`, `PHOTOGRAPHY`, `EDUCATION`, `MEDICAL` and
 
 The decision to use **K-Nearest Neighbors (KNN)** was motivated by the need to examine whether the data exhibited a **non-linear relationship** and to explore if the data could naturally form clusters rather than adhering to a linear classification boundary. KNN is particularly effective for data with non-linear patterns due to its instance-based approach, where decisions are made locally using the nearest neighbors.
 
-### Confusion Matrix
+### Advantages
 
-::: {style="text-align: center;"}
-**Figure 8**. Confusion Matrix
-:::
+The K-Nearest Neighbors (KNN) classifier offers several advantages that make it a popular choice for machine learning tasks. Its simplicity and ease of implementation allow for quick understanding and application. As a lazy learning algorithm, KNN does not require a training phase, making it computationally inexpensive during model building. Being non-parametric, it does not assume any specific data distribution, making it suitable for complex datasets. Additionally, KNN is versatile, supporting both classification and regression tasks, and it naturally handles multi-class problems without requiring extensive modifications. It is particularly effective for small datasets and allows for incremental learning, where new data can be incorporated without retraining the model. These characteristics make KNN ideal for scenarios requiring adaptability, interpretability, and dynamic data handling.
 
-![](images/KNN-Confusion.png) 
+### Model Evaluation
 
-
-
-### Parameters
+#### 1. Parameters
 
 The **KNN parameter `K`** plays a crucial role in determining the model's performance:  
 
@@ -323,15 +319,11 @@ The **KNN parameter `K`** plays a crucial role in determining the model's perfor
 - **Distance Metric**:  
 The **Euclidean Distance** was utilized as the distance measure, as this metric calculates the straight-line distance between points in the feature space, making it suitable for continuous numerical data as most of our data is numerical data
 
-
-
-### Advantages
-
 The KNN model achieved an accuracy of **76%**, which indicates that:
 
 - The relationship between the variables is **non-linear**, confirming the initial hypothesis.
 
-### Confusion Matrix
+#### 2. Confusion Matrix
 
 ::: {style="text-align: center;"}
 **Figure 8**. Confusion Matrix
@@ -340,9 +332,7 @@ The KNN model achieved an accuracy of **76%**, which indicates that:
 ![](images/KNN-Confusion.png) 
 
 
-In Figure 8:
-
-### Model Performance Summary
+##### In Figure 8: Model Performance Summary
 
 **Moderate Classification**: The model achieves a moderate level of accuracy with 1361 True Negatives and 1114 True Positives, indicating some success but also limitations.
 
@@ -353,7 +343,7 @@ In Figure 8:
 **Inconsistent Performance**: The model shows weakness in identifying class 1, as evidenced by the high False Negatives, reflecting areas for improvement.
 
 
-### Precision, Recall, and F1-Score
+#### 3. Precision, Recall, and F1-Score
 
 
 The model achieves a precision of **78.57%**, indicating that 78.57% of the predicted instances are correct. While this is a positive indication, it falls below the desired threshold of 80%.
@@ -366,7 +356,7 @@ Finally, the F1 score, which balances precision and recall, stands at **77.79%**
 
 
 
-### ROC
+#### 4. ROC
 
 ::: {style="text-align: center;"}
 **Figure 9**. ROC Curve
@@ -377,7 +367,7 @@ Finally, the F1 score, which balances precision and recall, stands at **77.79%**
 As observed from Figure 9, the KNN model achieves an AUC of **0.832**, indicating moderate predictive capabilities. This performance suggests room for improvement, possibly due to linear relationships between the variables that KNN may not fully leverage.
 
 
-### Feature Importance :
+### Interpretability: Feature Importance
 
 Apps with high installs tend to share features such as higher review
 counts and More frequent updates. These factors should be a focal point in marketing strategies
@@ -439,7 +429,9 @@ variables without requiring extensive preprocessing. Its ability to
 handle missing data and reduce variance through bootstrapping further
 enhances its reliability in predictive modeling tasks.
 
-### Confusion Matrix
+### Model Evaluation
+
+#### 1. Confusion Matrix
 
 The Random Forest model correctly classified 4425 instances of class 0
 and 2918 instances of class 1, with 171 false positives and 202 false
@@ -456,7 +448,7 @@ robustness and minimal overfitting.
 ![](cm_RF.png){style="display: block; margin: 0 auto;"}
 
 
-### Graph Analysis: Error Rates and Model Stability
+#### 2. Graph Analysis: Error Rates and Model Stability
 
 The graph in the slide illustrates the error rates for the Random Forest
 model as the number of trees increases.
@@ -480,7 +472,7 @@ As, per the graph, the model is pretty reliable with generalizability.
 ![](RF_eval.png){style="display: block; margin: 0 auto;"}
 
 
-### Feature Importance :
+###Interpretability: Feature Importance 
 
 In Figure 16., from the mean decrease accuracy values, the top five
 importance features from this model is: 'Reviews', 'Price', 'Rating',
@@ -524,7 +516,10 @@ data.Following are the parameters for building the model:
 These settings have balanced model performance, generalization, and
 training stability.
 
-### Confusion matrix:
+
+### Model Evaluation
+
+#### 1. Confusion matrix:
 
 ::: {style="text-align: center;"}
 **Figure 11**. Confusion Matrix of Gradient Boosting
@@ -539,12 +534,10 @@ misclassification rates indicate the model struggles to effectively
 differentiate between the two classes. This results in poor recall for
 "Low Installs" and low precision for "High Installs”.
 
-### Evaluation of the model:
-
 For classification tasks, Gradient Boosting models are evaluated on
 their ability to predict categorical labels.
 
-**Logloss:**
+#### 2. **Logloss:**
 
 ::: {style="text-align: center;"}
 **Figure 12**. LogLoss over iterations ![](images/Logloss_GB.png)
@@ -560,7 +553,7 @@ stable performance. The final logloss (\~0.61) is moderate, with
 potential for improvement through tuning or adjustments to enhance
 predictive accuracy.
 
-**ROC/AUC curve:**
+#### 3. **ROC/AUC curve:**
 
 ::: {style="text-align: center;"}
 **Figure 13**. ROC Curve for Gradient Boosting ![](images/ROC_GB.png)
@@ -575,7 +568,7 @@ curve (AUC) would be high, reflecting robust discriminative capability.
 Overall, the ROC curve highlights the model's reliability in binary
 classification tasks.
 
-**Accuracy, precision and recall:**
+#### 4. **Accuracy, precision and recall:**
 
 Accuracy (%):95.82 Precision(%): 96 Recall(%):96.32
 
@@ -584,7 +577,7 @@ The model achieved strong overall performance, with an accuracy of
 highlight the model's reliability in predicting "High Installs" while
 effectively minimizing false positives and false negatives.
 
-### Feature importance :
+### Interpretability: Feature importance
 
 ::: {style="text-align: center;"}
 **Figure 18**. Feature Importance of Gradient Boosting
@@ -655,7 +648,10 @@ complexity.
 :::
 
 ![](images/SVM-C.png)
-### Confusion Matrix
+
+### Model Evaluation 
+
+#### 1. Confusion Matrix
 
 ::: {style="text-align: center;"}
 **Figure 9**. Confusion Matrix
@@ -682,7 +678,7 @@ class 1.
 effective handling of both classes, with errors distributed
 proportionally and no significant bias toward either class.
 
-### Precision, Recall, and F1-Score
+#### 2. Precision, Recall, and F1-Score
 
 The model achieves a precision of **92.10%** for class 1, indicating
 that 92.10% of the predicted class 1 instances are correct. Its recall
@@ -700,7 +696,7 @@ overall performance. This combination of high precision and recall
 demonstrates the model's ability to minimize false positives and false
 negatives effectively, ensuring reliable and consistent classification.
 
-### ROC
+#### 3. ROC
 
 ::: {style="text-align: center;"}
 **Figure 10**. ROC Curve
@@ -709,7 +705,7 @@ negatives effectively, ensuring reliable and consistent classification.
 ![](images/SVM-ROC.png)
 
 
-### Insights from SVM model :
+#### Insights from SVM model :
 
 Apps with high installs tend to share features such as higher review
 counts and potentially other engagement metrics auch as ratings and active user
@@ -717,7 +713,7 @@ feedback. These factors should be a focal point in marketing strategies
 to boost installs.
 
 
-### Feature Importance :
+### Interpretability: Feature Importance
 
 ::: {style="text-align: center;"}
 **Figure 17**. Top Categories
@@ -725,16 +721,11 @@ to boost installs.
 
 ![](images/SVM-Feature.png)
 
+**Top 5 Features**: The key features influencing app installs are Reviews, Ratings, Last Updated, Price, and Size. Positive Reviews enhance appeal, while higher Ratings indicate user satisfaction. Frequent updates build trust, and free or low-cost apps attract more users. Additionally, smaller apps that occupy less storage are preferred. Focusing on these aspects can improve an app's market competitiveness.
 
-**
-As observed from Figure 10, AUC values close to 1 suggest robust
-predictive capabilities, and in this case, the model excels at
-minimizing misclassification. These results confirm that the linear SVM
-is a suitable choice for this dataset, effectively capturing the linear
-relationships between variables while maintaining reliable
-generalization.
-**
-:::
+**Top 5 Categories**: The most popular app categories are Medical, Fitness, Finance, Family, and News & Magazines. These categories reflect a strong demand for practical solutions. Medical and Fitness apps prioritize health, Finance apps focus on financial management, Family apps provide safe content for households, and News & Magazines apps offer reliable information. Targeting these categories can lead to higher installs and broader market reach.
+
++3
 
 
 
@@ -773,13 +764,7 @@ research and real-world implementation.
 | Overfitting Tendency | Low | Low | Moderate | Moderate | Low |
 | Interpretability | High | Moderate | Moderate | Moderate | Moderate |
 
-# **Predictions and Interpretability**
 
-::::::: {style="text-align: justify;"}
-
-**Top 5 Features**: The key features influencing app installs are Reviews, Ratings, Last Updated, Price, and Size. Positive Reviews enhance appeal, while higher Ratings indicate user satisfaction. Frequent updates build trust, and free or low-cost apps attract more users. Additionally, smaller apps that occupy less storage are preferred. Focusing on these aspects can improve an app's market competitiveness.
-
-**Top 5 Categories**: The most popular app categories are Medical, Fitness, Finance, Family, and News & Magazines. These categories reflect a strong demand for practical solutions. Medical and Fitness apps prioritize health, Finance apps focus on financial management, Family apps provide safe content for households, and News & Magazines apps offer reliable information. Targeting these categories can lead to higher installs and broader market reach.
 
 
 # **Reliability and Limitations**
