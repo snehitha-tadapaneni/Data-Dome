@@ -529,46 +529,40 @@ The leading categories for app installs are Medical, Fitness, Finance, Family, a
 
 *Categories:* The low importance of categorical features (catMEDICAL, catFAMILY, etc.) indicates that these categories do not contribute much to the predictive task. This might be due to insufficient variance or weak correlation with the target variable.
 
-
-
 :::
 
 # **Reliability and Limitations**
 
 ::: {style="text-align: justify;"}
-Reliability of Results: Discuss how reliable the results are, based on
-metrics, cross-validation, and OOB error. *Limitations:* Bias in the
-dataset. Model interpretability limitations. Potential overfitting.
-Mitigation Strategies: Discuss how limitations were addressed (e.g.,
-feature engineering, parameter tuning).
+### Reliability
 
-## SVM 
+*Model Robustness:* The use of ensemble techniques like Random Forest and XGBoost enhances the reliability of predictions by aggregating multiple decision paths and reducing overfitting.
 
-There is a slight indication of overfitting, as evidenced by the marginal difference between training and testing accuracies. While this overfitting is relatively minor and manageable, it is essential to monitor to ensure that the model maintains its generalization ability on unseen data.
+*Feature Importance*: All the models provide insights into feature importance, which adds transparency to the decision-making process.
 
-Additionally, the interpretability of the model poses challenges, as SVMs often create complex decision boundaries that are difficult to understand
+*Balanced Data Representation:* Data cleaning and transformations, such as binning and log transformations, ensured a more balanced representation of key features, improving the reliability of model outputs.
 
+### Limitations
+
+*Dataset Size and Scope:* Although comprehensive, the dataset is limited to apps listed on the Google Play Store between 2010 and 2018, potentially omitting recent trends and app categories.
+
+*Imputed Data:* The imputation of missing values, while necessary, may introduce bias or inaccuracies in the analysis.
+
+*Static Analysis:* The study does not consider temporal trends, such as changes in user preferences or technological advancements over time.
+
+*Model Limitations:* Despite their strengths, models like Random Forest and XGBoost can be computationally intensive and may lack interpretability compared to simpler methods like Logistic Regression.
 :::
 
 # **Future Work**
 
 ::: {style="text-align: justify;"}
+1. Incorporate Temporal Dynamics: Future research could include time-series analysis to capture evolving trends in app success and user preferences.
 
-## SVM
-Improvements: Suggest ways to improve the model, such as: Incorporating
-additional data. Trying advanced algorithms or ensembles. Refining
-features or engineering new ones. Further Analysis: Mention areas where
-additional analysis could add value (e.g., testing for seasonality,
-applying domain knowledge).
+2. Advanced Feature Engineering: Explore additional features, such as user demographics, sentiment analysis of reviews, and app update frequency.
 
-## SVM 
+3. Explainable AI: Implement interpretability techniques, such as SHAP values, to provide deeper insights into model predictions and improve stakeholder trust.
 
-Expanding the dataset with diverse samples can improve generalization and reduce bias.
-
-Trying algorithms like Random Forests or Gradient Boosting and using ensemble methods can enhance accuracy.
-
-Conducting further feature engineering such as adding interaction terms to create new relevant features can capture hidden patterns and improve predictive capabilities.
-
+4. Real-Time Prediction: Develop pipelines for real-time prediction and monitoring of app success metrics using streaming data.
 :::
 
 # **Conclusion**
