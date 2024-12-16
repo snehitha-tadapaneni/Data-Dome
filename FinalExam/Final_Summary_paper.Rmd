@@ -60,7 +60,7 @@ user satisfaction and engagement.
 
 # **Exploratory Data Analysis (EDA)**
 
-### Dataset Overview
+## Dataset Overview
 
 ::: {style="text-align: justify;"}
 The dataset used in this study is a popular collection of Google Play
@@ -75,7 +75,7 @@ user behavior, app performance, and trends within the mobile app
 ecosystem.
 :::
 
-### Data Cleaning
+## Data Cleaning
 
 ::: {style="text-align: justify;"}
 The Google Play Store dataset, as analyzed, contains missing values and
